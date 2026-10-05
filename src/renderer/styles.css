@@ -2,4 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { margin: 0; background: #0d0c09; font-family: 'JetBrains Mono', Consolas, monospace; }
+:root {
+  --accent: #B83A2D;
+  --panel-alpha: 0.9;
+}
+:root[data-accent='sage'] { --accent: #4E6851; }
+:root[data-accent='cream'] { --accent: #DCC9A9; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+}
+body {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  color: #DCC9A9;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgb(17 16 9 / var(--panel-alpha));
+  border: 1px solid #22211c;
+}
+.titlebar { -webkit-app-region: drag; user-select: none; }
+.no-drag { -webkit-app-region: no-drag; }
+
+.corner { position: absolute; width: 8px; height: 8px; border-style: solid; border-color: var(--accent); pointer-events: none; }
+.corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.dot-btn { width: 12px; height: 12px; border-radius: 50%; border: none; padding: 0; cursor: pointer; }
+.dot-btn:hover { filter: brightness(0.8); }
+
+.win-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+.win-body::-webkit-scrollbar { width: 4px; }
+.win-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+
+.panel-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #7a6e5a; }
+
+.field {
+  width: 100%;
+  background: #0d0c09;
+  border: 1px solid #22211c;
+  color: #DCC9A9;
+  padding: 4px 6px;
+  font: inherit;
+  outline: none;
+  color-scheme: dark;
+}
+.field:focus { border-color: var(--accent); }
+.btn {
+  background: transparent;
+  border: 1px solid #3a3630;
+  color: #DCC9A9;
+  padding: 3px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
