@@ -88,6 +88,7 @@ input, textarea { user-select: text; }
   scrollbar-width: thin;
   scrollbar-color: rgb(255 255 255 / 0.18) transparent;
 }
+.win-body[data-fit='both'] { overflow: hidden; }
 .win-body::-webkit-scrollbar { width: 6px; }
 .win-body::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.18); border-radius: 3px; }
 
@@ -125,6 +126,22 @@ input, textarea { user-select: text; }
 .card-count {
   color: #A9A08F;
   font-size: 0.85rem;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 2px solid var(--line-strong);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); background: rgb(255 255 255 / 0.04); }
 .btn:active { transform: scale(0.95); }

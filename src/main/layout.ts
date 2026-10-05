@@ -13,15 +13,15 @@ export interface Size {
 }
 
 export const MIN_SIZES: Record<PanelId, Size> = {
-  bar: { width: 680, height: 56 },
-  checklist: { width: 280, height: 280 },
-  schedule: { width: 320, height: 320 },
-  gym: { width: 320, height: 320 },
-  progress: { width: 280, height: 280 },
-  nicotine: { width: 280, height: 280 },
-  settings: { width: 320, height: 360 },
-  profile: { width: 300, height: 360 },
-  confirm: { width: 320, height: 200 },
+  bar: { width: 600, height: 50 },
+  checklist: { width: 220, height: 240 },
+  schedule: { width: 240, height: 260 },
+  gym: { width: 240, height: 260 },
+  progress: { width: 200, height: 180 },
+  nicotine: { width: 200, height: 180 },
+  settings: { width: 260, height: 300 },
+  profile: { width: 240, height: 300 },
+  confirm: { width: 280, height: 160 },
   mini: { width: 56, height: 56 }
 }
 

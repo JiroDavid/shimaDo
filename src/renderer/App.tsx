@@ -26,6 +26,8 @@ const TITLES: Record<PanelId, string> = {
   mini: 'shimado'
 }
 
+const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', nicotine: 'both', settings: 'both', profile: 'both', confirm: 'both' }
+
 function currentPanel(): PanelId {
   const id = location.hash.replace(/^#\/?/, '')
   return id in TITLES ? (id as PanelId) : 'checklist'
@@ -46,7 +48,7 @@ export function App() {
   if (id === 'mini') return <Mini />
 
   return (
-    <PanelFrame id={id} title={TITLES[id]}>
+    <PanelFrame id={id} title={TITLES[id]} fit={FIT[id] ?? 'width'}>
       {id === 'checklist' && <Checklist data={data} />}
       {id === 'schedule' && <Schedule data={data} />}
       {id === 'gym' && <Gym data={data} />}

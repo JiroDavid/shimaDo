@@ -7,24 +7,24 @@ const area = { x: 0, y: 0, width: 1920, height: 1040 }
 
 describe('defaultBounds', () => {
   it('puts the bar top-left and the checklist beneath it', () => {
-    expect(defaultBounds('bar', area, panels)).toEqual({ x: 16, y: 16, width: 680, height: 56 })
-    expect(defaultBounds('checklist', area, panels)).toMatchObject({ x: 16, y: 84 })
+    expect(defaultBounds('bar', area, panels)).toEqual({ x: 16, y: 16, width: 600, height: 50 })
+    expect(defaultBounds('checklist', area, panels)).toMatchObject({ x: 16, y: 78 })
   })
   it('stacks progress and nicotine down the right edge without overlap', () => {
     const p = defaultBounds('progress', area, panels)
     const n = defaultBounds('nicotine', area, panels)
-    expect(p).toMatchObject({ x: 1564, y: 16 })
-    expect(n.x).toBe(1564)
+    expect(p).toMatchObject({ x: 1604, y: 16 })
+    expect(n.x).toBe(1604)
     expect(n.y).toBeGreaterThanOrEqual(p.y + p.height)
   })
   it('places schedule to the right of the checklist and gym to the right of schedule', () => {
-    expect(defaultBounds('schedule', area, panels)).toMatchObject({ x: 16 + 340 + 12, y: 84 })
-    expect(defaultBounds('gym', area, panels)).toMatchObject({ x: 16 + 340 + 12 + 400 + 12, y: 84 })
+    expect(defaultBounds('schedule', area, panels)).toMatchObject({ x: 16 + 300 + 12, y: 78 })
+    expect(defaultBounds('gym', area, panels)).toMatchObject({ x: 16 + 300 + 12 + 350 + 12, y: 78 })
   })
   it('centers settings, profile and the exit confirmation', () => {
-    expect(defaultBounds('settings', area, panels)).toEqual({ x: 770, y: 260, width: 380, height: 520 })
-    expect(defaultBounds('profile', area, panels)).toEqual({ x: 780, y: 290, width: 360, height: 460 })
-    expect(defaultBounds('confirm', area, panels)).toEqual({ x: 780, y: 415, width: 360, height: 210 })
+    expect(defaultBounds('settings', area, panels)).toEqual({ x: 795, y: 295, width: 330, height: 450 })
+    expect(defaultBounds('profile', area, panels)).toEqual({ x: 803, y: 320, width: 315, height: 400 })
+    expect(defaultBounds('confirm', area, panels)).toEqual({ x: 800, y: 425, width: 320, height: 190 })
   })
   it('puts the minimised icon where the bar starts', () => {
     expect(defaultBounds('mini', area, panels)).toEqual({ x: 16, y: 16, width: 56, height: 56 })
@@ -35,14 +35,18 @@ describe('defaultBounds', () => {
 })
 
 describe('effectiveSize', () => {
-  it('always uses the default size for the bar, even when old data saved a smaller one', () => {
-    expect(effectiveSize('bar', { width: 480, height: 44 }, panels)).toEqual({ width: 680, height: 56 })
+  it('always uses the default size for the bar, even when old data saved a bigger or smaller one', () => {
+    expect(effectiveSize('bar', { width: 480, height: 44 }, panels)).toEqual({ width: 600, height: 50 })
   })
   it('keeps the minimised icon a fixed size', () => {
     expect(effectiveSize('mini', { width: 300, height: 300 }, panels)).toEqual({ width: 56, height: 56 })
   })
   it('raises other panels to their minimum and leaves bigger ones alone', () => {
-    expect(effectiveSize('settings', { width: 300, height: 300 }, panels)).toEqual({ width: MIN_SIZES.settings.width, height: MIN_SIZES.settings.height })
+    expect(effectiveSize('settings', { width: 100, height: 100 }, panels)).toEqual({ width: MIN_SIZES.settings.width, height: MIN_SIZES.settings.height })
     expect(effectiveSize('progress', { width: 700, height: 900 }, panels)).toEqual({ width: 700, height: 900 })
+  })
+  it('lets the data panels shrink well below their default size', () => {
+    expect(MIN_SIZES.progress.width).toBeLessThanOrEqual(220)
+    expect(MIN_SIZES.nicotine.height).toBeLessThanOrEqual(200)
   })
 })

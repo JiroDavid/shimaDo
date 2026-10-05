@@ -12,6 +12,7 @@ interface Paths {
 }
 
 const CENTERED: PanelId[] = ['settings', 'profile', 'confirm']
+const UI_SCALE = 0.87
 const RESIZE_POLL_MS = 8
 const RESIZE_SAFETY_MS = 15000
 
@@ -267,6 +268,8 @@ export class PanelManager {
     })
     win.setMinimumSize(MIN_SIZES[id].width, MIN_SIZES[id].height)
     win.setMaximumSize(0, 0)
+    win.webContents.setVisualZoomLevelLimits(1, 1)
+    win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(UI_SCALE))
     this.applyTop(id, win)
     if (this.paths.devUrl) win.loadURL(`${this.paths.devUrl}#/${id}`)
     else win.loadFile(this.paths.file, { hash: `/${id}` })

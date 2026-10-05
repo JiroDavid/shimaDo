@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import type { Edge, PanelId } from '../../shared/types'
+import { Fit } from './Fit'
 
 const E = 8
 const C = 20
@@ -14,7 +15,7 @@ const HANDLES: { edge: Edge; style: CSSProperties; cursor: string }[] = [
   { edge: 'se', style: { bottom: 0, right: 0, width: C, height: C }, cursor: 'nwse-resize' }
 ]
 
-export function PanelFrame({ id, title, children }: { id: PanelId; title: string; children: ReactNode }) {
+export function PanelFrame({ id, title, fit = 'width', children }: { id: PanelId; title: string; fit?: 'width' | 'both'; children: ReactNode }) {
   const frame = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export function PanelFrame({ id, title, children }: { id: PanelId; title: string
         <span className="heading flex-1 text-center text-[1.05rem] tracking-[0.12em] text-muted">{title}</span>
         <span className="w-4" />
       </div>
-      <div className="win-body">{children}</div>
+      <Fit mode={fit}>{children}</Fit>
       {HANDLES.map((h) => (
         <div
           key={h.edge}
