@@ -20,3 +20,8 @@ export function linePoints(values: (number | null)[], width: number, height: num
   if (current.length) segments.push(current)
   return segments
 }
+
+export function labelStep(labels: string[], slot: number): number {
+  const longest = Math.max(0, ...labels.map((l) => l.length))
+  return Math.max(1, Math.ceil((longest * 5.5) / slot))
+}

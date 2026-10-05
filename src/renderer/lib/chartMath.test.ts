@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { barHeights, linePoints } from './chartMath'
+import { barHeights, labelStep, linePoints } from './chartMath'
 
 describe('barHeights', () => {
   it('scales to the tallest bar', () => {
@@ -35,5 +35,13 @@ describe('linePoints', () => {
   it('supports a custom range and a flat range without NaN', () => {
     expect(linePoints([50, 70], 100, 100, 70, 50)).toEqual([[[0, 100], [100, 0]]])
     expect(linePoints([5, 5], 10, 10, 5, 5)).toEqual([[[0, 10], [10, 10]]])
+  })
+})
+
+describe('labelStep', () => {
+  it('shows every label when they fit and skips alternate ones when they would collide', () => {
+    expect(labelStep(['M', 'T', 'W', 'T', 'F', 'S', 'S'], 200 / 7)).toBe(1)
+    expect(labelStep(Array.from({ length: 8 }, () => '10-05'), 25)).toBe(2)
+    expect(labelStep([], 25)).toBe(1)
   })
 })

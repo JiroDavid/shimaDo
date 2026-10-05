@@ -22,7 +22,7 @@ export function defaultData(): AppData {
         checklist: { width: 340, height: 480, visible: true },
         schedule: { width: 380, height: 520, visible: false },
         gym: { width: 400, height: 560, visible: false },
-        progress: { width: 340, height: 400, visible: true },
+        progress: { width: 340, height: 450, visible: true },
         nicotine: { width: 340, height: 380, visible: true },
         settings: { width: 340, height: 360, visible: false },
         profile: { width: 340, height: 440, visible: false }
