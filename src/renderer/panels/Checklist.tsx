@@ -12,19 +12,23 @@ function QuickAdd({ today }: { today: string }) {
   const [time, setTime] = useState('')
   const [tag, setTag] = useState<TaskTag | undefined>()
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const add = async () => {
+    if (busy) return
     const input = { title, kind: 'once' as const, date: today, time, ...(tag ? { tag } : {}) }
     const problem = validateTaskInput(input)
     if (problem) {
       setError(problem)
       return
     }
+    setBusy(true)
     await window.shima.addTask(input)
     setTitle('')
     setTime('')
     setTag(undefined)
     setError(null)
+    setBusy(false)
   }
 
   return (
@@ -35,7 +39,7 @@ function QuickAdd({ today }: { today: string }) {
           placeholder="Add a task for today..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
+          onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && add()}
         />
         <button className="btn btn-primary shrink-0" onClick={add}>
           Add
@@ -70,7 +74,7 @@ export function Checklist({ data }: { data: AppData }) {
   return (
     <div className="flex min-h-full flex-col">
       <div className="pt-2">
-        <h1 className="heading text-[2.7rem]">Things to do today</h1>
+        <h1 className="heading text-[2.3rem]">Things to do today</h1>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="font-bold text-muted">{formatDay(today)}</span>
           <span className="font-extrabold text-accent">

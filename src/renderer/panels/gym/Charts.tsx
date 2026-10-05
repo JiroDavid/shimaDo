@@ -38,7 +38,7 @@ function WeighIn() {
           placeholder="Today's weight (kg)"
           value={kg}
           onChange={(e) => setKg(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && log()}
+          onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && log()}
         />
         <button className="btn btn-primary shrink-0" onClick={log}>
           Log

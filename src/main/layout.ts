@@ -13,19 +13,25 @@ export interface Size {
 }
 
 export const MIN_SIZES: Record<PanelId, Size> = {
-  bar: { width: 400, height: 60 },
-  checklist: { width: 300, height: 300 },
-  schedule: { width: 340, height: 360 },
-  gym: { width: 340, height: 360 },
-  progress: { width: 300, height: 300 },
-  nicotine: { width: 300, height: 300 },
-  settings: { width: 340, height: 380 },
-  profile: { width: 320, height: 380 },
-  confirm: { width: 320, height: 160 }
+  bar: { width: 640, height: 56 },
+  checklist: { width: 280, height: 280 },
+  schedule: { width: 320, height: 320 },
+  gym: { width: 320, height: 320 },
+  progress: { width: 280, height: 280 },
+  nicotine: { width: 280, height: 280 },
+  settings: { width: 320, height: 360 },
+  profile: { width: 300, height: 360 },
+  confirm: { width: 320, height: 200 }
 }
 
 const MARGIN = 16
 const GAP = 12
+
+export function effectiveSize(id: PanelId, saved: Size, defaults: Record<PanelId, Size>): Size {
+  if (id === 'bar') return { width: defaults.bar.width, height: defaults.bar.height }
+  const min = MIN_SIZES[id]
+  return { width: Math.max(saved.width, min.width), height: Math.max(saved.height, min.height) }
+}
 
 export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels']): Rect {
   const { width, height } = panels[id]

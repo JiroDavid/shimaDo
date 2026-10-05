@@ -58,6 +58,7 @@ function boot(): void {
   app.on('second-instance', () => panels.show('checklist'))
   app.on('window-all-closed', () => {})
   app.on('before-quit', () => {
+    panels.flush()
     panels.quitting = true
   })
 

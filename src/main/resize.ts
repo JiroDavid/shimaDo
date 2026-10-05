@@ -1,7 +1,6 @@
 import type { Edge } from '../shared/types'
 import type { Rect, Size } from './layout'
 
-export type { Edge }
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi))
 
 export function resizeBounds(start: Rect, edge: Edge, dx: number, dy: number, min: Size, max: Size): Rect {
@@ -39,10 +38,7 @@ const overlap = (a: Rect, b: Rect) => ({
 
 export function fitOnScreen(rect: Rect, areas: Rect[]): Rect {
   if (areas.length === 0) return rect
-  if (areas.some((a) => {
-    const o = overlap(rect, a)
-    return o.w >= 120 && o.h >= 48
-  })) return rect
+  if (areas.some((a) => overlap(rect, a).w >= 120 && rect.y >= a.y && rect.y + 48 <= a.y + a.height)) return rect
   const a = areas[0]
   const width = Math.min(rect.width, a.width)
   const height = Math.min(rect.height, a.height)

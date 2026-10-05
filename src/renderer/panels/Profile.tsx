@@ -52,11 +52,11 @@ export function Profile({ data }: { data: AppData }) {
   return (
     <div className="space-y-2 pb-2">
       <div className="flex items-center gap-4 pt-2">
-        <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-accent text-muted">
+        <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-accent text-muted">
           {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <ProfileIcon />}
         </div>
         <div className="min-w-0">
-          <div className="heading truncate text-[2rem]">{form.firstName || form.username || 'Your profile'}</div>
+          <div className="heading truncate text-[1.7rem]">{form.firstName || form.username || 'Your profile'}</div>
           <button className="btn mt-2" onClick={pick}>
             {avatar ? 'Change picture' : 'Add picture'}
           </button>

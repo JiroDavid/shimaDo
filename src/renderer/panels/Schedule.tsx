@@ -55,8 +55,8 @@ export function Schedule({ data }: { data: AppData }) {
   const [editing, setEditing] = useState<Task | 'new' | null>(null)
 
   const day = selected ?? today
-  const shownMonth = month ?? day.slice(0, 7)
   const days = weekDays(addDays(today, offset * 7))
+  const shownMonth = expanded ? (month ?? day.slice(0, 7)) : days[3].slice(0, 7)
   const occurrences = occurrencesOn(data, day)
   const [year, monthIndex] = shownMonth.split('-').map(Number)
 
@@ -85,7 +85,7 @@ export function Schedule({ data }: { data: AppData }) {
     <div className="space-y-4 pt-1">
       <div className="flex items-center justify-between gap-2">
         <button className="flex items-center gap-2 text-left" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
-          <span className="heading text-[2rem]">
+          <span className="heading text-[1.75rem]">
             {MONTHS[monthIndex - 1]} {year}
           </span>
           <svg
@@ -152,7 +152,7 @@ export function Schedule({ data }: { data: AppData }) {
       )}
 
       <div className="flex items-center justify-between gap-2 pt-1">
-        <h2 className="heading text-[1.6rem]">{formatDay(day)}</h2>
+        <h2 className="heading text-[1.4rem]">{formatDay(day)}</h2>
         <button className="btn btn-primary" onClick={() => setEditing('new')}>
           + Task
         </button>

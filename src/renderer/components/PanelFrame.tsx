@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import type { Edge, PanelId } from '../../shared/types'
 
 const E = 8
@@ -15,17 +15,25 @@ const HANDLES: { edge: Edge; style: CSSProperties; cursor: string }[] = [
 ]
 
 export function PanelFrame({ id, title, children }: { id: PanelId; title: string; children: ReactNode }) {
-  const [shown, setShown] = useState(0)
+  const frame = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible') setShown((n) => n + 1)
+      if (document.visibilityState !== 'visible') return
+      frame.current?.animate(
+        [
+          { opacity: 0, transform: 'translateY(10px) scale(0.98)' },
+          { opacity: 1, transform: 'none' }
+        ],
+        { duration: 240, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
+      )
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   const begin = (edge: Edge) => (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
     e.preventDefault()
     e.currentTarget.setPointerCapture(e.pointerId)
     window.shima.beginResize(id, edge)
@@ -33,10 +41,10 @@ export function PanelFrame({ id, title, children }: { id: PanelId; title: string
   const end = () => window.shima.endResize()
 
   return (
-    <div className="panel panel-enter" key={shown}>
+    <div className="panel panel-enter" ref={frame}>
       <div className="titlebar flex items-center gap-3 px-5 pb-1 pt-4">
         <button className="dot-btn no-drag" aria-label="Hide panel" onClick={() => window.shima.hidePanel(id)} />
-        <span className="heading flex-1 text-center text-[1.15rem] tracking-[0.12em] text-muted">{title}</span>
+        <span className="heading flex-1 text-center text-[1.05rem] tracking-[0.12em] text-muted">{title}</span>
         <span className="w-4" />
       </div>
       <div className="win-body">{children}</div>

@@ -57,6 +57,9 @@ describe('fitOnScreen', () => {
   it('pulls back a rect that was on a monitor that is gone', () => {
     expect(fitOnScreen({ ...rect, x: 5000 }, areas)).toEqual({ ...rect, x: 1520 })
   })
+  it('treats a panel whose title bar is above the screen as off-screen', () => {
+    expect(fitOnScreen({ ...rect, y: -200 }, areas)).toEqual({ ...rect, y: 0 })
+  })
   it('treats a sliver of overlap as off-screen', () => {
     expect(fitOnScreen({ ...rect, x: 1900 }, areas)).toEqual({ ...rect, x: 1520 })
   })

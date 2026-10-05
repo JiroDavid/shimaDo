@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron'
 import { PANEL_IDS, type DisplayInfo, type Edge, type PanelId, type PanelState } from '../shared/types'
-import { defaultBounds, MIN_SIZES, type Rect } from './layout'
+import { defaultBounds, effectiveSize, MIN_SIZES, type Rect } from './layout'
 import { fitOnScreen, resizeBounds, translateBounds } from './resize'
 import { defaultData, type Store } from './store'
 
@@ -52,10 +52,6 @@ export class PanelManager {
     else this.show(id)
   }
 
-  window(id: PanelId): BrowserWindow | undefined {
-    return this.wins.get(id)
-  }
-
   beginResize(id: PanelId, edge: Edge): void {
     const win = this.wins.get(id)
     this.endResize()
@@ -65,6 +61,8 @@ export class PanelManager {
     const area = screen.getDisplayMatching(start).workArea
     const min = MIN_SIZES[id]
     const max = { width: area.width, height: area.height }
+    win.setMinimumSize(min.width, min.height)
+    win.setMaximumSize(0, 0)
     let last = start
     const timer = setInterval(() => {
       if (win.isDestroyed()) {
@@ -104,13 +102,20 @@ export class PanelManager {
     const areas = this.areas()
     for (const [id, win] of this.wins) {
       if (win.isDestroyed()) continue
+      const current = win.getBounds()
       if (CENTERED.includes(id)) {
-        if (win.isVisible()) win.setBounds(this.bounds(id, this.store.data.settings.panels[id]))
+        if (win.isVisible() && !sameRect(fitOnScreen(current, areas), current)) win.setBounds(this.bounds(id, this.store.data.settings.panels[id]))
         continue
       }
-      win.setBounds(fitOnScreen(win.getBounds(), areas))
+      const next = fitOnScreen(current, areas)
+      if (sameRect(next, current)) continue
+      win.setBounds(next)
       this.saveBoundsNow(id)
     }
+  }
+
+  flush(): void {
+    for (const id of [...this.saveTimers.keys()]) this.saveBoundsNow(id)
   }
 
   listDisplays(): DisplayInfo[] {
@@ -130,11 +135,23 @@ export class PanelManager {
   moveAllToDisplay(displayId: number): void {
     const target = screen.getAllDisplays().find((d) => d.id === displayId)
     if (!target) return
-    const from = this.barDisplay().workArea
-    for (const [id, win] of this.wins) {
-      if (win.isDestroyed() || CENTERED.includes(id)) continue
-      win.setBounds(translateBounds(win.getBounds(), from, target.workArea))
-      this.saveBoundsNow(id)
+    const panels = this.sizedPanels()
+    for (const id of PANEL_IDS) {
+      if (CENTERED.includes(id)) continue
+      const win = this.wins.get(id)
+      const ps = this.store.data.settings.panels[id]
+      const size = effectiveSize(id, ps, panels)
+      const rect: Rect =
+        win && !win.isDestroyed()
+          ? win.getBounds()
+          : ps.x !== undefined && ps.y !== undefined
+            ? { x: ps.x, y: ps.y, ...size }
+            : defaultBounds(id, this.barDisplay().workArea, panels)
+      const next = translateBounds(rect, screen.getDisplayMatching(rect).workArea, target.workArea)
+      win?.setBounds(next)
+      this.store.update((d) => {
+        Object.assign(d.settings.panels[id], next)
+      })
     }
     for (const id of CENTERED) {
       const win = this.wins.get(id)
@@ -147,7 +164,7 @@ export class PanelManager {
     const sizes = defaultData().settings.panels
     for (const id of PANEL_IDS) {
       if (CENTERED.includes(id)) continue
-      const rect = defaultBounds(id, area, sizes)
+      const rect = fitOnScreen(defaultBounds(id, area, sizes), [area])
       this.store.update((d) => {
         Object.assign(d.settings.panels[id], rect)
       })
@@ -168,7 +185,15 @@ export class PanelManager {
   }
 
   private areas(): Rect[] {
-    return screen.getAllDisplays().map((d) => d.workArea)
+    const bar = this.barDisplay()
+    return [bar, ...screen.getAllDisplays().filter((d) => d.id !== bar.id)].map((d) => d.workArea)
+  }
+
+  private sizedPanels(): Record<PanelId, PanelState> {
+    const panels = this.store.data.settings.panels
+    const out = {} as Record<PanelId, PanelState>
+    for (const id of PANEL_IDS) out[id] = { ...panels[id], ...effectiveSize(id, panels[id], defaultData().settings.panels) }
+    return out
   }
 
   private barDisplay() {
@@ -182,6 +207,9 @@ export class PanelManager {
       frame: false,
       transparent: true,
       resizable: false,
+      minimizable: false,
+      maximizable: false,
+      fullscreenable: false,
       skipTaskbar: true,
       hasShadow: false,
       show: false,
@@ -204,6 +232,7 @@ export class PanelManager {
       e.preventDefault()
       this.hide(id)
     })
+    win.on('system-context-menu', (e) => e.preventDefault())
     win.on('session-end', () => {
       this.quitting = true
     })
@@ -230,12 +259,15 @@ export class PanelManager {
   }
 
   private bounds(id: PanelId, ps: PanelState): Rect {
-    const panels = this.store.data.settings.panels
+    const panels = this.sizedPanels()
     if (CENTERED.includes(id)) return defaultBounds(id, this.barDisplay().workArea, panels)
-    const min = MIN_SIZES[id]
-    const width = Math.max(ps.width, min.width)
-    const height = Math.max(ps.height, min.height)
-    if (ps.x !== undefined && ps.y !== undefined) return fitOnScreen({ x: ps.x, y: ps.y, width, height }, this.areas())
-    return defaultBounds(id, screen.getPrimaryDisplay().workArea, panels)
+    if (ps.x !== undefined && ps.y !== undefined) {
+      return fitOnScreen({ x: ps.x, y: ps.y, width: panels[id].width, height: panels[id].height }, this.areas())
+    }
+    return defaultBounds(id, this.barDisplay().workArea, panels)
   }
+}
+
+function sameRect(a: Rect, b: Rect): boolean {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height
 }

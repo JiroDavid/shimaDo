@@ -16,14 +16,14 @@ export function Nicotine({ data }: { data: AppData }) {
 
   return (
     <div className="space-y-2 pb-2">
-      <div className="flex items-end justify-between gap-3 pt-2">
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 pt-2">
         <div>
           <div className="panel-label">Clean streak</div>
-          <div className="heading text-[3.2rem] text-accent">{nicotineStreak(data.nicotine, today)} days</div>
+          <div className="heading text-[2.5rem] text-accent">{nicotineStreak(data.nicotine, today)} days</div>
         </div>
         <div className="pb-1 text-right">
           <div className="panel-label">This week</div>
-          <div className="heading text-[1.8rem]">{thisWeek}/7</div>
+          <div className="heading text-[1.6rem]">{thisWeek}/7</div>
         </div>
       </div>
 

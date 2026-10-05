@@ -18,15 +18,15 @@ export function defaultData(): AppData {
       accent: 'orange',
       launchAtStartup: true,
       panels: {
-        bar: { width: 620, height: 60, visible: true },
-        checklist: { width: 380, height: 560, visible: true },
-        schedule: { width: 440, height: 600, visible: false },
-        gym: { width: 440, height: 600, visible: false },
-        progress: { width: 380, height: 500, visible: true },
-        nicotine: { width: 380, height: 440, visible: true },
-        settings: { width: 400, height: 540, visible: false },
-        profile: { width: 380, height: 480, visible: false },
-        confirm: { width: 360, height: 190, visible: false }
+        bar: { width: 640, height: 56, visible: true },
+        checklist: { width: 340, height: 500, visible: true },
+        schedule: { width: 400, height: 540, visible: false },
+        gym: { width: 400, height: 540, visible: false },
+        progress: { width: 340, height: 430, visible: true },
+        nicotine: { width: 340, height: 400, visible: true },
+        settings: { width: 380, height: 520, visible: false },
+        profile: { width: 360, height: 460, visible: false },
+        confirm: { width: 360, height: 210, visible: false }
       }
     }
   }

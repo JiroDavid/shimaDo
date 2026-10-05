@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppData } from '../../../shared/types'
 import { addDays, formatDay, fromDateKey, weekDays } from '../../../shared/dates'
 import { dayPlan, templateFor } from '../../../shared/gym'
+import { Dropdown } from '../../components/Dropdown'
 import { Check } from '../../components/TaskRow'
 import { useToday } from '../../hooks/useData'
 
@@ -61,7 +62,7 @@ export function Week({ data }: { data: AppData }) {
       <div className="card space-y-3">
         <div className="card-label">{formatDay(day)}</div>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="heading text-[2.2rem]">{plan ? plan.label : 'Rest day'}</h2>
+          <h2 className="heading text-[1.9rem]">{plan ? plan.label : 'Rest day'}</h2>
           <div className="flex items-center gap-2.5">
             <span className={`font-extrabold ${done ? 'text-accent' : 'text-muted'}`}>{done ? 'Done' : 'Not yet'}</span>
             <Check checked={done} onChange={() => window.shima.setGymDone(day, !done)} label="mark day done" />
@@ -76,16 +77,12 @@ export function Week({ data }: { data: AppData }) {
           </div>
         ))}
 
-        <div className="flex gap-2 border-t border-dark-border pt-3">
-          <select className="field" value="" onChange={(e) => change(e.target.value)}>
-            <option value="">Did something else today?</option>
-            <option value="rest">Rest day</option>
-            {swaps.map((s) => (
-              <option key={s.index} value={s.index}>
-                I did {s.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-start gap-2 border-t border-dark-border pt-3">
+          <Dropdown
+            placeholder="Did something else today?"
+            options={[{ value: 'rest', label: 'Rest day' }, ...swaps.map((s) => ({ value: String(s.index), label: `I did ${s.label}` }))]}
+            onSelect={change}
+          />
           {overridden && (
             <button className="btn shrink-0" onClick={() => window.shima.setGymOverride(day, undefined)}>
               Back to plan

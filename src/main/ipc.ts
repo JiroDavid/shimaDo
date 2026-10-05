@@ -9,6 +9,8 @@ import {
 import type { PanelManager } from './panels'
 import type { Store } from './store'
 
+const EDGES: Edge[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
+
 const isPanelId = (v: unknown): v is PanelId => PANEL_IDS.includes(v as PanelId)
 
 export interface AppActions {
@@ -52,7 +54,7 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
   ipcMain.handle('displays:move', (_e, id: number) => panels.moveAllToDisplay(id))
   ipcMain.handle('layout:reset', () => panels.resetLayout())
   ipcMain.on('panel:resize-begin', (_e, id: unknown, edge: Edge) => {
-    if (isPanelId(id)) panels.beginResize(id, edge)
+    if (isPanelId(id) && EDGES.includes(edge)) panels.beginResize(id, edge)
   })
   ipcMain.on('panel:resize-end', () => panels.endResize())
   ipcMain.handle('profile:set', (_e, input: ProfileInput) => {
