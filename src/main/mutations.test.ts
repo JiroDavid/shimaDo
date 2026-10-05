@@ -125,3 +125,23 @@ describe('updateTask and history', () => {
     expect(d.tasks[0]).toMatchObject({ id: 'old', createdOn: '2026-10-06' })
   })
 })
+
+describe('task tags', () => {
+  const base = { title: 'Gym', kind: 'weekly' as const, time: '07:00', weekdays: [1] }
+  it('addTask stores a tag only when given', () => {
+    const d = defaultData()
+    addTask(d, { ...base, tag: 'must' }, '2026-10-01', 'a')
+    addTask(d, base, '2026-10-01', 'b')
+    expect(d.tasks[0].tag).toBe('must')
+    expect('tag' in d.tasks[1]).toBe(false)
+  })
+  it('changing or removing a tag edits an older recurring task in place', () => {
+    const d = defaultData()
+    addTask(d, { ...base, tag: 'must' }, '2026-10-01', 'a')
+    updateTask(d, 'a', { ...base, tag: 'urgent' }, '2026-10-06', 'new')
+    expect(d.tasks).toHaveLength(1)
+    expect(d.tasks[0]).toMatchObject({ id: 'a', tag: 'urgent', createdOn: '2026-10-01' })
+    updateTask(d, 'a', base, '2026-10-06', 'new')
+    expect('tag' in d.tasks[0]).toBe(false)
+  })
+})

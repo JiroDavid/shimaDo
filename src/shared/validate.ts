@@ -1,11 +1,12 @@
 import { isValidDateKey, isValidTime } from './dates'
-import type { TaskInput } from './types'
+import { TASK_TAGS, type TaskInput } from './types'
 
 export function validateTaskInput(i: TaskInput): string | null {
   const title = i.title.trim()
   if (!title) return 'Title is required'
   if (title.length > 200) return 'Title is too long'
   if (i.time !== '' && !isValidTime(i.time)) return 'Time must be HH:MM'
+  if (i.tag !== undefined && !TASK_TAGS.includes(i.tag)) return 'Unknown tag'
   if (i.kind === 'once' && !(i.date && isValidDateKey(i.date))) return 'Pick a valid date'
   if (i.kind === 'weekly') {
     const days = i.weekdays ?? []

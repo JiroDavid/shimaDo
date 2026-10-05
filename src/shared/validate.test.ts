@@ -21,4 +21,8 @@ describe('validateTaskInput', () => {
     expect(validateTaskInput({ ...ok, kind: 'weekly', weekdays: [7] })).toMatch(/weekday/i)
     expect(validateTaskInput({ ...ok, kind: 'weekly', weekdays: [1] })).toBeNull()
   })
+  it('accepts the three fixed tags and rejects anything else', () => {
+    for (const tag of ['urgent', 'must', 'important'] as const) expect(validateTaskInput({ ...ok, tag })).toBeNull()
+    expect(validateTaskInput({ ...ok, tag: 'nope' as never })).toMatch(/tag/i)
+  })
 })

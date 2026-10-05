@@ -14,7 +14,8 @@ function normalise(input: TaskInput): Omit<Task, 'id' | 'createdOn' | 'archivedO
     kind: input.kind,
     ...(input.kind === 'once' ? { date: input.date } : {}),
     ...(input.kind === 'weekly' ? { weekdays: [...new Set(input.weekdays)].sort((a, b) => a - b) } : {}),
-    time: input.time
+    time: input.time,
+    ...(input.tag ? { tag: input.tag } : {})
   }
 }
 
