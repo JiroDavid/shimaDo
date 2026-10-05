@@ -50,3 +50,12 @@ export function nicotineWeeks(nic: Record<string, true>, todayKey: string, weeks
     return { weekStart: start, count: weekDays(start).filter((k) => nic[k]).length }
   })
 }
+
+export function pomodoroStreak(p: Record<string, number>, todayKey: string): number {
+  let streak = 0
+  for (let i = 0; i < MAX_LOOKBACK; i++) {
+    if ((p[addDays(todayKey, -i)] ?? 0) > 0) streak++
+    else if (i > 0) break
+  }
+  return streak
+}

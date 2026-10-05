@@ -41,6 +41,12 @@ export const NicotineIcon = () => (
     <path d="M6 6l12 12M7 13h5M14 13h3" />
   </Icon>
 )
+export const FocusIcon = () => (
+  <Icon>
+    <circle cx="12" cy="13" r="8" />
+    <path d="M12 9v4l2.5 2M9 3h6" />
+  </Icon>
+)
 export const SettingsIcon = () => (
   <Icon>
     <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
