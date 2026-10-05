@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow, nativeImage, screen } from 'electron'
 import { PANEL_IDS, type DisplayInfo, type Edge, type PanelId, type PanelState } from '../shared/types'
 import { defaultBounds, effectiveSize, MIN_SIZES, type Rect } from './layout'
 import { fitOnScreen, resizeBounds, translateBounds } from './resize'
@@ -12,7 +12,7 @@ interface Paths {
 }
 
 const CENTERED: PanelId[] = ['settings', 'profile', 'confirm']
-const UI_SCALE = 0.87
+const UI_SCALE = 0.91
 const RESIZE_POLL_MS = 8
 const RESIZE_SAFETY_MS = 15000
 
@@ -261,7 +261,7 @@ export class PanelManager {
       maximizable: false,
       fullscreenable: false,
       skipTaskbar: id !== 'bar',
-      icon: this.paths.icon,
+      icon: nativeImage.createFromPath(this.paths.icon),
       hasShadow: false,
       show: false,
       webPreferences: { preload: this.paths.preload, contextIsolation: true, sandbox: true }

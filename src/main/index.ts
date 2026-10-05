@@ -17,12 +17,14 @@ else boot()
 function boot(): void {
   const userData = app.getPath('userData')
   const store = new Store(join(userData, 'shimado-data.json'))
-  const iconPath = app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(app.getAppPath(), 'resources', 'icon.png')
+  const resources = app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources')
+  const iconPath = join(resources, 'icon.png')
+  const windowIcon = join(resources, 'icon.ico')
   let tray: ReturnType<typeof createTray> | undefined
 
   const panels = new PanelManager(
     store,
-    { icon: iconPath, preload: join(__dirname, '../preload/index.js'), devUrl: process.env['ELECTRON_RENDERER_URL'], file: join(__dirname, '../renderer/index.html') },
+    { icon: windowIcon, preload: join(__dirname, '../preload/index.js'), devUrl: process.env['ELECTRON_RENDERER_URL'], file: join(__dirname, '../renderer/index.html') },
     () => {
       tray?.refresh()
       panels.broadcast('data:changed', store.data)
