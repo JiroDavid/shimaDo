@@ -1,4 +1,6 @@
-import type { Accent, AppData, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
+import type { Accent, AppData, GymDay, GymSet, GymSetInput, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
+import { isValidDateKey } from '../shared/dates'
+import { canonicalExercise, normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateSet, validateWeighIn } from '../shared/gym'
 import { validateProfile } from '../shared/profile'
 import { validateTaskInput } from '../shared/validate'
 
@@ -72,4 +74,64 @@ export function setProfile(d: AppData, input: ProfileInput, todayKey: string): v
 
 export function setAvatarStamp(d: AppData, stamp: number): void {
   d.profile.avatarUpdatedAt = stamp
+}
+
+function assertDate(date: string): void {
+  if (!isValidDateKey(date)) throw new Error('Invalid date')
+}
+
+export function setSplit(d: AppData, days: (GymDay | null)[], todayKey: string): void {
+  const clean = normalizeDays(days)
+  const error = validateGymDays(clean)
+  if (error) throw new Error(error)
+  const existing = d.gym.splits.find((s) => s.from === todayKey)
+  if (existing) existing.days = clean
+  else d.gym.splits.push({ from: todayKey, days: clean })
+  d.gym.splits.sort((a, b) => a.from.localeCompare(b.from))
+}
+
+export function setGymOverride(d: AppData, date: string, value: GymDay | null | undefined): void {
+  assertDate(date)
+  if (value === undefined) {
+    delete d.gym.overrides[date]
+    return
+  }
+  if (value === null) {
+    d.gym.overrides[date] = null
+    return
+  }
+  const clean = normalizeDay(value)
+  const error = validateGymDay(clean)
+  if (error) throw new Error(error)
+  d.gym.overrides[date] = clean
+}
+
+export function setGymDone(d: AppData, date: string, done: boolean): void {
+  assertDate(date)
+  if (done) d.gym.done[date] = true
+  else delete d.gym.done[date]
+}
+
+export function addGymSet(d: AppData, input: GymSetInput, id: string, todayKey: string): GymSet {
+  const error = validateSet(input, todayKey)
+  if (error) throw new Error(error)
+  const set: GymSet = { id, date: input.date, exercise: canonicalExercise(d.gym, input.exercise.trim()), weightKg: input.weightKg, reps: input.reps }
+  d.gym.sets.push(set)
+  d.gym.done[input.date] = true
+  return set
+}
+
+export function deleteGymSet(d: AppData, id: string): void {
+  d.gym.sets = d.gym.sets.filter((s) => s.id !== id)
+}
+
+export function setWeighIn(d: AppData, date: string, kg: number | null): void {
+  assertDate(date)
+  if (kg === null) {
+    delete d.gym.weighIns[date]
+    return
+  }
+  const error = validateWeighIn(kg)
+  if (error) throw new Error(error)
+  d.gym.weighIns[date] = kg
 }
