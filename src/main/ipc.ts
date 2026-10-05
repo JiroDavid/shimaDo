@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { PANEL_IDS, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput } from '../shared/types'
+import { PANEL_IDS, type Edge, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import {
   addTask, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
@@ -13,7 +13,7 @@ const isPanelId = (v: unknown): v is PanelId => PANEL_IDS.includes(v as PanelId)
 
 export interface AppActions {
   changeSettings(patch: SettingsPatch): void
-  confirmExit(): Promise<void>
+  confirmExit(): void
   pickAvatar(): Promise<string | null>
   readAvatar(): string | null
 }
@@ -46,7 +46,15 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
   })
 
   ipcMain.handle('settings:set', (_e, raw: unknown) => actions.changeSettings(sanitizeSettingsPatch(raw)))
-  ipcMain.handle('app:exit', () => actions.confirmExit())
+  ipcMain.handle('app:exit', () => panels.show('confirm'))
+  ipcMain.handle('app:confirm-exit', () => actions.confirmExit())
+  ipcMain.handle('displays:list', () => panels.listDisplays())
+  ipcMain.handle('displays:move', (_e, id: number) => panels.moveAllToDisplay(id))
+  ipcMain.handle('layout:reset', () => panels.resetLayout())
+  ipcMain.on('panel:resize-begin', (_e, id: unknown, edge: Edge) => {
+    if (isPanelId(id)) panels.beginResize(id, edge)
+  })
+  ipcMain.on('panel:resize-end', () => panels.endResize())
   ipcMain.handle('profile:set', (_e, input: ProfileInput) => {
     store.update((d) => setProfile(d, input, today()))
     commit()

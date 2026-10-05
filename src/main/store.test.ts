@@ -100,11 +100,13 @@ describe('Store', () => {
       d.settings.panels.settings.visible = true
       d.settings.panels.profile.visible = true
       d.settings.panels.gym.visible = true
+      d.settings.panels.confirm.visible = true
     })
     const second = new Store(file)
     second.load()
     expect(second.data.settings.panels.settings.visible).toBe(false)
     expect(second.data.settings.panels.profile.visible).toBe(false)
+    expect(second.data.settings.panels.confirm.visible).toBe(false)
     expect(second.data.settings.panels.gym.visible).toBe(true)
   })
 

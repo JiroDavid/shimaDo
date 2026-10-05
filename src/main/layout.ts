@@ -20,7 +20,8 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   progress: { width: 300, height: 300 },
   nicotine: { width: 300, height: 300 },
   settings: { width: 340, height: 380 },
-  profile: { width: 320, height: 380 }
+  profile: { width: 320, height: 380 },
+  confirm: { width: 320, height: 160 }
 }
 
 const MARGIN = 16
@@ -47,6 +48,7 @@ export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels'
       return { x: right - width, y: top + panels.progress.height + GAP, width, height }
     case 'settings':
     case 'profile':
+    case 'confirm':
       return { x: Math.round(area.x + (area.width - width) / 2), y: Math.round(area.y + (area.height - height) / 2), width, height }
   }
 }

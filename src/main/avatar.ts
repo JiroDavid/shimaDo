@@ -1,4 +1,4 @@
-import { dialog, nativeImage, type BrowserWindow } from 'electron'
+import { dialog, nativeImage } from 'electron'
 import fs from 'node:fs'
 import { join } from 'node:path'
 import { centerSquare } from '../shared/profile'
@@ -9,13 +9,13 @@ export type PickResult = 'picked' | 'cancelled' | 'invalid'
 
 const avatarPath = (dir: string) => join(dir, 'avatar.png')
 
-export async function chooseAvatar(parent: BrowserWindow | undefined, dir: string): Promise<PickResult> {
+export async function chooseAvatar(dir: string): Promise<PickResult> {
   const options = {
     title: 'Choose a profile picture',
     properties: ['openFile' as const],
     filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'] }]
   }
-  const result = parent ? await dialog.showOpenDialog(parent, options) : await dialog.showOpenDialog(options)
+  const result = await dialog.showOpenDialog(options)
   if (result.canceled || result.filePaths.length === 0) return 'cancelled'
   const image = nativeImage.createFromPath(result.filePaths[0])
   if (image.isEmpty()) return 'invalid'

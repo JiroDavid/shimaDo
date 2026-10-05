@@ -1,6 +1,7 @@
+import type { Edge } from '../shared/types'
 import type { Rect, Size } from './layout'
 
-export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
+export type { Edge }
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi))
 
 export function resizeBounds(start: Rect, edge: Edge, dx: number, dy: number, min: Size, max: Size): Rect {

@@ -4,6 +4,7 @@ import { PanelFrame } from './components/PanelFrame'
 import { useData } from './hooks/useData'
 import { Bar } from './panels/Bar'
 import { Checklist } from './panels/Checklist'
+import { Confirm } from './panels/Confirm'
 import { Gym } from './panels/Gym'
 import { Nicotine } from './panels/Nicotine'
 import { Profile } from './panels/Profile'
@@ -19,7 +20,8 @@ const TITLES: Record<PanelId, string> = {
   progress: 'progress',
   nicotine: 'no-nicotine',
   settings: 'settings',
-  profile: 'profile'
+  profile: 'profile',
+  confirm: 'exit'
 }
 
 function currentPanel(): PanelId {
@@ -49,6 +51,7 @@ export function App() {
       {id === 'nicotine' && <Nicotine data={data} />}
       {id === 'settings' && <Settings data={data} />}
       {id === 'profile' && <Profile data={data} />}
+      {id === 'confirm' && <Confirm />}
     </PanelFrame>
   )
 }

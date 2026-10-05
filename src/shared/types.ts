@@ -2,8 +2,17 @@ export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'nicotine' | 'settings' | 'profile'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'nicotine', 'settings', 'profile']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'nicotine' | 'settings' | 'profile' | 'confirm'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'nicotine', 'settings', 'profile', 'confirm']
+export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
+
+export interface DisplayInfo {
+  id: number
+  label: string
+  primary: boolean
+  hasBar: boolean
+}
+
 export type Accent = 'brick' | 'sage' | 'cream'
 
 export interface Task {
@@ -109,6 +118,12 @@ export interface ShimaApi {
   togglePanel(id: PanelId): void
   setSettings(patch: SettingsPatch): Promise<void>
   requestExit(): Promise<void>
+  confirmExit(): Promise<void>
+  beginResize(id: PanelId, edge: Edge): void
+  endResize(): void
+  listDisplays(): Promise<DisplayInfo[]>
+  moveAllToDisplay(id: number): Promise<void>
+  resetLayout(): Promise<void>
   setProfile(input: ProfileInput): Promise<void>
   pickAvatar(): Promise<string | null>
   getAvatar(): Promise<string | null>

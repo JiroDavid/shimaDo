@@ -1,4 +1,4 @@
-import { app, dialog, Notification } from 'electron'
+import { app, Notification, screen } from 'electron'
 import { join } from 'node:path'
 import { PANEL_IDS, type SettingsPatch } from '../shared/types'
 import { chooseAvatar, readAvatarDataUrl } from './avatar'
@@ -41,23 +41,12 @@ function boot(): void {
     tray?.refresh()
   }
 
-  const confirmExit = async () => {
-    const options = {
-      type: 'question' as const,
-      buttons: ['Cancel', 'Exit ShimaDo'],
-      defaultId: 0,
-      cancelId: 0,
-      title: 'Exit ShimaDo',
-      message: 'Are you sure you want to exit?',
-      detail: 'Reminders stop until you start ShimaDo again.'
-    }
-    const parent = panels.window('bar')
-    const { response } = parent ? await dialog.showMessageBox(parent, options) : await dialog.showMessageBox(options)
-    if (response === 1) app.quit()
+  const confirmExit = () => {
+    app.quit()
   }
 
   const pickAvatar = async (): Promise<string | null> => {
-    const result = await chooseAvatar(panels.window('profile'), userData)
+    const result = await chooseAvatar(userData)
     if (result === 'invalid') return 'That file is not a readable image'
     if (result === 'picked') {
       store.update((d) => setAvatarStamp(d, Date.now()))
@@ -79,8 +68,13 @@ function boot(): void {
 
     for (const id of PANEL_IDS) {
       if (id === 'bar' || id === 'checklist') panels.show(id)
-      else if (id !== 'settings' && id !== 'profile' && store.data.settings.panels[id].visible) panels.show(id)
+      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && store.data.settings.panels[id].visible) panels.show(id)
     }
+
+    panels.fitAll()
+    screen.on('display-added', () => panels.fitAll())
+    screen.on('display-removed', () => panels.fitAll())
+    screen.on('display-metrics-changed', () => panels.fitAll())
 
     if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: store.data.settings.launchAtStartup })
 

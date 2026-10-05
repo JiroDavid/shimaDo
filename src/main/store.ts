@@ -18,14 +18,15 @@ export function defaultData(): AppData {
       accent: 'brick',
       launchAtStartup: true,
       panels: {
-        bar: { width: 480, height: 44, visible: true },
-        checklist: { width: 340, height: 480, visible: true },
-        schedule: { width: 380, height: 520, visible: false },
-        gym: { width: 400, height: 560, visible: false },
-        progress: { width: 340, height: 450, visible: true },
-        nicotine: { width: 340, height: 380, visible: true },
-        settings: { width: 340, height: 360, visible: false },
-        profile: { width: 340, height: 440, visible: false }
+        bar: { width: 620, height: 60, visible: true },
+        checklist: { width: 380, height: 560, visible: true },
+        schedule: { width: 440, height: 600, visible: false },
+        gym: { width: 440, height: 600, visible: false },
+        progress: { width: 380, height: 500, visible: true },
+        nicotine: { width: 380, height: 440, visible: true },
+        settings: { width: 400, height: 540, visible: false },
+        profile: { width: 380, height: 480, visible: false },
+        confirm: { width: 360, height: 190, visible: false }
       }
     }
   }
@@ -76,6 +77,7 @@ export class Store {
       this.data = migrate(JSON.parse(fs.readFileSync(this.file, 'utf8')))
       this.data.settings.panels.settings.visible = false
       this.data.settings.panels.profile.visible = false
+      this.data.settings.panels.confirm.visible = false
     } catch {
       fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`)
       this.data = defaultData()
