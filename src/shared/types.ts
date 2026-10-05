@@ -1,0 +1,127 @@
+export type TaskKind = 'once' | 'daily' | 'weekly'
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'nicotine' | 'settings' | 'profile'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'nicotine', 'settings', 'profile']
+export type Accent = 'brick' | 'sage' | 'cream'
+
+export interface Task {
+  id: string
+  title: string
+  notes?: string
+  kind: TaskKind
+  date?: string
+  time: string
+  weekdays?: number[]
+  createdOn: string
+  archivedOn?: string
+}
+
+export interface TaskInput {
+  title: string
+  notes?: string
+  kind: TaskKind
+  date?: string
+  time: string
+  weekdays?: number[]
+}
+
+export interface Completion {
+  taskId: string
+  occurrenceDate: string
+  doneAt: string
+}
+
+export interface PanelState {
+  x?: number
+  y?: number
+  width: number
+  height: number
+  visible: boolean
+}
+
+export interface Settings {
+  opacity: number
+  alwaysOnTop: boolean
+  accent: Accent
+  launchAtStartup: boolean
+  panels: Record<PanelId, PanelState>
+}
+
+export interface GymDay {
+  label: string
+  exercises: string[]
+}
+
+export interface GymSplit {
+  from: string
+  days: (GymDay | null)[]
+}
+
+export interface GymSet {
+  id: string
+  date: string
+  exercise: string
+  weightKg: number
+  reps: number
+}
+
+export type GymSetInput = Omit<GymSet, 'id'>
+
+export interface Gym {
+  splits: GymSplit[]
+  overrides: Record<string, GymDay | null>
+  done: Record<string, true>
+  sets: GymSet[]
+  weighIns: Record<string, number>
+}
+
+export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'alwaysOnTop' | 'launchAtStartup'>>
+
+export interface Profile {
+  username: string
+  firstName: string
+  dateOfBirth: string
+  heightCm: number | null
+  avatarUpdatedAt: number | null
+}
+
+export type ProfileInput = Omit<Profile, 'avatarUpdatedAt'>
+
+export interface AppData {
+  version: 1
+  tasks: Task[]
+  completions: Completion[]
+  nicotine: Record<string, true>
+  profile: Profile
+  gym: Gym
+  settings: Settings
+}
+
+export interface Occurrence {
+  task: Task
+  date: string
+  done: boolean
+}
+
+export interface ShimaApi {
+  getData(): Promise<AppData>
+  onChange(cb: (d: AppData) => void): () => void
+  addTask(input: TaskInput): Promise<void>
+  updateTask(id: string, input: TaskInput): Promise<void>
+  deleteTask(id: string): Promise<void>
+  setDone(taskId: string, date: string, done: boolean): Promise<void>
+  setNicotine(date: string, on: boolean): Promise<void>
+  resizePanel(id: PanelId, width: number, height: number): void
+  hidePanel(id: PanelId): void
+  togglePanel(id: PanelId): void
+  setSettings(patch: SettingsPatch): Promise<void>
+  requestExit(): Promise<void>
+  setProfile(input: ProfileInput): Promise<void>
+  pickAvatar(): Promise<string | null>
+  getAvatar(): Promise<string | null>
+  setSplit(days: (GymDay | null)[]): Promise<void>
+  setGymOverride(date: string, value: GymDay | null | undefined): Promise<void>
+  setGymDone(date: string, done: boolean): Promise<void>
+  addGymSet(input: GymSetInput): Promise<void>
+  deleteGymSet(id: string): Promise<void>
+  setWeighIn(date: string, kg: number | null): Promise<void>
+}

@@ -1,0 +1,24 @@
+import { describe, it, expect } from 'vitest'
+import { validateTaskInput } from './validate'
+import type { TaskInput } from './types'
+
+const ok: TaskInput = { title: 'Gym', kind: 'daily', time: '07:00' }
+
+describe('validateTaskInput', () => {
+  it('accepts a valid daily task', () => expect(validateTaskInput(ok)).toBeNull())
+  it('accepts an untimed task', () => expect(validateTaskInput({ ...ok, time: '' })).toBeNull())
+  it('rejects blank titles', () => expect(validateTaskInput({ ...ok, title: '   ' })).toMatch(/title/i))
+  it('rejects overlong titles', () => expect(validateTaskInput({ ...ok, title: 'a'.repeat(201) })).toMatch(/long/i))
+  it('rejects malformed times', () => expect(validateTaskInput({ ...ok, time: '25:00' })).toMatch(/time/i))
+  it('requires a real date for once tasks', () => {
+    expect(validateTaskInput({ ...ok, kind: 'once' })).toMatch(/date/i)
+    expect(validateTaskInput({ ...ok, kind: 'once', date: '2026-02-30' })).toMatch(/date/i)
+    expect(validateTaskInput({ ...ok, kind: 'once', date: '2026-02-28' })).toBeNull()
+  })
+  it('requires at least one valid weekday for weekly tasks', () => {
+    expect(validateTaskInput({ ...ok, kind: 'weekly', weekdays: [] })).toMatch(/weekday/i)
+    expect(validateTaskInput({ ...ok, kind: 'weekly' })).toMatch(/weekday/i)
+    expect(validateTaskInput({ ...ok, kind: 'weekly', weekdays: [7] })).toMatch(/weekday/i)
+    expect(validateTaskInput({ ...ok, kind: 'weekly', weekdays: [1] })).toBeNull()
+  })
+})
