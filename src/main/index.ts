@@ -22,7 +22,7 @@ function boot(): void {
 
   const panels = new PanelManager(
     store,
-    { preload: join(__dirname, '../preload/index.js'), devUrl: process.env['ELECTRON_RENDERER_URL'], file: join(__dirname, '../renderer/index.html') },
+    { icon: iconPath, preload: join(__dirname, '../preload/index.js'), devUrl: process.env['ELECTRON_RENDERER_URL'], file: join(__dirname, '../renderer/index.html') },
     () => {
       tray?.refresh()
       panels.broadcast('data:changed', store.data)
@@ -68,6 +68,7 @@ function boot(): void {
     tray = createTray({ store, panels, iconPath, onSettings: changeSettings, onExit: () => app.quit() })
 
     for (const id of PANEL_IDS) {
+      if (id === 'mini') continue
       if (id === 'bar' || id === 'checklist') panels.show(id)
       else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && store.data.settings.panels[id].visible) panels.show(id)
     }

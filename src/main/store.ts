@@ -18,7 +18,7 @@ export function defaultData(): AppData {
       accent: 'orange',
       launchAtStartup: true,
       panels: {
-        bar: { width: 640, height: 56, visible: true },
+        bar: { width: 680, height: 56, visible: true },
         checklist: { width: 340, height: 500, visible: true },
         schedule: { width: 400, height: 540, visible: false },
         gym: { width: 400, height: 540, visible: false },
@@ -26,7 +26,8 @@ export function defaultData(): AppData {
         nicotine: { width: 340, height: 400, visible: true },
         settings: { width: 380, height: 520, visible: false },
         profile: { width: 360, height: 460, visible: false },
-        confirm: { width: 360, height: 210, visible: false }
+        confirm: { width: 360, height: 210, visible: false },
+        mini: { width: 56, height: 56, visible: false }
       }
     }
   }
@@ -78,6 +79,7 @@ export class Store {
       this.data.settings.panels.settings.visible = false
       this.data.settings.panels.profile.visible = false
       this.data.settings.panels.confirm.visible = false
+      this.data.settings.panels.mini.visible = false
     } catch {
       fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`)
       this.data = defaultData()

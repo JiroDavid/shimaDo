@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
-import { ChecklistIcon, DumbbellIcon, NicotineIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
+import { ChecklistIcon, DumbbellIcon, MinimizeIcon, NicotineIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
 import { useAvatar } from '../hooks/useData'
 
 const BUTTONS: { id: PanelId; label: string; icon: ReactNode }[] = [
@@ -31,7 +31,11 @@ export function Bar({ data }: { data: AppData }) {
           </button>
         )
       })}
-      <button className="bar-btn bar-exit no-drag ml-auto" aria-label="Exit ShimaDo" onClick={() => window.shima.requestExit()}>
+      <button className="bar-btn no-drag ml-auto" aria-label="Minimise to icon" onClick={() => window.shima.minimizeAll()}>
+        <MinimizeIcon />
+        <span className="bar-label">Minimise</span>
+      </button>
+      <button className="bar-btn bar-exit no-drag" aria-label="Exit ShimaDo" onClick={() => window.shima.requestExit()}>
         <PowerIcon />
         <span className="bar-label">Exit</span>
       </button>

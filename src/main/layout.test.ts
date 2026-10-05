@@ -7,7 +7,7 @@ const area = { x: 0, y: 0, width: 1920, height: 1040 }
 
 describe('defaultBounds', () => {
   it('puts the bar top-left and the checklist beneath it', () => {
-    expect(defaultBounds('bar', area, panels)).toEqual({ x: 16, y: 16, width: 640, height: 56 })
+    expect(defaultBounds('bar', area, panels)).toEqual({ x: 16, y: 16, width: 680, height: 56 })
     expect(defaultBounds('checklist', area, panels)).toMatchObject({ x: 16, y: 84 })
   })
   it('stacks progress and nicotine down the right edge without overlap', () => {
@@ -26,6 +26,9 @@ describe('defaultBounds', () => {
     expect(defaultBounds('profile', area, panels)).toEqual({ x: 780, y: 290, width: 360, height: 460 })
     expect(defaultBounds('confirm', area, panels)).toEqual({ x: 780, y: 415, width: 360, height: 210 })
   })
+  it('puts the minimised icon where the bar starts', () => {
+    expect(defaultBounds('mini', area, panels)).toEqual({ x: 16, y: 16, width: 56, height: 56 })
+  })
   it('respects a work area that does not start at the origin', () => {
     expect(defaultBounds('bar', { x: 1920, y: 40, width: 1920, height: 1000 }, panels)).toMatchObject({ x: 1936, y: 56 })
   })
@@ -33,7 +36,10 @@ describe('defaultBounds', () => {
 
 describe('effectiveSize', () => {
   it('always uses the default size for the bar, even when old data saved a smaller one', () => {
-    expect(effectiveSize('bar', { width: 480, height: 44 }, panels)).toEqual({ width: 640, height: 56 })
+    expect(effectiveSize('bar', { width: 480, height: 44 }, panels)).toEqual({ width: 680, height: 56 })
+  })
+  it('keeps the minimised icon a fixed size', () => {
+    expect(effectiveSize('mini', { width: 300, height: 300 }, panels)).toEqual({ width: 56, height: 56 })
   })
   it('raises other panels to their minimum and leaves bigger ones alone', () => {
     expect(effectiveSize('settings', { width: 300, height: 300 }, panels)).toEqual({ width: MIN_SIZES.settings.width, height: MIN_SIZES.settings.height })

@@ -5,6 +5,7 @@ import { fitOnScreen, resizeBounds, translateBounds } from './resize'
 import { defaultData, type Store } from './store'
 
 interface Paths {
+  icon: string
   preload: string
   devUrl?: string
   file: string
@@ -22,6 +23,7 @@ interface ResizeSession {
 
 export class PanelManager {
   quitting = false
+  minimized = false
   private wins = new Map<PanelId, BrowserWindow>()
   private saveTimers = new Map<PanelId, NodeJS.Timeout>()
   private session: ResizeSession | null = null
@@ -29,6 +31,7 @@ export class PanelManager {
   constructor(private store: Store, private paths: Paths, private onVisibility: () => void) {}
 
   show(id: PanelId): void {
+    if (this.minimized && id !== 'mini') this.restoreAll()
     this.setVisible(id, true)
     const win = this.wins.get(id)
     if (!win) {
@@ -50,6 +53,52 @@ export class PanelManager {
     if (id === 'bar') return
     if (this.wins.get(id)?.isVisible()) this.hide(id)
     else this.show(id)
+  }
+
+  minimizeAll(): void {
+    if (this.minimized) return
+    this.endResize()
+    this.minimized = true
+    const barBounds = this.wins.get('bar')?.getBounds()
+    for (const [id, win] of this.wins) {
+      if (id !== 'mini' && !win.isDestroyed()) win.hide()
+    }
+    this.setVisible('mini', true)
+    const saved = this.store.data.settings.panels.mini
+    const mini = this.wins.get('mini') ?? this.create('mini')
+    if (saved.x === undefined && barBounds) mini.setBounds({ x: barBounds.x, y: barBounds.y, width: saved.width, height: saved.height })
+    mini.show()
+    mini.moveTop()
+  }
+
+  restoreAll(): void {
+    if (!this.minimized) return
+    this.minimized = false
+    this.endResize()
+    this.setVisible('mini', false)
+    this.wins.get('mini')?.hide()
+    for (const id of PANEL_IDS) {
+      if (id === 'mini') continue
+      if (id === 'bar' || this.store.data.settings.panels[id].visible) this.show(id)
+    }
+  }
+
+  beginMove(id: PanelId): void {
+    const win = this.wins.get(id)
+    this.endResize()
+    if (!win || id !== 'mini') return
+    const start = win.getBounds()
+    const origin = screen.getCursorScreenPoint()
+    const timer = setInterval(() => {
+      if (win.isDestroyed()) {
+        this.endResize()
+        return
+      }
+      const p = screen.getCursorScreenPoint()
+      win.setBounds({ ...start, x: start.x + p.x - origin.x, y: start.y + p.y - origin.y })
+    }, RESIZE_POLL_MS)
+    const safety = setTimeout(() => this.endResize(), RESIZE_SAFETY_MS)
+    this.session = { id, timer, safety }
   }
 
   beginResize(id: PanelId, edge: Edge): void {
@@ -89,7 +138,7 @@ export class PanelManager {
   }
 
   applyAlwaysOnTop(): void {
-    for (const win of this.wins.values()) this.applyTop(win)
+    for (const [id, win] of this.wins) this.applyTop(id, win)
   }
 
   broadcast(channel: string, payload: unknown): void {
@@ -163,7 +212,7 @@ export class PanelManager {
     const area = this.barDisplay().workArea
     const sizes = defaultData().settings.panels
     for (const id of PANEL_IDS) {
-      if (CENTERED.includes(id)) continue
+      if (CENTERED.includes(id) || id === 'mini') continue
       const rect = fitOnScreen(defaultBounds(id, area, sizes), [area])
       this.store.update((d) => {
         Object.assign(d.settings.panels[id], rect)
@@ -173,8 +222,8 @@ export class PanelManager {
     for (const id of ['bar', 'checklist', 'progress', 'nicotine'] as PanelId[]) this.show(id)
   }
 
-  private applyTop(win: BrowserWindow): void {
-    win.setAlwaysOnTop(this.store.data.settings.alwaysOnTop, 'screen-saver')
+  private applyTop(id: PanelId, win: BrowserWindow): void {
+    win.setAlwaysOnTop(id === 'mini' || this.store.data.settings.alwaysOnTop, 'screen-saver')
   }
 
   private setVisible(id: PanelId, visible: boolean): void {
@@ -210,14 +259,15 @@ export class PanelManager {
       minimizable: false,
       maximizable: false,
       fullscreenable: false,
-      skipTaskbar: true,
+      skipTaskbar: id !== 'bar',
+      icon: this.paths.icon,
       hasShadow: false,
       show: false,
       webPreferences: { preload: this.paths.preload, contextIsolation: true, sandbox: true }
     })
     win.setMinimumSize(MIN_SIZES[id].width, MIN_SIZES[id].height)
     win.setMaximumSize(0, 0)
-    this.applyTop(win)
+    this.applyTop(id, win)
     if (this.paths.devUrl) win.loadURL(`${this.paths.devUrl}#/${id}`)
     else win.loadFile(this.paths.file, { hash: `/${id}` })
     const reveal = () => {

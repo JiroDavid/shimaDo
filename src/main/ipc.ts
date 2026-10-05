@@ -57,6 +57,12 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
     if (isPanelId(id) && EDGES.includes(edge)) panels.beginResize(id, edge)
   })
   ipcMain.on('panel:resize-end', () => panels.endResize())
+  ipcMain.on('app:minimize', () => panels.minimizeAll())
+  ipcMain.on('app:restore', () => panels.restoreAll())
+  ipcMain.on('panel:move-begin', (_e, id: unknown) => {
+    if (isPanelId(id)) panels.beginMove(id)
+  })
+  ipcMain.on('panel:move-end', () => panels.endResize())
   ipcMain.handle('profile:set', (_e, input: ProfileInput) => {
     store.update((d) => setProfile(d, input, today()))
     commit()

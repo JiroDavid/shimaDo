@@ -6,6 +6,7 @@ import { Bar } from './panels/Bar'
 import { Checklist } from './panels/Checklist'
 import { Confirm } from './panels/Confirm'
 import { Gym } from './panels/Gym'
+import { Mini } from './panels/Mini'
 import { Nicotine } from './panels/Nicotine'
 import { Profile } from './panels/Profile'
 import { Progress } from './panels/Progress'
@@ -21,7 +22,8 @@ const TITLES: Record<PanelId, string> = {
   nicotine: 'no-nicotine',
   settings: 'settings',
   profile: 'profile',
-  confirm: 'exit'
+  confirm: 'exit',
+  mini: 'shimado'
 }
 
 function currentPanel(): PanelId {
@@ -41,6 +43,7 @@ export function App() {
 
   if (!data) return null
   if (id === 'bar') return <Bar data={data} />
+  if (id === 'mini') return <Mini />
 
   return (
     <PanelFrame id={id} title={TITLES[id]}>

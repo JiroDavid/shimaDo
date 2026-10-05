@@ -48,6 +48,11 @@ export const SettingsIcon = () => (
     <circle cx="8" cy="17" r="2" />
   </Icon>
 )
+export const MinimizeIcon = () => (
+  <Icon>
+    <path d="M5 12h14" />
+  </Icon>
+)
 export const PowerIcon = () => (
   <Icon>
     <path d="M12 3v9M6.3 7.3a8 8 0 1 0 11.4 0" />
