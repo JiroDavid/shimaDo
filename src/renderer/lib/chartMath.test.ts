@@ -32,4 +32,8 @@ describe('linePoints', () => {
   it('clamps out-of-range values', () => {
     expect(linePoints([150, -5], 10, 10)[0].map((p) => p[1])).toEqual([0, 10])
   })
+  it('supports a custom range and a flat range without NaN', () => {
+    expect(linePoints([50, 70], 100, 100, 70, 50)).toEqual([[[0, 100], [100, 0]]])
+    expect(linePoints([5, 5], 10, 10, 5, 5)).toEqual([[[0, 10], [10, 10]]])
+  })
 })

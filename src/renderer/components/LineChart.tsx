@@ -1,11 +1,22 @@
 import { linePoints } from '../lib/chartMath'
 
-export function LineChart({ values }: { values: (number | null)[] }) {
-  const segments = linePoints(values, 200, 70, 100)
+interface Props {
+  values: (number | null)[]
+  dots?: (number | null)[]
+  min?: number
+  max?: number
+}
+
+export function LineChart({ values, dots, min = 0, max = 100 }: Props) {
+  const segments = linePoints(values, 200, 70, max, min)
+  const points = dots ? linePoints(dots, 200, 70, max, min).flat() : []
   return (
     <svg viewBox="0 0 200 76" className="w-full" role="img" aria-label="line chart">
       {[0, 35, 70].map((y) => (
         <line key={y} x1="0" x2="200" y1={y} y2={y} stroke="#22211c" />
+      ))}
+      {points.map((p, i) => (
+        <circle key={`dot${i}`} cx={p[0]} cy={p[1]} r="1.5" fill="#7a6e5a" />
       ))}
       {segments.map((seg, i) =>
         seg.length === 1 ? (
