@@ -1,0 +1,16 @@
+# Claude
+.claude/
+CLAUDE.md
+.claudeignore
+.superpowers/
+
+# Dependencies and build output
+node_modules/
+dist/
+out/
+release/
+
+# Misc
+.env
+*.log
+.DS_Store
