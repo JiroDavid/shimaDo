@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppData } from '../../../shared/types'
 import { addDays, formatDay, fromDateKey, weekDays } from '../../../shared/dates'
 import { dayPlan, templateFor } from '../../../shared/gym'
+import { Check } from '../../components/TaskRow'
 import { useToday } from '../../hooks/useData'
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -20,76 +21,78 @@ export function Week({ data }: { data: AppData }) {
   const swaps = template.flatMap((d, i) => (d === null ? [] : [{ index: i, label: d.label }]))
   const done = Boolean(gym.done[day])
 
-  const swap = (value: string) => {
+  const change = (value: string) => {
     if (value === 'rest') window.shima.setGymOverride(day, null)
     else if (value !== '') window.shima.setGymOverride(day, template[Number(value)])
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-1">
-        <button className="btn" onClick={() => setOffset(offset - 1)}>
-          &lt;
+    <div className="space-y-4">
+      <div className="flex items-center gap-1.5">
+        <button className="btn !px-3" onClick={() => setOffset(offset - 1)} aria-label="previous week">
+          ‹
         </button>
         <div className="flex flex-1 gap-1">
           {days.map((k) => {
-            const marker = gym.done[k] ? 'bg-sage' : dayPlan(gym, k) ? 'bg-accent' : 'bg-transparent'
+            const p = dayPlan(gym, k)
+            const isSelected = k === day
+            const isToday = k === today
             return (
               <button
                 key={k}
                 onClick={() => setSelected(k)}
-                className={`flex-1 border py-1 text-center ${k === day ? 'border-accent text-accent' : 'border-dark-border'} ${k === today ? 'font-bold' : ''}`}
+                aria-label={formatDay(k)}
+                className={`flex flex-1 flex-col items-center rounded-2xl border-2 py-2 transition active:scale-95 ${
+                  isSelected ? 'border-accent bg-accent text-[#1a1410]' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-white/10'
+                }`}
               >
-                <div className="text-[0.7rem] text-muted">{LETTERS[fromDateKey(k).getDay()]}</div>
-                <div>{k.slice(8)}</div>
-                <div className={`mx-auto mt-0.5 h-1 w-1 rounded-full ${marker}`} />
+                <span className={`text-[0.72rem] font-extrabold ${isSelected ? '' : 'text-muted'}`}>{LETTERS[fromDateKey(k).getDay()]}</span>
+                <span className="text-[1.15rem] font-extrabold leading-tight">{k.slice(8).replace(/^0/, '')}</span>
+                <span className="mt-0.5 text-[0.8rem] font-extrabold leading-none">{gym.done[k] ? '✓' : p ? '•' : ''}</span>
               </button>
             )
           })}
         </div>
-        <button className="btn" onClick={() => setOffset(offset + 1)}>
-          &gt;
+        <button className="btn !px-3" onClick={() => setOffset(offset + 1)} aria-label="next week">
+          ›
         </button>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-[0.75rem] text-muted">{formatDay(day)}</div>
-          <div className="text-accent font-bold">{plan ? plan.label : 'rest day'}</div>
+      <div className="card space-y-3">
+        <div className="card-label">{formatDay(day)}</div>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="heading text-[2.2rem]">{plan ? plan.label : 'Rest day'}</h2>
+          <div className="flex items-center gap-2.5">
+            <span className={`font-extrabold ${done ? 'text-accent' : 'text-muted'}`}>{done ? 'Done' : 'Not yet'}</span>
+            <Check checked={done} onChange={() => window.shima.setGymDone(day, !done)} label="mark day done" />
+          </div>
         </div>
-        <button
-          role="checkbox"
-          aria-checked={done}
-          onClick={() => window.shima.setGymDone(day, !done)}
-          className={`flex h-5 w-5 items-center justify-center border text-[0.8rem] leading-none ${done ? 'border-sage bg-sage text-dark' : 'border-muted'}`}
-        >
-          {done ? '✓' : ''}
-        </button>
-      </div>
 
-      <div className="flex gap-1">
-        <select className="field" value="" onChange={(e) => swap(e.target.value)}>
-          <option value="">change this day...</option>
-          <option value="rest">rest day</option>
-          {swaps.map((s) => (
-            <option key={s.index} value={s.index}>
-              do {s.label}
-            </option>
-          ))}
-        </select>
-        {overridden && (
-          <button className="btn shrink-0" onClick={() => window.shima.setGymOverride(day, undefined)}>
-            back to plan
-          </button>
-        )}
-      </div>
+        {plan && plan.exercises.length === 0 && <p className="text-muted">No exercises listed. Add them in My split.</p>}
+        {plan?.exercises.map((exercise, i) => (
+          <div key={`${exercise}-${i}`} className="flex items-center gap-3 border-t border-dark-border py-2.5">
+            <span className="heading w-6 text-[1.3rem] text-accent">{i + 1}</span>
+            <span className="text-[1.05rem] font-bold">{exercise}</span>
+          </div>
+        ))}
 
-      {plan && plan.exercises.length === 0 && <p className="text-muted">no exercises listed - add them in the split tab</p>}
-      {plan?.exercises.map((exercise) => (
-        <div key={exercise} className="border-b border-dark-border py-1">
-          {exercise}
+        <div className="flex gap-2 border-t border-dark-border pt-3">
+          <select className="field" value="" onChange={(e) => change(e.target.value)}>
+            <option value="">Did something else today?</option>
+            <option value="rest">Rest day</option>
+            {swaps.map((s) => (
+              <option key={s.index} value={s.index}>
+                I did {s.label}
+              </option>
+            ))}
+          </select>
+          {overridden && (
+            <button className="btn shrink-0" onClick={() => window.shima.setGymOverride(day, undefined)}>
+              Back to plan
+            </button>
+          )}
         </div>
-      ))}
+      </div>
     </div>
   )
 }

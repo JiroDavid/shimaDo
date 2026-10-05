@@ -4,7 +4,7 @@ import { toDateKey } from '../../../shared/dates'
 import { normalizeDays, templateFor, validateGymDays } from '../../../shared/gym'
 
 const ORDER = [1, 2, 3, 4, 5, 6, 0]
-const NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export function Split({ data, onSaved }: { data: AppData; onSaved: () => void }) {
   const current = templateFor(data.gym, toDateKey(new Date()))
@@ -28,27 +28,19 @@ export function Split({ data, onSaved }: { data: AppData; onSaved: () => void })
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-[0.75rem] text-muted">leave a label empty for a rest day. changes apply from today; earlier days keep their old plan.</p>
+    <div className="space-y-2">
+      <p className="text-muted">Leave a day empty for rest. Changes apply from today; earlier days keep their old plan.</p>
       {ORDER.map((i) => (
-        <div key={i} className="border border-dark-border p-2">
-          <div className="flex items-center gap-2">
-            <span className="panel-label w-8">{NAMES[i]}</span>
-            <input className="field" placeholder="rest" maxLength={24} value={rows[i].label} onChange={(e) => update(i, { label: e.target.value })} />
-          </div>
-          <textarea
-            className="field mt-1"
-            rows={2}
-            placeholder="exercises, one per line"
-            value={rows[i].exercises}
-            onChange={(e) => update(i, { exercises: e.target.value })}
-          />
+        <div key={i} className="card space-y-2">
+          <div className="card-label">{NAMES[i]}</div>
+          <input className="field" placeholder="Rest day" maxLength={24} value={rows[i].label} onChange={(e) => update(i, { label: e.target.value })} />
+          <textarea className="field" rows={3} placeholder="Exercises, one per line" value={rows[i].exercises} onChange={(e) => update(i, { exercises: e.target.value })} />
         </div>
       ))}
-      {error && <p className="text-brick">{error}</p>}
-      <div className="flex justify-end">
-        <button className="btn" onClick={save}>
-          save from today
+      {error && <p className="font-bold text-urgent">{error}</p>}
+      <div className="flex justify-end pt-2">
+        <button className="btn btn-primary" onClick={save}>
+          Save from today
         </button>
       </div>
     </div>

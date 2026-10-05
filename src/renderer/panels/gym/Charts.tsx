@@ -3,6 +3,7 @@ import type { AppData } from '../../../shared/types'
 import { daysBack, toDateKey } from '../../../shared/dates'
 import { latestWeight, validateWeighIn, weeklyConsistency, weightTrend } from '../../../shared/gym'
 import { BarChart } from '../../components/BarChart'
+import { Section } from '../../components/Section'
 import { LineChart } from '../../components/LineChart'
 import { useToday } from '../../hooks/useData'
 
@@ -29,21 +30,21 @@ function WeighIn() {
 
   return (
     <div>
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         <input
           className="field"
           type="number"
           step="0.1"
-          placeholder="today's weight (kg)"
+          placeholder="Today's weight (kg)"
           value={kg}
           onChange={(e) => setKg(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && log()}
         />
-        <button className="btn shrink-0" onClick={log}>
-          log
+        <button className="btn btn-primary shrink-0" onClick={log}>
+          Log
         </button>
       </div>
-      {error && <p className="mt-1 text-brick">{error}</p>}
+      {error && <p className="mt-1 font-bold text-urgent">{error}</p>}
     </div>
   )
 }
@@ -60,20 +61,21 @@ export function Charts({ data }: { data: AppData }) {
   const latest = latestWeight(gym.weighIns)
 
   return (
-    <div className="space-y-5">
-      <div>
-        <div className="panel-label mb-1">consistency - done / planned per week</div>
+    <div className="space-y-2 pb-2">
+      <Section label="Consistency">
+        <p className="mb-2 text-[0.85rem] text-muted">Workouts done out of planned, per week</p>
         <BarChart values={rates} labels={weeks.map((w) => w.weekStart.slice(5))} max={100} />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between">
-          <span className="panel-label">weight - 60 days (line = 7-day average)</span>
-          <span className="text-accent font-bold">{latest === null ? '--' : `${latest} kg`}</span>
+      </Section>
+      <Section label="Weight">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <span className="text-[0.85rem] text-muted">Last 60 days, line is the 7-day average</span>
+          <span className="heading text-[1.8rem] text-accent">{latest === null ? '--' : `${latest} kg`}</span>
         </div>
         <WeighIn />
-        <LineChart values={trend} dots={raw} min={weightRange.min} max={weightRange.max} />
-      </div>
+        <div className="mt-3">
+          <LineChart values={trend} dots={raw} min={weightRange.min} max={weightRange.max} />
+        </div>
+      </Section>
     </div>
   )
 }
