@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { TimerState } from '../shared/pomodoro'
 import type { AppData, ShimaApi } from '../shared/types'
 
 const api: ShimaApi = {
@@ -8,6 +9,13 @@ const api: ShimaApi = {
     ipcRenderer.on('data:changed', handler)
     return () => ipcRenderer.removeListener('data:changed', handler)
   },
+  getTimer: () => ipcRenderer.invoke('timer:get'),
+  onTimer: (cb) => {
+    const handler = (_e: unknown, s: TimerState) => cb(s)
+    ipcRenderer.on('timer:changed', handler)
+    return () => ipcRenderer.removeListener('timer:changed', handler)
+  },
+  timerAction: (action) => ipcRenderer.send('timer:action', action),
   addTask: (input) => ipcRenderer.invoke('task:add', input),
   updateTask: (id, input) => ipcRenderer.invoke('task:update', id, input),
   deleteTask: (id) => ipcRenderer.invoke('task:delete', id),

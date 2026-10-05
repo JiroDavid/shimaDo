@@ -1,9 +1,12 @@
+import type { TimerState } from './pomodoro'
+
 export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'nicotine' | 'settings' | 'profile' | 'confirm' | 'mini'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'nicotine', 'settings', 'profile', 'confirm', 'mini']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'nicotine' | 'focus' | 'settings' | 'profile' | 'confirm' | 'mini'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'nicotine', 'focus', 'settings', 'profile', 'confirm', 'mini']
+export type TimerAction = 'start' | 'pause' | 'reset' | 'skip'
 export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
 export interface DisplayInfo {
@@ -95,6 +98,7 @@ export interface AppData {
   tasks: Task[]
   completions: Completion[]
   nicotine: Record<string, true>
+  pomodoros: Record<string, number>
   profile: Profile
   gym: Gym
   settings: Settings
@@ -107,6 +111,9 @@ export interface Occurrence {
 }
 
 export interface ShimaApi {
+  getTimer(): Promise<TimerState>
+  onTimer(cb: (s: TimerState) => void): () => void
+  timerAction(action: TimerAction): void
   getData(): Promise<AppData>
   onChange(cb: (d: AppData) => void): () => void
   addTask(input: TaskInput): Promise<void>

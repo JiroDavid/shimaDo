@@ -1,11 +1,12 @@
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { PANEL_IDS, type Edge, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput } from '../shared/types'
+import { PANEL_IDS, type Edge, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import {
   addTask, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setNicotine, setProfile, setSplit, setWeighIn, updateTask
 } from './mutations'
+import type { PomodoroTimer } from './timer'
 import type { PanelManager } from './panels'
 import type { Store } from './store'
 
@@ -20,7 +21,9 @@ export interface AppActions {
   readAvatar(): string | null
 }
 
-export function registerIpc(store: Store, panels: PanelManager, actions: AppActions): void {
+const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
+
+export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroTimer, actions: AppActions): void {
   const today = () => toDateKey(new Date())
   const commit = () => panels.broadcast('data:changed', store.data)
 
@@ -45,6 +48,11 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
   ipcMain.handle('nicotine:set', (_e, date: string, on: boolean) => {
     store.update((d) => setNicotine(d, date, on))
     commit()
+  })
+
+  ipcMain.handle('timer:get', () => timer.state)
+  ipcMain.on('timer:action', (_e, action: unknown) => {
+    if (TIMER_ACTIONS.includes(action as TimerAction)) timer.act(action as TimerAction)
   })
 
   ipcMain.handle('settings:set', (_e, raw: unknown) => actions.changeSettings(sanitizeSettingsPatch(raw)))

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AppData, Profile } from '../../shared/types'
 import { toDateKey } from '../../shared/dates'
+import type { TimerState } from '../../shared/pomodoro'
 
 export function useData(): AppData | null {
   const [data, setData] = useState<AppData | null>(null)
@@ -48,4 +49,20 @@ export function useAvatar(profile: Profile): string | null {
     }
   }, [profile.avatarUpdatedAt])
   return src
+}
+
+export function useTimer(): TimerState | null {
+  const [state, setState] = useState<TimerState | null>(null)
+  useEffect(() => {
+    let alive = true
+    window.shima.getTimer().then((s) => {
+      if (alive) setState(s)
+    })
+    const off = window.shima.onTimer(setState)
+    return () => {
+      alive = false
+      off()
+    }
+  }, [])
+  return state
 }

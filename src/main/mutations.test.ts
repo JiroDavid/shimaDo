@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { occurrencesOn } from '../shared/recurrence'
-import { addTask, updateTask, deleteTask, setDone, setNicotine, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
+import { addTask, updateTask, deleteTask, setDone, setNicotine, addPomodoro, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
 import { defaultData } from './store'
 
 describe('mutations', () => {
@@ -47,6 +47,13 @@ describe('mutations', () => {
     expect(d.completions).toHaveLength(1)
     setDone(d, 'id1', '2026-10-05', false, 'now')
     expect(d.completions).toHaveLength(0)
+  })
+
+  it('addPomodoro increments the day count', () => {
+    const d = defaultData()
+    addPomodoro(d, '2026-10-05')
+    addPomodoro(d, '2026-10-05')
+    expect(d.pomodoros).toEqual({ '2026-10-05': 2 })
   })
 
   it('setNicotine toggles a day', () => {

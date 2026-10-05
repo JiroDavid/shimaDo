@@ -1,9 +1,11 @@
 import { app, Notification, screen } from 'electron'
 import { join } from 'node:path'
+import { toDateKey } from '../shared/dates'
 import { PANEL_IDS, type SettingsPatch } from '../shared/types'
 import { chooseAvatar, readAvatarDataUrl } from './avatar'
 import { registerIpc } from './ipc'
-import { setAvatarStamp } from './mutations'
+import { addPomodoro, setAvatarStamp } from './mutations'
+import { PomodoroTimer } from './timer'
 import { PanelManager } from './panels'
 import { startScheduler } from './scheduler'
 import { Store } from './store'
@@ -29,6 +31,15 @@ function boot(): void {
       panels.broadcast('data:changed', store.data)
     }
   )
+
+  const timer = new PomodoroTimer({
+    onChange: (s) => panels.broadcast('timer:changed', s),
+    onFocusDone: () => {
+      store.update((d) => addPomodoro(d, toDateKey(new Date())))
+      panels.broadcast('data:changed', store.data)
+    },
+    onNotifyClick: () => panels.show('focus')
+  })
 
   const changeSettings = (patch: SettingsPatch) => {
     const previousScale = store.data.settings.textScale
@@ -62,12 +73,13 @@ function boot(): void {
   app.on('window-all-closed', () => {})
   app.on('before-quit', () => {
     panels.flush()
+    timer.dispose()
     panels.quitting = true
   })
 
   app.whenReady().then(() => {
     store.load()
-    registerIpc(store, panels, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData) })
+    registerIpc(store, panels, timer, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData) })
     tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit() })
 
     for (const id of PANEL_IDS) {

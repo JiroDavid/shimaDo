@@ -10,6 +10,7 @@ export function defaultData(): AppData {
     tasks: [],
     completions: [],
     nicotine: {},
+    pomodoros: {},
     profile: emptyProfile(),
     gym: emptyGym(),
     settings: {
@@ -25,6 +26,7 @@ export function defaultData(): AppData {
         gym: { width: 350, height: 470, visible: false },
         progress: { width: 300, height: 380, visible: true },
         nicotine: { width: 300, height: 350, visible: true },
+        focus: { width: 280, height: 360, visible: false },
         settings: { width: 330, height: 450, visible: false },
         profile: { width: 315, height: 400, visible: false },
         confirm: { width: 320, height: 190, visible: false },
@@ -59,6 +61,7 @@ export function migrate(raw: unknown): AppData {
     tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']) : [],
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     nicotine: typeof r.nicotine === 'object' && r.nicotine !== null ? (r.nicotine as AppData['nicotine']) : {},
+    pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },
     gym: pickGym(r.gym),
     settings: { ...def.settings, ...s, panels }

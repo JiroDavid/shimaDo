@@ -57,6 +57,10 @@ export function setNicotine(d: AppData, date: string, on: boolean): void {
   else delete d.nicotine[date]
 }
 
+export function addPomodoro(d: AppData, date: string): void {
+  d.pomodoros[date] = (d.pomodoros[date] ?? 0) + 1
+}
+
 const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']
 
 export function sanitizeSettingsPatch(raw: unknown): SettingsPatch {
