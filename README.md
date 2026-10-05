@@ -35,7 +35,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 
 ## Installation
 
-Download the installer from the latest release, or build it yourself:
+Build the Windows installer on a Windows machine with Node 20.19+:
 
 ```bash
 git clone https://github.com/JiroDavid/shimaDo.git
@@ -44,7 +44,7 @@ npm install
 npm run dist
 ```
 
-Run the build on Windows. The installer appears in `dist/`.
+Run `dist/ShimaDo Setup 0.1.0.exe`. It installs ShimaDo for your user and adds Start menu and desktop shortcuts. Open it from Start, right-click its taskbar button and choose "Pin to taskbar", or right-click the Start entry and pin it to Start or the taskbar. It starts with Windows by default and can be turned off in Settings.
 
 ## Development
 

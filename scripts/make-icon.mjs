@@ -45,5 +45,16 @@ const png = Buffer.concat([
   chunk('IEND', Buffer.alloc(0))
 ])
 
+const icoHeader = Buffer.alloc(22)
+icoHeader.writeUInt16LE(1, 2)
+icoHeader.writeUInt16LE(1, 4)
+icoHeader[6] = 0
+icoHeader[7] = 0
+icoHeader.writeUInt16LE(1, 10)
+icoHeader.writeUInt16LE(32, 12)
+icoHeader.writeUInt32LE(png.length, 14)
+icoHeader.writeUInt32LE(22, 18)
+
 mkdirSync('resources', { recursive: true })
 writeFileSync('resources/icon.png', png)
+writeFileSync('resources/icon.ico', Buffer.concat([icoHeader, png]))
