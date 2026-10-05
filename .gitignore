@@ -1,8 +1,10 @@
 # Claude
 .claude/
 CLAUDE.md
+claude.md
 .claudeignore
 .superpowers/
+docs/superpowers/
 
 # Dependencies and build output
 node_modules/
