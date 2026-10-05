@@ -1,74 +1,10 @@
 import { useState } from 'react'
-import type { AppData, GymSet } from '../../../shared/types'
-import { addDays, formatDay, fromDateKey, toDateKey, weekDays } from '../../../shared/dates'
-import { dayPlan, exerciseNames, templateFor, unplannedSets, validateSet } from '../../../shared/gym'
+import type { AppData } from '../../../shared/types'
+import { addDays, formatDay, fromDateKey, weekDays } from '../../../shared/dates'
+import { dayPlan, templateFor } from '../../../shared/gym'
 import { useToday } from '../../hooks/useData'
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-
-function SetAdder({ date, exercise, names }: { date: string; exercise?: string; names?: string[] }) {
-  const [name, setName] = useState('')
-  const [weight, setWeight] = useState('')
-  const [reps, setReps] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  const add = async () => {
-    const input = { date, exercise: exercise ?? name, weightKg: Number(weight), reps: Number(reps) }
-    const problem = validateSet(input, toDateKey(new Date()))
-    if (problem) {
-      setError(problem)
-      return
-    }
-    await window.shima.addGymSet(input)
-    setError(null)
-    setReps('')
-  }
-
-  return (
-    <div className="mt-1">
-      {exercise === undefined && (
-        <>
-          <input className="field mb-1" list="gym-exercises" placeholder="exercise" value={name} onChange={(e) => setName(e.target.value)} />
-          <datalist id="gym-exercises">
-            {names?.map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
-        </>
-      )}
-      <div className="flex gap-1">
-        <input className="field" type="number" step="0.5" placeholder="kg" value={weight} onChange={(e) => setWeight(e.target.value)} />
-        <input
-          className="field"
-          type="number"
-          placeholder="reps"
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
-        />
-        <button className="btn" onClick={add} aria-label={`add set for ${exercise ?? (name || 'exercise')}`}>
-          +
-        </button>
-      </div>
-      {error && <p className="mt-1 text-brick">{error}</p>}
-    </div>
-  )
-}
-
-function SetList({ sets }: { sets: GymSet[] }) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {sets.map((s) => (
-        <span key={s.id} className="flex items-center gap-1 border border-dark-border px-1.5 py-0.5 text-[11px]">
-          {s.weightKg}kg x {s.reps}
-          <button className="text-muted hover:text-brick" aria-label="delete set" onClick={() => window.shima.deleteGymSet(s.id)}>
-            x
-          </button>
-        </span>
-      ))}
-    </div>
-  )
-}
 
 export function Week({ data }: { data: AppData }) {
   const today = useToday()
@@ -83,8 +19,6 @@ export function Week({ data }: { data: AppData }) {
   const template = templateFor(gym, day)
   const swaps = template.flatMap((d, i) => (d === null ? [] : [{ index: i, label: d.label }]))
   const done = Boolean(gym.done[day])
-  const daySets = gym.sets.filter((s) => s.date === day)
-  const unplanned = unplannedSets(gym, day, plan)
 
   const swap = (value: string) => {
     if (value === 'rest') window.shima.setGymOverride(day, null)
@@ -99,8 +33,7 @@ export function Week({ data }: { data: AppData }) {
         </button>
         <div className="flex flex-1 gap-1">
           {days.map((k) => {
-            const p = dayPlan(gym, k)
-            const marker = gym.done[k] ? 'bg-sage' : p ? 'bg-accent' : 'bg-transparent'
+            const marker = gym.done[k] ? 'bg-sage' : dayPlan(gym, k) ? 'bg-accent' : 'bg-transparent'
             return (
               <button
                 key={k}
@@ -153,23 +86,10 @@ export function Week({ data }: { data: AppData }) {
 
       {plan && plan.exercises.length === 0 && <p className="text-muted">no exercises listed - add them in the split tab</p>}
       {plan?.exercises.map((exercise) => (
-        <div key={exercise} className="border-b border-dark-border pb-2">
-          <div className="mb-1">{exercise}</div>
-          <SetList sets={daySets.filter((s) => s.exercise.toLowerCase() === exercise.toLowerCase())} />
-          <SetAdder date={day} exercise={exercise} />
+        <div key={exercise} className="border-b border-dark-border py-1">
+          {exercise}
         </div>
       ))}
-
-      {unplanned.length > 0 && (
-        <div className="border-b border-dark-border pb-2">
-          <div className="panel-label mb-1">other sets this day</div>
-          <SetList sets={unplanned} />
-        </div>
-      )}
-      <div>
-        <div className="panel-label mb-1">add another exercise</div>
-        <SetAdder date={day} names={exerciseNames(gym)} />
-      </div>
     </div>
   )
 }

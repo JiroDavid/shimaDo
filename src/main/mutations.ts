@@ -1,6 +1,6 @@
-import type { Accent, AppData, GymDay, GymSet, GymSetInput, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
+import type { Accent, AppData, GymDay, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
 import { isValidDateKey } from '../shared/dates'
-import { canonicalExercise, normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateSet, validateWeighIn } from '../shared/gym'
+import { normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateWeighIn } from '../shared/gym'
 import { validateProfile } from '../shared/profile'
 import { validateTaskInput } from '../shared/validate'
 
@@ -119,19 +119,6 @@ export function setGymDone(d: AppData, date: string, done: boolean): void {
   assertDate(date)
   if (done) d.gym.done[date] = true
   else delete d.gym.done[date]
-}
-
-export function addGymSet(d: AppData, input: GymSetInput, id: string, todayKey: string): GymSet {
-  const error = validateSet(input, todayKey)
-  if (error) throw new Error(error)
-  const set: GymSet = { id, date: input.date, exercise: canonicalExercise(d.gym, input.exercise.trim()), weightKg: input.weightKg, reps: input.reps }
-  d.gym.sets.push(set)
-  d.gym.done[input.date] = true
-  return set
-}
-
-export function deleteGymSet(d: AppData, id: string): void {
-  d.gym.sets = d.gym.sets.filter((s) => s.id !== id)
 }
 
 export function setWeighIn(d: AppData, date: string, kg: number | null): void {

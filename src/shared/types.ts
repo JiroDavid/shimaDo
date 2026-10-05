@@ -56,21 +56,10 @@ export interface GymSplit {
   days: (GymDay | null)[]
 }
 
-export interface GymSet {
-  id: string
-  date: string
-  exercise: string
-  weightKg: number
-  reps: number
-}
-
-export type GymSetInput = Omit<GymSet, 'id'>
-
 export interface Gym {
   splits: GymSplit[]
   overrides: Record<string, GymDay | null>
   done: Record<string, true>
-  sets: GymSet[]
   weighIns: Record<string, number>
 }
 
@@ -121,7 +110,5 @@ export interface ShimaApi {
   setSplit(days: (GymDay | null)[]): Promise<void>
   setGymOverride(date: string, value: GymDay | null | undefined): Promise<void>
   setGymDone(date: string, done: boolean): Promise<void>
-  addGymSet(input: GymSetInput): Promise<void>
-  deleteGymSet(id: string): Promise<void>
   setWeighIn(date: string, kg: number | null): Promise<void>
 }

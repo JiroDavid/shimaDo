@@ -1,9 +1,9 @@
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { PANEL_IDS, type GymDay, type GymSetInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput } from '../shared/types'
+import { PANEL_IDS, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import {
-  addGymSet, addTask, deleteGymSet, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
+  addTask, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setNicotine, setProfile, setSplit, setWeighIn, updateTask
 } from './mutations'
 import type { PanelManager } from './panels'
@@ -64,14 +64,6 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
   })
   ipcMain.handle('gym:done', (_e, date: string, done: boolean) => {
     store.update((d) => setGymDone(d, date, done))
-    commit()
-  })
-  ipcMain.handle('gym:add-set', (_e, input: GymSetInput) => {
-    store.update((d) => addGymSet(d, input, randomUUID(), today()))
-    commit()
-  })
-  ipcMain.handle('gym:delete-set', (_e, id: string) => {
-    store.update((d) => deleteGymSet(d, id))
     commit()
   })
   ipcMain.handle('gym:weigh-in', (_e, date: string, kg: number | null) => {

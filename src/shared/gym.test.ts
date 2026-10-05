@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { daysBack } from './dates'
 import {
-  canonicalExercise, dayPlan, e1rm, emptyGym, exerciseNames, latestWeight, normalizeDays,
-  relativeStrength, strengthSeries, templateFor, unplannedSets, validateGymDays, validateSet, validateWeighIn,
+  dayPlan, emptyGym, latestWeight, normalizeDays, templateFor, validateGymDays, validateWeighIn,
   weeklyConsistency, weightTrend
 } from './gym'
 import type { Gym, GymDay } from './types'
@@ -54,39 +53,6 @@ describe('weeklyConsistency', () => {
   })
 })
 
-describe('strength', () => {
-  it('estimates a one rep max with the Epley formula', () => {
-    expect(e1rm(100, 5)).toBe(116.7)
-    expect(e1rm(100, 1)).toBe(100)
-    expect(e1rm(60, 10)).toBe(80)
-  })
-
-  const sets = [
-    { id: '1', date: '2026-10-05', exercise: 'Bench', weightKg: 100, reps: 5 },
-    { id: '2', date: '2026-10-05', exercise: 'Bench', weightKg: 90, reps: 8 },
-    { id: '3', date: '2026-10-12', exercise: 'Bench', weightKg: 105, reps: 3 },
-    { id: '4', date: '2026-10-05', exercise: 'Squat', weightKg: 120, reps: 5 }
-  ]
-
-  it('keeps the best estimate per session and ignores other exercises', () => {
-    expect(strengthSeries(gymWith({ sets }), 'Bench')).toEqual([
-      { date: '2026-10-05', e1rm: 116.7 },
-      { date: '2026-10-12', e1rm: 115.5 }
-    ])
-    expect(strengthSeries(gymWith(), 'Bench')).toEqual([])
-  })
-  it('divides by the latest weigh-in on or before each session and skips earlier ones', () => {
-    const gym = gymWith({ sets, weighIns: { '2026-10-10': 80 } })
-    expect(relativeStrength(gym, 'Bench')).toEqual([{ date: '2026-10-12', ratio: 1.44 }])
-  })
-  it('lists exercise names without case duplicates', () => {
-    const gym = gymWith({ sets: [{ id: '1', date: '2026-10-05', exercise: 'bench', weightKg: 50, reps: 5 }, { id: '2', date: '2026-10-05', exercise: 'Squat', weightKg: 50, reps: 5 }] })
-    expect(exerciseNames(gym)).toEqual(['Bench', 'Row', 'Squat'])
-    expect(canonicalExercise(gym, 'ROW')).toBe('Row')
-    expect(canonicalExercise(gym, 'Deadlift')).toBe('Deadlift')
-  })
-})
-
 describe('weight', () => {
   const weighIns = { '2026-10-01': 80, '2026-10-03': 78, '2026-10-07': 76 }
   it('averages the weigh-ins in the 7 days ending at each key', () => {
@@ -104,18 +70,6 @@ describe('weight', () => {
 })
 
 describe('validation', () => {
-  const set = { date: '2026-10-05', exercise: 'Bench', weightKg: 80, reps: 5 }
-  it('accepts a normal set', () => expect(validateSet(set, '2026-10-05')).toBeNull())
-  it('rejects bad sets', () => {
-    expect(validateSet({ ...set, exercise: '  ' }, '2026-10-05')).toMatch(/exercise/i)
-    expect(validateSet({ ...set, weightKg: 0 }, '2026-10-05')).toMatch(/weight/i)
-    expect(validateSet({ ...set, weightKg: 5000 }, '2026-10-05')).toMatch(/weight/i)
-    expect(validateSet({ ...set, weightKg: NaN }, '2026-10-05')).toMatch(/weight/i)
-    expect(validateSet({ ...set, reps: 2.5 }, '2026-10-05')).toMatch(/reps/i)
-    expect(validateSet({ ...set, reps: 0 }, '2026-10-05')).toMatch(/reps/i)
-    expect(validateSet({ ...set, date: '2026-10-06' }, '2026-10-05')).toMatch(/future/i)
-    expect(validateSet({ ...set, date: '2026-02-30' }, '2026-10-05')).toMatch(/future|date/i)
-  })
   it('validates weigh-ins', () => {
     expect(validateWeighIn(72.4)).toBeNull()
     expect(validateWeighIn(5)).toMatch(/weight/i)
@@ -135,17 +89,3 @@ describe('validation', () => {
   })
 })
 
-describe('unplannedSets', () => {
-  const sets = [
-    { id: '1', date: '2026-10-05', exercise: 'Bench', weightKg: 80, reps: 5 },
-    { id: '2', date: '2026-10-05', exercise: 'Squat', weightKg: 100, reps: 5 },
-    { id: '3', date: '2026-10-06', exercise: 'Row', weightKg: 60, reps: 8 }
-  ]
-  it('returns the day sets whose exercise is not in the plan, ignoring case', () => {
-    const gym = gymWith({ sets })
-    expect(unplannedSets(gym, '2026-10-05', day('Chest+Tri', ['bench'])).map((s) => s.id)).toEqual(['2'])
-  })
-  it('returns every set of the day when the day has no plan', () => {
-    expect(unplannedSets(gymWith({ sets }), '2026-10-05', null).map((s) => s.id)).toEqual(['1', '2'])
-  })
-})

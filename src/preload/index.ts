@@ -24,8 +24,6 @@ const api: ShimaApi = {
   setSplit: (days) => ipcRenderer.invoke('gym:split', days),
   setGymOverride: (date, value) => ipcRenderer.invoke('gym:override', date, value),
   setGymDone: (date, done) => ipcRenderer.invoke('gym:done', date, done),
-  addGymSet: (input) => ipcRenderer.invoke('gym:add-set', input),
-  deleteGymSet: (id) => ipcRenderer.invoke('gym:delete-set', id),
   setWeighIn: (date, kg) => ipcRenderer.invoke('gym:weigh-in', date, kg)
 }
 

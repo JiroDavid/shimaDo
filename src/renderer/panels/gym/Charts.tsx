@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { AppData } from '../../../shared/types'
 import { daysBack, toDateKey } from '../../../shared/dates'
-import { exerciseNames, latestWeight, relativeStrength, strengthSeries, validateWeighIn, weeklyConsistency, weightTrend } from '../../../shared/gym'
+import { latestWeight, validateWeighIn, weeklyConsistency, weightTrend } from '../../../shared/gym'
 import { BarChart } from '../../components/BarChart'
 import { LineChart } from '../../components/LineChart'
 import { useToday } from '../../hooks/useData'
@@ -59,14 +59,6 @@ export function Charts({ data }: { data: AppData }) {
   const weightRange = range([...raw, ...trend].filter((v): v is number => v !== null))
   const latest = latestWeight(gym.weighIns)
 
-  const exercises = exerciseNames(gym).filter((n) => strengthSeries(gym, n).length > 0)
-  const [picked, setPicked] = useState('')
-  const exercise = exercises.includes(picked) ? picked : (exercises[0] ?? '')
-  const series = exercise ? strengthSeries(gym, exercise).map((p) => p.e1rm) : []
-  const strengthRange = range(series)
-  const relative = exercise ? relativeStrength(gym, exercise) : []
-  const lastRelative = relative.length ? relative[relative.length - 1].ratio : null
-
   return (
     <div className="space-y-5">
       <div>
@@ -81,32 +73,6 @@ export function Charts({ data }: { data: AppData }) {
         </div>
         <WeighIn />
         <LineChart values={trend} dots={raw} min={weightRange.min} max={weightRange.max} />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="panel-label">strength - estimated 1RM</span>
-          {exercises.length > 0 && (
-            <select className="field w-auto" value={exercise} onChange={(e) => setPicked(e.target.value)}>
-              {exercises.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-        {exercises.length === 0 ? (
-          <p className="text-muted">log sets in the week tab to see strength progress</p>
-        ) : (
-          <>
-            <LineChart values={series} min={strengthRange.min} max={strengthRange.max} />
-            <div className="text-[10px] text-muted">
-              best {series[series.length - 1]} kg
-              {lastRelative !== null ? `  -  ${lastRelative}x bodyweight` : '  -  log a weigh-in to see strength relative to bodyweight'}
-            </div>
-          </>
-        )}
       </div>
     </div>
   )

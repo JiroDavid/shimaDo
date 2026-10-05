@@ -1,7 +1,7 @@
-import { addDays, isValidDateKey, weekDays, weekStart, weekdayOf } from './dates'
-import type { Gym, GymDay, GymSet, GymSetInput } from './types'
+import { addDays, weekDays, weekStart, weekdayOf } from './dates'
+import type { Gym, GymDay } from './types'
 
-export const emptyGym = (): Gym => ({ splits: [], overrides: {}, done: {}, sets: [], weighIns: {} })
+export const emptyGym = (): Gym => ({ splits: [], overrides: {}, done: {}, weighIns: {} })
 
 export function templateFor(gym: Gym, key: string): (GymDay | null)[] {
   let days: (GymDay | null)[] = []
@@ -23,34 +23,6 @@ export function weeklyConsistency(gym: Gym, todayKey: string, weeks: number): { 
   })
 }
 
-export function e1rm(weightKg: number, reps: number): number {
-  const value = reps <= 1 ? weightKg : weightKg * (1 + reps / 30)
-  return Math.round(value * 10) / 10
-}
-
-export function exerciseNames(gym: Gym): string[] {
-  const seen = new Map<string, string>()
-  const add = (name: string) => {
-    if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name)
-  }
-  for (const split of gym.splits) for (const day of split.days) day?.exercises.forEach(add)
-  gym.sets.forEach((s) => add(s.exercise))
-  return [...seen.values()].sort((a, b) => a.localeCompare(b))
-}
-
-export function canonicalExercise(gym: Gym, name: string): string {
-  return exerciseNames(gym).find((n) => n.toLowerCase() === name.toLowerCase()) ?? name
-}
-
-export function strengthSeries(gym: Gym, exercise: string): { date: string; e1rm: number }[] {
-  const best = new Map<string, number>()
-  for (const s of gym.sets) {
-    if (s.exercise !== exercise) continue
-    best.set(s.date, Math.max(best.get(s.date) ?? 0, e1rm(s.weightKg, s.reps)))
-  }
-  return [...best].map(([date, value]) => ({ date, e1rm: value })).sort((a, b) => a.date.localeCompare(b.date))
-}
-
 export function latestWeightOnOrBefore(weighIns: Record<string, number>, key: string): number | null {
   let best: string | null = null
   for (const k of Object.keys(weighIns)) if (k <= key && (best === null || k > best)) best = k
@@ -59,13 +31,6 @@ export function latestWeightOnOrBefore(weighIns: Record<string, number>, key: st
 
 export const latestWeight = (weighIns: Record<string, number>): number | null => latestWeightOnOrBefore(weighIns, '9999-12-31')
 
-export function relativeStrength(gym: Gym, exercise: string): { date: string; ratio: number }[] {
-  return strengthSeries(gym, exercise).flatMap((p) => {
-    const weight = latestWeightOnOrBefore(gym.weighIns, p.date)
-    return weight === null ? [] : [{ date: p.date, ratio: Math.round((p.e1rm / weight) * 100) / 100 }]
-  })
-}
-
 export function weightTrend(weighIns: Record<string, number>, keys: string[]): { raw: (number | null)[]; trend: (number | null)[] } {
   const raw = keys.map((k) => weighIns[k] ?? null)
   const trend = keys.map((k) => {
@@ -73,11 +38,6 @@ export function weightTrend(weighIns: Record<string, number>, keys: string[]): {
     return window.length === 0 ? null : Math.round((window.reduce((a, b) => a + b, 0) / window.length) * 10) / 10
   })
   return { raw, trend }
-}
-
-export function unplannedSets(gym: Gym, date: string, plan: GymDay | null): GymSet[] {
-  const planned = new Set((plan?.exercises ?? []).map((e) => e.toLowerCase()))
-  return gym.sets.filter((s) => s.date === date && !planned.has(s.exercise.toLowerCase()))
 }
 
 export function normalizeDay(day: GymDay): GymDay {
@@ -101,15 +61,6 @@ export function validateGymDays(days: (GymDay | null)[]): string | null {
     const problem = d === null ? null : validateGymDay(d)
     if (problem) return problem
   }
-  return null
-}
-
-export function validateSet(i: GymSetInput, todayKey: string): string | null {
-  const name = i.exercise.trim()
-  if (name === '' || name.length > 60) return 'Exercise name must be 1-60 characters'
-  if (!isValidDateKey(i.date) || i.date > todayKey) return 'Pick a date that is not in the future'
-  if (!(Number.isFinite(i.weightKg) && i.weightKg > 0 && i.weightKg <= 1000)) return 'Weight must be above 0 and at most 1000 kg'
-  if (!(Number.isInteger(i.reps) && i.reps >= 1 && i.reps <= 50)) return 'Reps must be a whole number from 1 to 50'
   return null
 }
 

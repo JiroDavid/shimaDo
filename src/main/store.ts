@@ -31,6 +31,18 @@ export function defaultData(): AppData {
   }
 }
 
+function pickGym(raw: unknown): Gym {
+  const base = emptyGym()
+  if (typeof raw !== 'object' || raw === null) return base
+  const g = raw as Partial<Gym>
+  return {
+    splits: Array.isArray(g.splits) ? g.splits : base.splits,
+    overrides: typeof g.overrides === 'object' && g.overrides !== null ? g.overrides : base.overrides,
+    done: typeof g.done === 'object' && g.done !== null ? g.done : base.done,
+    weighIns: typeof g.weighIns === 'object' && g.weighIns !== null ? g.weighIns : base.weighIns
+  }
+}
+
 export function migrate(raw: unknown): AppData {
   if (typeof raw !== 'object' || raw === null) throw new Error('invalid data file')
   const r = raw as Record<string, unknown>
@@ -45,7 +57,7 @@ export function migrate(raw: unknown): AppData {
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     nicotine: typeof r.nicotine === 'object' && r.nicotine !== null ? (r.nicotine as AppData['nicotine']) : {},
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },
-    gym: { ...emptyGym(), ...(typeof r.gym === 'object' && r.gym !== null ? (r.gym as Partial<Gym>) : {}) },
+    gym: pickGym(r.gym),
     settings: { ...def.settings, ...s, panels }
   }
 }

@@ -107,4 +107,14 @@ describe('Store', () => {
     expect(second.data.settings.panels.profile.visible).toBe(false)
     expect(second.data.settings.panels.gym.visible).toBe(true)
   })
+
+  it('drops the legacy gym sets field when loading old data', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, gym: { weighIns: { '2026-10-05': 72 }, sets: [{ id: 'x', date: '2026-10-05', exercise: 'Bench', weightKg: 80, reps: 5 }] } }))
+    const s = new Store(file)
+    s.load()
+    expect(Object.keys(s.data.gym).sort()).toEqual(['done', 'overrides', 'splits', 'weighIns'])
+    expect(s.data.gym.weighIns).toEqual({ '2026-10-05': 72 })
+  })
 })
