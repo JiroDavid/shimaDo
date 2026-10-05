@@ -7,6 +7,22 @@ export interface Rect {
   height: number
 }
 
+export interface Size {
+  width: number
+  height: number
+}
+
+export const MIN_SIZES: Record<PanelId, Size> = {
+  bar: { width: 400, height: 60 },
+  checklist: { width: 300, height: 300 },
+  schedule: { width: 340, height: 360 },
+  gym: { width: 340, height: 360 },
+  progress: { width: 300, height: 300 },
+  nicotine: { width: 300, height: 300 },
+  settings: { width: 340, height: 380 },
+  profile: { width: 320, height: 380 }
+}
+
 const MARGIN = 16
 const GAP = 12
 
