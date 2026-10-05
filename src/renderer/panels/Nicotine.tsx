@@ -2,6 +2,8 @@ import type { AppData } from '../../shared/types'
 import { fromDateKey, weekDays } from '../../shared/dates'
 import { nicotineStreak, nicotineWeeks } from '../../shared/stats'
 import { BarChart } from '../components/BarChart'
+import { Section } from '../components/Section'
+import { Check } from '../components/TaskRow'
 import { useToday } from '../hooks/useData'
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -13,43 +15,42 @@ export function Nicotine({ data }: { data: AppData }) {
   const thisWeek = days.filter((k) => data.nicotine[k]).length
 
   return (
-    <div className="space-y-4">
-      <div className="border border-dark-border p-2">
-        <div className="panel-label">clean streak</div>
-        <div className="text-accent text-lg font-bold">{nicotineStreak(data.nicotine, today)}d</div>
-      </div>
-
-      <div>
-        <div className="panel-label mb-1">this week - {thisWeek}/7</div>
-        <div className="flex gap-1">
-          {days.map((k) => {
-            const future = k > today
-            const on = Boolean(data.nicotine[k])
-            return (
-              <button
-                key={k}
-                disabled={future}
-                aria-label={`${k} nicotine free`}
-                aria-pressed={on}
-                onClick={() => window.shima.setNicotine(k, !on)}
-                className={`flex flex-1 flex-col items-center gap-1 border py-1 ${
-                  k === today ? 'border-accent' : 'border-dark-border'
-                } ${future ? 'opacity-30' : ''}`}
-              >
-                <span className="text-[0.7rem] text-muted">{LETTERS[fromDateKey(k).getDay()]}</span>
-                <span className={`flex h-4 w-4 items-center justify-center border text-[0.75rem] leading-none ${on ? 'border-sage bg-sage text-dark' : 'border-muted'}`}>
-                  {on ? '✓' : ''}
-                </span>
-              </button>
-            )
-          })}
+    <div className="space-y-2 pb-2">
+      <div className="flex items-end justify-between gap-3 pt-2">
+        <div>
+          <div className="panel-label">Clean streak</div>
+          <div className="heading text-[3.2rem] text-accent">{nicotineStreak(data.nicotine, today)} days</div>
+        </div>
+        <div className="pb-1 text-right">
+          <div className="panel-label">This week</div>
+          <div className="heading text-[1.8rem]">{thisWeek}/7</div>
         </div>
       </div>
 
-      <div>
-        <div className="panel-label mb-1">clean days per week</div>
+      <Section label="Tick off each day">
+        <div className="flex gap-1.5 pb-1">
+          {days.map((k) => {
+            const on = Boolean(data.nicotine[k])
+            const isToday = k === today
+            return (
+              <div
+                key={k}
+                className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 py-2.5 transition ${
+                  isToday ? 'border-accent bg-white/5' : 'border-transparent'
+                }`}
+              >
+                <span className={`text-[0.8rem] font-extrabold ${isToday ? 'text-accent' : 'text-muted'}`}>{LETTERS[fromDateKey(k).getDay()]}</span>
+                <Check checked={on} onChange={() => window.shima.setNicotine(k, !on)} label={`${k} nicotine free`} />
+                <span className={`text-[0.75rem] font-bold ${isToday ? 'text-accent' : 'text-muted'}`}>{k.slice(8).replace(/^0/, '')}</span>
+              </div>
+            )
+          })}
+        </div>
+      </Section>
+
+      <Section label="Clean days per week">
         <BarChart values={weeks.map((w) => w.count)} labels={weeks.map((w) => w.weekStart.slice(5))} max={7} />
-      </div>
+      </Section>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { daysBack, weekDays, weekdayOf } from '../../shared/dates'
 import { consistency, doneCountByDay, taskStreak } from '../../shared/stats'
 import { BarChart } from '../components/BarChart'
 import { LineChart } from '../components/LineChart'
+import { Section } from '../components/Section'
 import { useToday } from '../hooks/useData'
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -16,28 +17,23 @@ export function Progress({ data }: { data: AppData }) {
   const weekTotal = doneCountByDay(data, weekDays(today)).reduce((a, b) => a + b, 0)
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <Stat label="streak" value={`${taskStreak(data, today)}d`} />
-        <Stat label="this week" value={String(weekTotal)} />
+    <div className="space-y-2 pb-2">
+      <div className="flex items-end justify-between gap-3 pt-2">
+        <div>
+          <div className="panel-label">Streak</div>
+          <div className="heading text-[3.2rem] text-accent">{taskStreak(data, today)} days</div>
+        </div>
+        <div className="pb-1 text-right">
+          <div className="panel-label">Done this week</div>
+          <div className="heading text-[1.8rem]">{weekTotal}</div>
+        </div>
       </div>
-      <div>
-        <div className="panel-label mb-1">consistency - 30 days</div>
+      <Section label="Consistency" count="30 days">
         <LineChart values={line} />
-      </div>
-      <div>
-        <div className="panel-label mb-1">tasks done - 7 days</div>
+      </Section>
+      <Section label="Tasks done" count="7 days">
         <BarChart values={bars} labels={last7.map((k) => LETTERS[weekdayOf(k)])} />
-      </div>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex-1 border border-dark-border p-2">
-      <div className="panel-label">{label}</div>
-      <div className="text-accent text-lg font-bold">{value}</div>
+      </Section>
     </div>
   )
 }
