@@ -59,6 +59,13 @@ describe('mutations', () => {
 })
 
 describe('sanitizeSettingsPatch', () => {
+  it('clamps the text scale to a readable range and defaults to 1', () => {
+    expect(sanitizeSettingsPatch({ textScale: 5 })).toEqual({ textScale: 1.4 })
+    expect(sanitizeSettingsPatch({ textScale: 0.1 })).toEqual({ textScale: 0.8 })
+    expect(sanitizeSettingsPatch({ textScale: 1.2 })).toEqual({ textScale: 1.2 })
+    expect(sanitizeSettingsPatch({ textScale: NaN })).toEqual({})
+    expect(defaultData().settings.textScale).toBe(1)
+  })
   it('accepts the orange accent and new installs default to it', () => {
     expect(sanitizeSettingsPatch({ accent: 'orange' })).toEqual({ accent: 'orange' })
     expect(defaultData().settings.accent).toBe('orange')

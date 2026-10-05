@@ -17,6 +17,7 @@ export function defaultData(): AppData {
       alwaysOnTop: true,
       accent: 'orange',
       launchAtStartup: true,
+      textScale: 1,
       panels: {
         bar: { width: 600, height: 50, visible: true },
         checklist: { width: 300, height: 440, visible: true },

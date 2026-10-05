@@ -1,6 +1,6 @@
 import { BrowserWindow, nativeImage, screen } from 'electron'
 import { PANEL_IDS, type DisplayInfo, type Edge, type PanelId, type PanelState } from '../shared/types'
-import { defaultBounds, effectiveSize, MIN_SIZES, type Rect } from './layout'
+import { defaultBounds, effectiveSize, minSize, scaledPanels, type Rect } from './layout'
 import { fitOnScreen, resizeBounds, translateBounds } from './resize'
 import { defaultData, type Store } from './store'
 
@@ -28,6 +28,10 @@ export class PanelManager {
   private wins = new Map<PanelId, BrowserWindow>()
   private saveTimers = new Map<PanelId, NodeJS.Timeout>()
   private session: ResizeSession | null = null
+
+  private get scale(): number {
+    return this.store.data.settings.textScale
+  }
 
   constructor(private store: Store, private paths: Paths, private onVisibility: () => void) {}
 
@@ -109,7 +113,7 @@ export class PanelManager {
     const start = win.getBounds()
     const origin = screen.getCursorScreenPoint()
     const area = screen.getDisplayMatching(start).workArea
-    const min = MIN_SIZES[id]
+    const min = minSize(id, this.scale)
     const max = { width: area.width, height: area.height }
     win.setMinimumSize(min.width, min.height)
     win.setMaximumSize(0, 0)
@@ -164,6 +168,32 @@ export class PanelManager {
     }
   }
 
+  applyScale(previous: number): void {
+    const ratio = this.scale / previous
+    const zoom = UI_SCALE * this.scale
+    const defaults = defaultData().settings.panels
+    for (const id of PANEL_IDS) {
+      const win = this.wins.get(id)
+      const live = win && !win.isDestroyed() ? win : undefined
+      const min = minSize(id, this.scale)
+      const base = live ? live.getBounds() : this.store.data.settings.panels[id]
+      const size =
+        id === 'bar' || id === 'mini'
+          ? effectiveSize(id, base, defaults, this.scale)
+          : { width: Math.max(min.width, Math.round(base.width * ratio)), height: Math.max(min.height, Math.round(base.height * ratio)) }
+      if (live) {
+        live.webContents.setZoomFactor(zoom)
+        live.setMinimumSize(min.width, min.height)
+        const b = live.getBounds()
+        live.setBounds({ x: b.x, y: b.y, ...size })
+      }
+      this.store.update((d) => {
+        Object.assign(d.settings.panels[id], size)
+      })
+    }
+    this.fitAll()
+  }
+
   flush(): void {
     for (const id of [...this.saveTimers.keys()]) this.saveBoundsNow(id)
   }
@@ -211,7 +241,7 @@ export class PanelManager {
 
   resetLayout(): void {
     const area = this.barDisplay().workArea
-    const sizes = defaultData().settings.panels
+    const sizes = scaledPanels(defaultData().settings.panels, this.scale)
     for (const id of PANEL_IDS) {
       if (CENTERED.includes(id) || id === 'mini') continue
       const rect = fitOnScreen(defaultBounds(id, area, sizes), [area])
@@ -242,7 +272,7 @@ export class PanelManager {
   private sizedPanels(): Record<PanelId, PanelState> {
     const panels = this.store.data.settings.panels
     const out = {} as Record<PanelId, PanelState>
-    for (const id of PANEL_IDS) out[id] = { ...panels[id], ...effectiveSize(id, panels[id], defaultData().settings.panels) }
+    for (const id of PANEL_IDS) out[id] = { ...panels[id], ...effectiveSize(id, panels[id], defaultData().settings.panels, this.scale) }
     return out
   }
 
@@ -266,10 +296,11 @@ export class PanelManager {
       show: false,
       webPreferences: { preload: this.paths.preload, contextIsolation: true, sandbox: true }
     })
-    win.setMinimumSize(MIN_SIZES[id].width, MIN_SIZES[id].height)
+    const min = minSize(id, this.scale)
+    win.setMinimumSize(min.width, min.height)
     win.setMaximumSize(0, 0)
     win.webContents.setVisualZoomLevelLimits(1, 1)
-    win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(UI_SCALE))
+    win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(UI_SCALE * this.scale))
     this.applyTop(id, win)
     if (this.paths.devUrl) win.loadURL(`${this.paths.devUrl}#/${id}`)
     else win.loadFile(this.paths.file, { hash: `/${id}` })

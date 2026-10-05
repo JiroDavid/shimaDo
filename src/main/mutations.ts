@@ -67,6 +67,7 @@ export function sanitizeSettingsPatch(raw: unknown): SettingsPatch {
   if (ACCENTS.includes(r.accent as Accent)) out.accent = r.accent as Accent
   if (typeof r.alwaysOnTop === 'boolean') out.alwaysOnTop = r.alwaysOnTop
   if (typeof r.launchAtStartup === 'boolean') out.launchAtStartup = r.launchAtStartup
+  if (typeof r.textScale === 'number' && Number.isFinite(r.textScale)) out.textScale = Math.min(1.4, Math.max(0.8, r.textScale))
   return out
 }
 

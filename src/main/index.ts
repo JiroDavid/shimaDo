@@ -32,10 +32,12 @@ function boot(): void {
   )
 
   const changeSettings = (patch: SettingsPatch) => {
+    const previousScale = store.data.settings.textScale
     store.update((d) => {
       Object.assign(d.settings, patch)
     })
     if (patch.alwaysOnTop !== undefined) panels.applyAlwaysOnTop()
+    if (patch.textScale !== undefined && patch.textScale !== previousScale) panels.applyScale(previousScale)
     if (patch.launchAtStartup !== undefined && app.isPackaged) {
       app.setLoginItemSettings({ openAtLogin: patch.launchAtStartup })
     }

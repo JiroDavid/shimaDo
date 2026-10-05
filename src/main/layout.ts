@@ -28,10 +28,24 @@ export const MIN_SIZES: Record<PanelId, Size> = {
 const MARGIN = 16
 const GAP = 12
 
-export function effectiveSize(id: PanelId, saved: Size, defaults: Record<PanelId, Size>): Size {
-  if (id === 'bar' || id === 'mini') return { width: defaults[id].width, height: defaults[id].height }
-  const min = MIN_SIZES[id]
+export function minSize(id: PanelId, scale = 1): Size {
+  return { width: Math.round(MIN_SIZES[id].width * scale), height: Math.round(MIN_SIZES[id].height * scale) }
+}
+
+export function effectiveSize(id: PanelId, saved: Size, defaults: Record<PanelId, Size>, scale = 1): Size {
+  if (id === 'bar' || id === 'mini') {
+    return { width: Math.round(defaults[id].width * scale), height: Math.round(defaults[id].height * scale) }
+  }
+  const min = minSize(id, scale)
   return { width: Math.max(saved.width, min.width), height: Math.max(saved.height, min.height) }
+}
+
+export function scaledPanels(panels: Settings['panels'], scale: number): Settings['panels'] {
+  const out = {} as Settings['panels']
+  for (const id of Object.keys(panels) as PanelId[]) {
+    out[id] = { ...panels[id], width: Math.round(panels[id].width * scale), height: Math.round(panels[id].height * scale) }
+  }
+  return out
 }
 
 export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels']): Rect {

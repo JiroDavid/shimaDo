@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { defaultBounds, effectiveSize, MIN_SIZES } from './layout'
+import { defaultBounds, effectiveSize, MIN_SIZES, scaledPanels } from './layout'
 import { defaultData } from './store'
 
 const panels = defaultData().settings.panels
@@ -44,6 +44,18 @@ describe('effectiveSize', () => {
   it('raises other panels to their minimum and leaves bigger ones alone', () => {
     expect(effectiveSize('settings', { width: 100, height: 100 }, panels)).toEqual({ width: MIN_SIZES.settings.width, height: MIN_SIZES.settings.height })
     expect(effectiveSize('progress', { width: 700, height: 900 }, panels)).toEqual({ width: 700, height: 900 })
+  })
+  it('scales the bar, the icon and the minimum sizes with the text size', () => {
+    expect(effectiveSize('bar', { width: 1, height: 1 }, panels, 1.2)).toEqual({ width: 720, height: 60 })
+    expect(effectiveSize('mini', { width: 1, height: 1 }, panels, 1.5)).toEqual({ width: 84, height: 84 })
+    expect(effectiveSize('settings', { width: 1, height: 1 }, panels, 1.5)).toEqual({ width: MIN_SIZES.settings.width * 1.5, height: MIN_SIZES.settings.height * 1.5 })
+    expect(effectiveSize('progress', { width: 700, height: 900 }, panels, 1.4)).toEqual({ width: 700, height: 900 })
+  })
+  it('scales a whole set of panel sizes', () => {
+    const scaled = scaledPanels(panels, 1.2)
+    expect(scaled.checklist.width).toBe(360)
+    expect(scaled.checklist.height).toBe(528)
+    expect(scaled.checklist.visible).toBe(panels.checklist.visible)
   })
   it('lets the data panels shrink well below their default size', () => {
     expect(MIN_SIZES.progress.width).toBeLessThanOrEqual(220)

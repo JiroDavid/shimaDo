@@ -112,6 +112,16 @@ describe('Store', () => {
     expect(second.data.settings.panels.gym.visible).toBe(true)
   })
 
+  it('gives old data files a text scale of 1', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, settings: { opacity: 0.5 } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.textScale).toBe(1)
+    expect(s.data.settings.opacity).toBe(0.5)
+  })
+
   it('drops the legacy gym sets field when loading old data', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')

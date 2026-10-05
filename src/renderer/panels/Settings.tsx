@@ -21,9 +21,11 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
 export function Settings({ data }: { data: AppData }) {
   const s = data.settings
   const [opacity, setOpacity] = useState(s.opacity)
+  const [scale, setScale] = useState(s.textScale)
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
 
   useEffect(() => setOpacity(s.opacity), [s.opacity])
+  useEffect(() => setScale(s.textScale), [s.textScale])
   useEffect(() => {
     if (opacity === s.opacity) return
     const t = setTimeout(() => window.shima.setSettings({ opacity }), 150)
@@ -57,6 +59,25 @@ export function Settings({ data }: { data: AppData }) {
               className="w-full"
               style={{ accentColor: 'var(--accent)' }}
             />
+          </div>
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-bold">Text size</span>
+              <span className="font-extrabold text-accent">{Math.round(scale * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.8"
+              max="1.4"
+              step="0.05"
+              value={scale}
+              onChange={(e) => setScale(Number(e.target.value))}
+              onPointerUp={() => scale !== s.textScale && window.shima.setSettings({ textScale: scale })}
+              onKeyUp={() => scale !== s.textScale && window.shima.setSettings({ textScale: scale })}
+              className="w-full"
+              style={{ accentColor: 'var(--accent)' }}
+            />
+            <p className="mt-1 text-[0.8rem] text-muted">Everything resizes and re-wraps. Panels grow or shrink with it.</p>
           </div>
           <div>
             <div className="mb-2 font-bold">Accent colour</div>

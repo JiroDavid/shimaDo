@@ -57,6 +57,7 @@ export interface Settings {
   alwaysOnTop: boolean
   accent: Accent
   launchAtStartup: boolean
+  textScale: number
   panels: Record<PanelId, PanelState>
 }
 
@@ -77,7 +78,7 @@ export interface Gym {
   weighIns: Record<string, number>
 }
 
-export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'alwaysOnTop' | 'launchAtStartup'>>
+export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale'>>
 
 export interface Profile {
   username: string
