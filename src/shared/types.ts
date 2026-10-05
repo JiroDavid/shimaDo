@@ -93,12 +93,24 @@ export interface Profile {
 
 export type ProfileInput = Omit<Profile, 'avatarUpdatedAt'>
 
+export interface PomodoroSession {
+  date: string
+  endedAt: number
+  task: string
+}
+
+export interface BackupResult {
+  ok: boolean
+  message: string
+}
+
 export interface AppData {
   version: 1
   tasks: Task[]
   completions: Completion[]
   nicotine: Record<string, true>
   pomodoros: Record<string, number>
+  pomodoroLog: PomodoroSession[]
   profile: Profile
   gym: Gym
   settings: Settings
@@ -114,6 +126,7 @@ export interface ShimaApi {
   getTimer(): Promise<TimerState>
   onTimer(cb: (s: TimerState) => void): () => void
   timerAction(action: TimerAction): void
+  setTimerTask(task: string): void
   getData(): Promise<AppData>
   onChange(cb: (d: AppData) => void): () => void
   addTask(input: TaskInput): Promise<void>
@@ -142,4 +155,6 @@ export interface ShimaApi {
   setGymOverride(date: string, value: GymDay | null | undefined): Promise<void>
   setGymDone(date: string, done: boolean): Promise<void>
   setWeighIn(date: string, kg: number | null): Promise<void>
+  exportBackup(): Promise<BackupResult>
+  importBackup(): Promise<BackupResult>
 }

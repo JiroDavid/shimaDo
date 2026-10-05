@@ -23,6 +23,7 @@ export function Settings({ data }: { data: AppData }) {
   const [opacity, setOpacity] = useState(s.opacity)
   const [scale, setScale] = useState(s.textScale)
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
+  const [backupMsg, setBackupMsg] = useState('')
 
   useEffect(() => setOpacity(s.opacity), [s.opacity])
   useEffect(() => setScale(s.textScale), [s.textScale])
@@ -34,6 +35,8 @@ export function Settings({ data }: { data: AppData }) {
   useEffect(() => {
     window.shima.listDisplays().then(setDisplays)
   }, [data])
+
+  const runBackup = async (action: () => Promise<{ message: string }>) => setBackupMsg((await action()).message)
 
   const move = async (id: number) => {
     await window.shima.moveAllToDisplay(id)
@@ -119,6 +122,19 @@ export function Settings({ data }: { data: AppData }) {
             </div>
           ))}
         </div>
+      </Section>
+
+      <Section label="Backup">
+        <p className="mb-3 text-muted">Save everything (tasks, history, gym, profile, settings) to a file, or load one to replace what is here.</p>
+        <div className="flex gap-2">
+          <button className="btn" onClick={() => runBackup(window.shima.exportBackup)}>
+            Export
+          </button>
+          <button className="btn" onClick={() => runBackup(window.shima.importBackup)}>
+            Import
+          </button>
+        </div>
+        {backupMsg && <p className="mt-2 text-[0.85rem] font-bold text-accent">{backupMsg}</p>}
       </Section>
 
       <Section label="Layout">

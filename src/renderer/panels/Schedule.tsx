@@ -23,25 +23,33 @@ interface CellProps {
   dim?: boolean
   onPick: (d: string) => void
   tall?: boolean
+  month?: boolean
 }
 
-function DayCell({ date, today, selected, occs, dim, onPick, tall }: CellProps) {
+function DayCell({ date, today, selected, occs, dim, onPick, tall, month }: CellProps) {
   const isSelected = date === selected
   const isToday = date === today
   const tag = topTag(occs)
   const allDone = occs.length > 0 && occs.every((o) => o.done)
   const dot = tag ? TAG_COLOR[tag] : allDone ? 'var(--text)' : occs.length > 0 ? 'var(--accent)' : 'transparent'
+  const tint = month && !isSelected && occs.length > 0 ? (tag ? TAG_COLOR[tag] : allDone ? 'var(--text)' : 'var(--accent)') : null
+  const left = occs.filter((o) => !o.done).length
   return (
     <button
       onClick={() => onPick(date)}
+      style={tint ? { background: `color-mix(in srgb, ${tint} ${allDone ? 14 : 32}%, transparent)` } : undefined}
       aria-label={formatDay(date)}
-      className={`flex flex-1 flex-col items-center justify-center rounded-2xl border-2 transition active:scale-95 ${tall ? 'py-2' : 'py-1'} ${
+      className={`flex flex-1 flex-col items-center justify-center rounded-2xl border-2 transition active:scale-95 ${tall ? 'py-2' : 'py-1.5'} ${
         isSelected ? 'border-accent bg-accent text-[#1a1410]' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-white/10'
       } ${dim && !isSelected ? 'opacity-35' : ''}`}
     >
       {tall && <span className={`text-[0.72rem] font-extrabold ${isSelected ? '' : 'text-muted'}`}>{LETTERS[fromDateKey(date).getDay()]}</span>}
       <span className="text-[1.15rem] font-extrabold leading-tight">{date.slice(8).replace(/^0/, '')}</span>
-      <span className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? '#1a1410' : dot, opacity: dot === 'transparent' ? 0 : 1 }} />
+      {month ? (
+        <span className="text-[0.65rem] font-extrabold leading-none opacity-80">{occs.length === 0 ? '\u00a0' : allDone ? '✓' : left}</span>
+      ) : (
+        <span className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? '#1a1410' : dot, opacity: dot === 'transparent' ? 0 : 1 }} />
+      )}
     </button>
   )
 }
@@ -130,7 +138,7 @@ export function Schedule({ data }: { data: AppData }) {
           {monthGrid(shownMonth).map((row) => (
             <div key={row[0]} className="flex gap-1">
               {row.map((k) => (
-                <DayCell key={k} date={k} today={today} selected={day} occs={occurrencesOn(data, k)} dim={!k.startsWith(shownMonth)} onPick={pick} />
+                <DayCell key={k} date={k} today={today} selected={day} occs={occurrencesOn(data, k)} dim={!k.startsWith(shownMonth)} onPick={pick} month />
               ))}
             </div>
           ))}

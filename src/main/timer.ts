@@ -1,10 +1,10 @@
 import { Notification } from 'electron'
-import { PHASE_LABELS, finishPhase, initialTimer, isDue, pauseTimer, resetTimer, skipPhase, startTimer, type TimerState } from '../shared/pomodoro'
+import { PHASE_LABELS, finishPhase, initialTimer, isDue, pauseTimer, resetTimer, setTimerTask, skipPhase, startTimer, type TimerState } from '../shared/pomodoro'
 import type { TimerAction } from '../shared/types'
 
 interface Options {
   onChange: (s: TimerState) => void
-  onFocusDone: () => void
+  onFocusDone: (task: string) => void
   onNotifyClick: () => void
 }
 
@@ -24,6 +24,11 @@ export class PomodoroTimer {
     this.opts.onChange(this.state)
   }
 
+  setTask(task: string): void {
+    this.state = setTimerTask(this.state, task)
+    this.opts.onChange(this.state)
+  }
+
   dispose(): void {
     if (this.handle) clearTimeout(this.handle)
   }
@@ -38,9 +43,10 @@ export class PomodoroTimer {
   private fire(): void {
     const now = Date.now()
     if (!isDue(this.state, now)) return this.arm()
-    const { state, focusCompleted } = finishPhase(this.state, now)
+    const finished = this.state
+    const { state, focusCompleted } = finishPhase(finished, now)
     this.state = state
-    if (focusCompleted) this.opts.onFocusDone()
+    if (focusCompleted) this.opts.onFocusDone(finished.task)
     this.arm()
     this.opts.onChange(this.state)
     const body = state.running ? `Time for a ${PHASE_LABELS[state.phase].toLowerCase()}` : 'Break over - ready to focus?'

@@ -37,3 +37,12 @@ export function readAvatarDataUrl(dir: string): string | null {
     return null
   }
 }
+
+export function writeAvatar(dir: string, png: Buffer): void {
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(avatarPath(dir), png)
+}
+
+export function removeAvatar(dir: string): void {
+  fs.rmSync(avatarPath(dir), { force: true })
+}

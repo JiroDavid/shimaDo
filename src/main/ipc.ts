@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { PANEL_IDS, type Edge, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
+import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import {
   addTask, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
@@ -19,6 +19,8 @@ export interface AppActions {
   confirmExit(): void
   pickAvatar(): Promise<string | null>
   readAvatar(): string | null
+  exportBackup(): Promise<BackupResult>
+  importBackup(): Promise<BackupResult>
 }
 
 const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
@@ -54,6 +56,12 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.on('timer:action', (_e, action: unknown) => {
     if (TIMER_ACTIONS.includes(action as TimerAction)) timer.act(action as TimerAction)
   })
+
+  ipcMain.on('timer:task', (_e, task: unknown) => {
+    if (typeof task === 'string') timer.setTask(task)
+  })
+  ipcMain.handle('backup:export', () => actions.exportBackup())
+  ipcMain.handle('backup:import', () => actions.importBackup())
 
   ipcMain.handle('settings:set', (_e, raw: unknown) => actions.changeSettings(sanitizeSettingsPatch(raw)))
   ipcMain.handle('app:exit', () => panels.show('confirm'))

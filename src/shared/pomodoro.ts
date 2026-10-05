@@ -6,6 +6,7 @@ export interface TimerState {
   endsAt: number | null
   remainingMs: number
   cycle: number
+  task: string
 }
 
 export const PHASE_MS: Record<Phase, number> = {
@@ -17,7 +18,7 @@ export const PHASE_LABELS: Record<Phase, string> = { focus: 'FOCUS', short: 'SHO
 export const SETS_BEFORE_LONG = 4
 
 export function initialTimer(): TimerState {
-  return { phase: 'focus', running: false, endsAt: null, remainingMs: PHASE_MS.focus, cycle: 0 }
+  return { phase: 'focus', running: false, endsAt: null, remainingMs: PHASE_MS.focus, cycle: 0, task: '' }
 }
 
 export function remaining(s: TimerState, now: number): number {
@@ -38,8 +39,14 @@ export function resetTimer(s: TimerState): TimerState {
   return { ...s, running: false, endsAt: null, remainingMs: PHASE_MS[s.phase] }
 }
 
-function idleAt(phase: Phase, cycle: number): TimerState {
-  return { phase, running: false, endsAt: null, remainingMs: PHASE_MS[phase], cycle }
+function idleAt(phase: Phase, cycle: number, task: string): TimerState {
+  return { phase, running: false, endsAt: null, remainingMs: PHASE_MS[phase], cycle, task }
+}
+
+export const MAX_TASK_LENGTH = 60
+
+export function setTimerTask(s: TimerState, task: string): TimerState {
+  return { ...s, task: task.trim().slice(0, MAX_TASK_LENGTH) }
 }
 
 function nextPhase(s: TimerState): { phase: Phase; cycle: number } {
@@ -50,7 +57,7 @@ function nextPhase(s: TimerState): { phase: Phase; cycle: number } {
 
 export function skipPhase(s: TimerState): TimerState {
   const n = nextPhase(s)
-  return idleAt(n.phase, n.cycle)
+  return idleAt(n.phase, n.cycle, s.task)
 }
 
 export function isDue(s: TimerState, now: number): boolean {
@@ -59,7 +66,7 @@ export function isDue(s: TimerState, now: number): boolean {
 
 export function finishPhase(s: TimerState, now: number): { state: TimerState; focusCompleted: boolean } {
   const n = nextPhase(s)
-  const idle = idleAt(n.phase, n.cycle)
+  const idle = idleAt(n.phase, n.cycle, s.task)
   const state = n.phase === 'focus' ? idle : startTimer(idle, now)
   return { state, focusCompleted: s.phase === 'focus' }
 }

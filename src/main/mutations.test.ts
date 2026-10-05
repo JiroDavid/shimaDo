@@ -54,6 +54,13 @@ describe('mutations', () => {
     addPomodoro(d, '2026-10-05')
     addPomodoro(d, '2026-10-05')
     expect(d.pomodoros).toEqual({ '2026-10-05': 2 })
+    expect(d.pomodoroLog).toHaveLength(2)
+  })
+
+  it('addPomodoro records the task name', () => {
+    const d = defaultData()
+    addPomodoro(d, '2026-10-05', 'Essay', 123)
+    expect(d.pomodoroLog).toEqual([{ date: '2026-10-05', endedAt: 123, task: 'Essay' }])
   })
 
   it('setNicotine toggles a day', () => {

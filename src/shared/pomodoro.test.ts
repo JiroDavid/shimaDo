@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  PHASE_MS, finishPhase, formatClock, initialTimer, isDue, pauseTimer, remaining, resetTimer, skipPhase, startTimer
+  PHASE_MS, finishPhase, formatClock, initialTimer, isDue, pauseTimer, remaining, resetTimer, setTimerTask, skipPhase, startTimer
 } from './pomodoro'
 
 describe('pomodoro timer', () => {
@@ -51,5 +51,13 @@ describe('pomodoro timer', () => {
     expect(formatClock(PHASE_MS.focus)).toBe('25:00')
     expect(formatClock(59_001)).toBe('01:00')
     expect(formatClock(0)).toBe('00:00')
+  })
+
+  it('keeps the task name across phases', () => {
+    let s = setTimerTask(initialTimer(), '  Essay ')
+    expect(s.task).toBe('Essay')
+    s = finishPhase(startTimer(s, 0), 0).state
+    expect(s.task).toBe('Essay')
+    expect(skipPhase(s).task).toBe('Essay')
   })
 })

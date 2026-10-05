@@ -11,6 +11,7 @@ export function defaultData(): AppData {
     completions: [],
     nicotine: {},
     pomodoros: {},
+    pomodoroLog: [],
     profile: emptyProfile(),
     gym: emptyGym(),
     settings: {
@@ -62,10 +63,19 @@ export function migrate(raw: unknown): AppData {
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     nicotine: typeof r.nicotine === 'object' && r.nicotine !== null ? (r.nicotine as AppData['nicotine']) : {},
     pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},
+    pomodoroLog: Array.isArray(r.pomodoroLog) ? (r.pomodoroLog as AppData['pomodoroLog']) : [],
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },
     gym: pickGym(r.gym),
     settings: { ...def.settings, ...s, panels }
   }
+}
+
+export function hideTransientPanels(d: AppData): void {
+  const p = d.settings.panels
+  p.settings.visible = false
+  p.profile.visible = false
+  p.confirm.visible = false
+  p.mini.visible = false
 }
 
 export class Store {
@@ -80,10 +90,7 @@ export class Store {
     }
     try {
       this.data = migrate(JSON.parse(fs.readFileSync(this.file, 'utf8')))
-      this.data.settings.panels.settings.visible = false
-      this.data.settings.panels.profile.visible = false
-      this.data.settings.panels.confirm.visible = false
-      this.data.settings.panels.mini.visible = false
+      hideTransientPanels(this.data)
     } catch {
       fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`)
       this.data = defaultData()

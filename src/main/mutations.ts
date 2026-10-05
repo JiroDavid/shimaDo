@@ -57,8 +57,9 @@ export function setNicotine(d: AppData, date: string, on: boolean): void {
   else delete d.nicotine[date]
 }
 
-export function addPomodoro(d: AppData, date: string): void {
+export function addPomodoro(d: AppData, date: string, task = '', endedAt = Date.now()): void {
   d.pomodoros[date] = (d.pomodoros[date] ?? 0) + 1
+  d.pomodoroLog.push({ date, endedAt, task })
 }
 
 const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']

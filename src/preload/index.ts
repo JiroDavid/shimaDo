@@ -16,6 +16,7 @@ const api: ShimaApi = {
     return () => ipcRenderer.removeListener('timer:changed', handler)
   },
   timerAction: (action) => ipcRenderer.send('timer:action', action),
+  setTimerTask: (task) => ipcRenderer.send('timer:task', task),
   addTask: (input) => ipcRenderer.invoke('task:add', input),
   updateTask: (id, input) => ipcRenderer.invoke('task:update', id, input),
   deleteTask: (id) => ipcRenderer.invoke('task:delete', id),
@@ -41,7 +42,9 @@ const api: ShimaApi = {
   setSplit: (days) => ipcRenderer.invoke('gym:split', days),
   setGymOverride: (date, value) => ipcRenderer.invoke('gym:override', date, value),
   setGymDone: (date, done) => ipcRenderer.invoke('gym:done', date, done),
-  setWeighIn: (date, kg) => ipcRenderer.invoke('gym:weigh-in', date, kg)
+  setWeighIn: (date, kg) => ipcRenderer.invoke('gym:weigh-in', date, kg),
+  exportBackup: () => ipcRenderer.invoke('backup:export'),
+  importBackup: () => ipcRenderer.invoke('backup:import')
 }
 
 contextBridge.exposeInMainWorld('shima', api)

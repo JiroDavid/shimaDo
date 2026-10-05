@@ -1,14 +1,16 @@
-import { app, Notification, screen } from 'electron'
+import { app, dialog, Notification, screen } from 'electron'
+import fs from 'node:fs'
 import { join } from 'node:path'
 import { toDateKey } from '../shared/dates'
-import { PANEL_IDS, type SettingsPatch } from '../shared/types'
-import { chooseAvatar, readAvatarDataUrl } from './avatar'
+import { PANEL_IDS, type BackupResult, type SettingsPatch } from '../shared/types'
+import { chooseAvatar, readAvatarDataUrl, removeAvatar, writeAvatar } from './avatar'
+import { avatarBytes, buildBackup, parseBackup } from './backup'
 import { registerIpc } from './ipc'
 import { addPomodoro, setAvatarStamp } from './mutations'
 import { PomodoroTimer } from './timer'
 import { PanelManager } from './panels'
 import { startScheduler } from './scheduler'
-import { Store } from './store'
+import { Store, hideTransientPanels } from './store'
 import { createTray } from './tray'
 
 app.setAppUserModelId('com.jirodavid.shimado')
@@ -34,8 +36,8 @@ function boot(): void {
 
   const timer = new PomodoroTimer({
     onChange: (s) => panels.broadcast('timer:changed', s),
-    onFocusDone: () => {
-      store.update((d) => addPomodoro(d, toDateKey(new Date())))
+    onFocusDone: (task) => {
+      store.update((d) => addPomodoro(d, toDateKey(new Date()), task))
       panels.broadcast('data:changed', store.data)
     },
     onNotifyClick: () => panels.show('focus')
@@ -69,6 +71,54 @@ function boot(): void {
     return null
   }
 
+  const exportBackup = async (): Promise<BackupResult> => {
+    const result = await dialog.showSaveDialog({
+      title: 'Export ShimaDo backup',
+      defaultPath: `shimado-backup-${toDateKey(new Date())}.json`,
+      filters: [{ name: 'ShimaDo backup', extensions: ['json'] }]
+    })
+    if (result.canceled || !result.filePath) return { ok: false, message: '' }
+    try {
+      fs.writeFileSync(result.filePath, buildBackup(store.data, readAvatarDataUrl(userData)))
+      return { ok: true, message: 'Backup saved' }
+    } catch (e) {
+      return { ok: false, message: `Could not save: ${(e as Error).message}` }
+    }
+  }
+
+  const importBackup = async (): Promise<BackupResult> => {
+    const picked = await dialog.showOpenDialog({
+      title: 'Import ShimaDo backup',
+      properties: ['openFile'],
+      filters: [{ name: 'ShimaDo backup', extensions: ['json'] }]
+    })
+    if (picked.canceled || picked.filePaths.length === 0) return { ok: false, message: '' }
+    let parsed: ReturnType<typeof parseBackup>
+    try {
+      parsed = parseBackup(fs.readFileSync(picked.filePaths[0], 'utf8'))
+    } catch (e) {
+      return { ok: false, message: (e as Error).message }
+    }
+    const answer = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Import backup',
+      message: 'Replace everything with this backup?',
+      detail: 'All current tasks, history and settings will be overwritten. ShimaDo will restart.',
+      buttons: ['Replace', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1
+    })
+    if (answer.response !== 0) return { ok: false, message: '' }
+    hideTransientPanels(parsed.data)
+    store.data = parsed.data
+    store.save()
+    if (parsed.avatar) writeAvatar(userData, avatarBytes(parsed.avatar))
+    else removeAvatar(userData)
+    app.relaunch()
+    app.exit(0)
+    return { ok: true, message: 'Imported' }
+  }
+
   app.on('second-instance', () => panels.show('checklist'))
   app.on('window-all-closed', () => {})
   app.on('before-quit', () => {
@@ -79,7 +129,7 @@ function boot(): void {
 
   app.whenReady().then(() => {
     store.load()
-    registerIpc(store, panels, timer, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData) })
+    registerIpc(store, panels, timer, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup })
     tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit() })
 
     for (const id of PANEL_IDS) {
