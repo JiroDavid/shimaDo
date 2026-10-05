@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { daysBack } from './dates'
 import {
   canonicalExercise, dayPlan, e1rm, emptyGym, exerciseNames, latestWeight, normalizeDays,
-  relativeStrength, strengthSeries, templateFor, validateGymDays, validateSet, validateWeighIn,
+  relativeStrength, strengthSeries, templateFor, unplannedSets, validateGymDays, validateSet, validateWeighIn,
   weeklyConsistency, weightTrend
 } from './gym'
 import type { Gym, GymDay } from './types'
@@ -132,5 +132,20 @@ describe('validation', () => {
     expect(validateGymDays(week(day('x'.repeat(25))))).toMatch(/label/i)
     expect(validateGymDays(week(day('Push', Array.from({ length: 21 }, (_, i) => `e${i}`))))).toMatch(/exercises/i)
     expect(validateGymDays(week(day('Push', ['y'.repeat(61)])))).toMatch(/exercise/i)
+  })
+})
+
+describe('unplannedSets', () => {
+  const sets = [
+    { id: '1', date: '2026-10-05', exercise: 'Bench', weightKg: 80, reps: 5 },
+    { id: '2', date: '2026-10-05', exercise: 'Squat', weightKg: 100, reps: 5 },
+    { id: '3', date: '2026-10-06', exercise: 'Row', weightKg: 60, reps: 8 }
+  ]
+  it('returns the day sets whose exercise is not in the plan, ignoring case', () => {
+    const gym = gymWith({ sets })
+    expect(unplannedSets(gym, '2026-10-05', day('Chest+Tri', ['bench'])).map((s) => s.id)).toEqual(['2'])
+  })
+  it('returns every set of the day when the day has no plan', () => {
+    expect(unplannedSets(gymWith({ sets }), '2026-10-05', null).map((s) => s.id)).toEqual(['1', '2'])
   })
 })

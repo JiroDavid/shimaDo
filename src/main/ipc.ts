@@ -29,7 +29,7 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
     commit()
   })
   ipcMain.handle('task:update', (_e, id: string, input: TaskInput) => {
-    store.update((d) => updateTask(d, id, input))
+    store.update((d) => updateTask(d, id, input, today(), randomUUID()))
     commit()
   })
   ipcMain.handle('task:delete', (_e, id: string) => {

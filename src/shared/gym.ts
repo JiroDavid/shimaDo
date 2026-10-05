@@ -1,5 +1,5 @@
 import { addDays, isValidDateKey, weekDays, weekStart, weekdayOf } from './dates'
-import type { Gym, GymDay, GymSetInput } from './types'
+import type { Gym, GymDay, GymSet, GymSetInput } from './types'
 
 export const emptyGym = (): Gym => ({ splits: [], overrides: {}, done: {}, sets: [], weighIns: {} })
 
@@ -73,6 +73,11 @@ export function weightTrend(weighIns: Record<string, number>, keys: string[]): {
     return window.length === 0 ? null : Math.round((window.reduce((a, b) => a + b, 0) / window.length) * 10) / 10
   })
   return { raw, trend }
+}
+
+export function unplannedSets(gym: Gym, date: string, plan: GymDay | null): GymSet[] {
+  const planned = new Set((plan?.exercises ?? []).map((e) => e.toLowerCase()))
+  return gym.sets.filter((s) => s.date === date && !planned.has(s.exercise.toLowerCase()))
 }
 
 export function normalizeDay(day: GymDay): GymDay {

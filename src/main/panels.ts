@@ -39,7 +39,7 @@ export class PanelManager {
 
   toggle(id: PanelId): void {
     if (id === 'bar') return
-    if (this.store.data.settings.panels[id].visible) this.hide(id)
+    if (this.wins.get(id)?.isVisible()) this.hide(id)
     else this.show(id)
   }
 
@@ -96,6 +96,9 @@ export class PanelManager {
       if (this.quitting) return
       e.preventDefault()
       this.hide(id)
+    })
+    win.on('session-end', () => {
+      this.quitting = true
     })
     win.on('move', () => this.saveBounds(id))
     win.on('closed', () => this.wins.delete(id))

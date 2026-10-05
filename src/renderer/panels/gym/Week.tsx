@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import type { AppData, GymSet } from '../../../shared/types'
 import { addDays, formatDay, fromDateKey, toDateKey, weekDays } from '../../../shared/dates'
-import { dayPlan, templateFor, validateSet } from '../../../shared/gym'
+import { dayPlan, exerciseNames, templateFor, unplannedSets, validateSet } from '../../../shared/gym'
 import { useToday } from '../../hooks/useData'
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-function SetAdder({ date, exercise }: { date: string; exercise: string }) {
+function SetAdder({ date, exercise, names }: { date: string; exercise?: string; names?: string[] }) {
+  const [name, setName] = useState('')
   const [weight, setWeight] = useState('')
   const [reps, setReps] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const add = async () => {
-    const input = { date, exercise, weightKg: Number(weight), reps: Number(reps) }
+    const input = { date, exercise: exercise ?? name, weightKg: Number(weight), reps: Number(reps) }
     const problem = validateSet(input, toDateKey(new Date()))
     if (problem) {
       setError(problem)
@@ -25,6 +26,16 @@ function SetAdder({ date, exercise }: { date: string; exercise: string }) {
 
   return (
     <div className="mt-1">
+      {exercise === undefined && (
+        <>
+          <input className="field mb-1" list="gym-exercises" placeholder="exercise" value={name} onChange={(e) => setName(e.target.value)} />
+          <datalist id="gym-exercises">
+            {names?.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+        </>
+      )}
       <div className="flex gap-1">
         <input className="field" type="number" step="0.5" placeholder="kg" value={weight} onChange={(e) => setWeight(e.target.value)} />
         <input
@@ -35,7 +46,7 @@ function SetAdder({ date, exercise }: { date: string; exercise: string }) {
           onChange={(e) => setReps(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
-        <button className="btn" onClick={add} aria-label={`add set for ${exercise}`}>
+        <button className="btn" onClick={add} aria-label={`add set for ${exercise ?? (name || 'exercise')}`}>
           +
         </button>
       </div>
@@ -73,6 +84,7 @@ export function Week({ data }: { data: AppData }) {
   const swaps = template.flatMap((d, i) => (d === null ? [] : [{ index: i, label: d.label }]))
   const done = Boolean(gym.done[day])
   const daySets = gym.sets.filter((s) => s.date === day)
+  const unplanned = unplannedSets(gym, day, plan)
 
   const swap = (value: string) => {
     if (value === 'rest') window.shima.setGymOverride(day, null)
@@ -147,6 +159,17 @@ export function Week({ data }: { data: AppData }) {
           <SetAdder date={day} exercise={exercise} />
         </div>
       ))}
+
+      {unplanned.length > 0 && (
+        <div className="border-b border-dark-border pb-2">
+          <div className="panel-label mb-1">other sets this day</div>
+          <SetList sets={unplanned} />
+        </div>
+      )}
+      <div>
+        <div className="panel-label mb-1">add another exercise</div>
+        <SetAdder date={day} names={exerciseNames(gym)} />
+      </div>
     </div>
   )
 }

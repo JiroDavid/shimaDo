@@ -90,4 +90,21 @@ describe('Store', () => {
     expect(s.data.gym).toEqual({ ...defaultData().gym, weighIns: { '2026-10-05': 72 } })
     expect(s.data.settings.panels.gym.visible).toBe(false)
   })
+
+  it('does not restore the centered panels as open after a restart', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    const first = new Store(file)
+    first.load()
+    first.update((d) => {
+      d.settings.panels.settings.visible = true
+      d.settings.panels.profile.visible = true
+      d.settings.panels.gym.visible = true
+    })
+    const second = new Store(file)
+    second.load()
+    expect(second.data.settings.panels.settings.visible).toBe(false)
+    expect(second.data.settings.panels.profile.visible).toBe(false)
+    expect(second.data.settings.panels.gym.visible).toBe(true)
+  })
 })

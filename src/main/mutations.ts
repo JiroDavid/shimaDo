@@ -24,11 +24,20 @@ export function addTask(d: AppData, input: TaskInput, todayKey: string, id: stri
   return task
 }
 
-export function updateTask(d: AppData, id: string, input: TaskInput): void {
+export function updateTask(d: AppData, id: string, input: TaskInput, todayKey: string, newId: string): void {
   const idx = d.tasks.findIndex((t) => t.id === id)
   if (idx === -1) return
-  const { id: keepId, createdOn, archivedOn } = d.tasks[idx]
-  d.tasks[idx] = { id: keepId, createdOn, ...(archivedOn ? { archivedOn } : {}), ...normalise(input) }
+  const old = d.tasks[idx]
+  const fields = normalise(input)
+  const weekdaysChanged = fields.kind === 'weekly' && JSON.stringify(old.weekdays ?? []) !== JSON.stringify(fields.weekdays ?? [])
+  const scheduleChanged = old.kind !== fields.kind || weekdaysChanged
+  if (old.kind !== 'once' && scheduleChanged && old.createdOn < todayKey) {
+    old.archivedOn = todayKey
+    d.tasks.push({ id: newId, createdOn: todayKey, ...fields })
+    return
+  }
+  const createdOn = old.kind === 'once' && fields.kind !== 'once' ? todayKey : old.createdOn
+  d.tasks[idx] = { id: old.id, createdOn, ...(old.archivedOn ? { archivedOn: old.archivedOn } : {}), ...fields }
 }
 
 export function deleteTask(d: AppData, id: string, todayKey: string): void {

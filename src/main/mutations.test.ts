@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { occurrencesOn } from '../shared/recurrence'
 import { addTask, updateTask, deleteTask, setDone, setNicotine, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
 import { defaultData } from './store'
 
@@ -20,14 +21,14 @@ describe('mutations', () => {
   it('updateTask replaces fields and keeps identity', () => {
     const d = defaultData()
     addTask(d, { title: 'a', kind: 'daily', time: '08:00' }, '2026-10-05', 'id1')
-    updateTask(d, 'id1', { title: 'b', kind: 'once', date: '2026-10-06', time: '' })
+    updateTask(d, 'id1', { title: 'b', kind: 'once', date: '2026-10-06', time: '' }, '2026-10-05', 'new1')
     expect(d.tasks[0]).toMatchObject({ id: 'id1', title: 'b', kind: 'once', date: '2026-10-06', time: '' })
     expect(d.tasks[0].weekdays).toBeUndefined()
   })
 
   it('updateTask ignores unknown ids', () => {
     const d = defaultData()
-    expect(() => updateTask(d, 'nope', { title: 'b', kind: 'daily', time: '' })).not.toThrow()
+    expect(() => updateTask(d, 'nope', { title: 'b', kind: 'daily', time: '' }, '2026-10-05', 'new1')).not.toThrow()
   })
 
   it('deleteTask archives the task and keeps completions', () => {
@@ -92,5 +93,35 @@ describe('profile mutations', () => {
     const d = defaultData()
     setAvatarStamp(d, 123)
     expect(d.profile.avatarUpdatedAt).toBe(123)
+  })
+})
+
+describe('updateTask and history', () => {
+  const weeklyMon = { title: 'Gym', kind: 'weekly' as const, time: '07:00', weekdays: [1] }
+
+  it('a schedule change on an older recurring task archives it and starts a new one today', () => {
+    const d = defaultData()
+    addTask(d, weeklyMon, '2026-10-01', 'old')
+    setDone(d, 'old', '2026-10-05', true, 'now')
+    updateTask(d, 'old', { ...weeklyMon, weekdays: [1, 3] }, '2026-10-06', 'new')
+    expect(d.tasks.find((t) => t.id === 'old')?.archivedOn).toBe('2026-10-06')
+    expect(d.tasks.find((t) => t.id === 'new')).toMatchObject({ createdOn: '2026-10-06', weekdays: [1, 3] })
+    expect(d.completions).toHaveLength(1)
+    expect(occurrencesOn(d, '2026-10-02').filter((o) => o.task.id === 'new')).toEqual([])
+    expect(occurrencesOn(d, '2026-10-05').map((o) => o.task.id)).toEqual(['old'])
+  })
+  it('title or time edits stay in place', () => {
+    const d = defaultData()
+    addTask(d, weeklyMon, '2026-10-01', 'old')
+    updateTask(d, 'old', { ...weeklyMon, title: 'Lift', time: '08:00' }, '2026-10-06', 'new')
+    expect(d.tasks).toHaveLength(1)
+    expect(d.tasks[0]).toMatchObject({ id: 'old', title: 'Lift', createdOn: '2026-10-01' })
+  })
+  it('turning an old one-off into a recurring task starts it today, not at its creation', () => {
+    const d = defaultData()
+    addTask(d, { title: 'x', kind: 'once', date: '2026-10-01', time: '' }, '2026-10-01', 'old')
+    updateTask(d, 'old', { title: 'x', kind: 'daily', time: '' }, '2026-10-06', 'new')
+    expect(d.tasks).toHaveLength(1)
+    expect(d.tasks[0]).toMatchObject({ id: 'old', createdOn: '2026-10-06' })
   })
 })

@@ -62,6 +62,8 @@ export class Store {
     }
     try {
       this.data = migrate(JSON.parse(fs.readFileSync(this.file, 'utf8')))
+      this.data.settings.panels.settings.visible = false
+      this.data.settings.panels.profile.visible = false
     } catch {
       fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`)
       this.data = defaultData()
