@@ -21,7 +21,7 @@ interface Options {
 }
 
 export function createTray({ store, panels, iconPath, onSettings, onExit }: Options) {
-  const tray = new Tray(nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 }))
+  const tray = new Tray(nativeImage.createFromPath(iconPath))
   tray.setToolTip('ShimaDo')
 
   const build = () => {

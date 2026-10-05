@@ -18,7 +18,6 @@ function boot(): void {
   const userData = app.getPath('userData')
   const store = new Store(join(userData, 'shimado-data.json'))
   const resources = app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources')
-  const iconPath = join(resources, 'icon.png')
   const windowIcon = join(resources, 'icon.ico')
   let tray: ReturnType<typeof createTray> | undefined
 
@@ -69,7 +68,7 @@ function boot(): void {
   app.whenReady().then(() => {
     store.load()
     registerIpc(store, panels, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData) })
-    tray = createTray({ store, panels, iconPath, onSettings: changeSettings, onExit: () => app.quit() })
+    tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit() })
 
     for (const id of PANEL_IDS) {
       if (id === 'mini') continue

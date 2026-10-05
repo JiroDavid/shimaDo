@@ -28,7 +28,7 @@ export function defaultData(): AppData {
         settings: { width: 330, height: 450, visible: false },
         profile: { width: 315, height: 400, visible: false },
         confirm: { width: 320, height: 190, visible: false },
-        mini: { width: 56, height: 56, visible: false }
+        mini: { width: 64, height: 64, visible: false }
       }
     }
   }

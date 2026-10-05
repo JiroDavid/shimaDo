@@ -109,7 +109,7 @@ export class PanelManager {
   beginResize(id: PanelId, edge: Edge): void {
     const win = this.wins.get(id)
     this.endResize()
-    if (!win || id === 'bar') return
+    if (!win) return
     const start = win.getBounds()
     const origin = screen.getCursorScreenPoint()
     const area = screen.getDisplayMatching(start).workArea
@@ -178,7 +178,7 @@ export class PanelManager {
       const min = minSize(id, this.scale)
       const base = live ? live.getBounds() : this.store.data.settings.panels[id]
       const size =
-        id === 'bar' || id === 'mini'
+        id === 'mini'
           ? effectiveSize(id, base, defaults, this.scale)
           : { width: Math.max(min.width, Math.round(base.width * ratio)), height: Math.max(min.height, Math.round(base.height * ratio)) }
       if (live) {

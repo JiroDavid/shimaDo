@@ -11,6 +11,7 @@ export function Mini() {
   }
 
   return (
+    <div className="mini-wrap">
     <button
       className="mini"
       aria-label="Open ShimaDo"
@@ -28,5 +29,6 @@ export function Mini() {
         <circle cx="24" cy="24" r="13" fill="var(--accent)" />
       </svg>
     </button>
+    </div>
   )
 }

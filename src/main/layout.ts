@@ -13,7 +13,7 @@ export interface Size {
 }
 
 export const MIN_SIZES: Record<PanelId, Size> = {
-  bar: { width: 600, height: 50 },
+  bar: { width: 320, height: 32 },
   checklist: { width: 220, height: 240 },
   schedule: { width: 240, height: 260 },
   gym: { width: 240, height: 260 },
@@ -22,7 +22,7 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   settings: { width: 260, height: 300 },
   profile: { width: 240, height: 300 },
   confirm: { width: 280, height: 160 },
-  mini: { width: 56, height: 56 }
+  mini: { width: 64, height: 64 }
 }
 
 const MARGIN = 16
@@ -33,7 +33,7 @@ export function minSize(id: PanelId, scale = 1): Size {
 }
 
 export function effectiveSize(id: PanelId, saved: Size, defaults: Record<PanelId, Size>, scale = 1): Size {
-  if (id === 'bar' || id === 'mini') {
+  if (id === 'mini') {
     return { width: Math.round(defaults[id].width * scale), height: Math.round(defaults[id].height * scale) }
   }
   const min = minSize(id, scale)
