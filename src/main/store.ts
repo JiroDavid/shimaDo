@@ -15,7 +15,7 @@ export function defaultData(): AppData {
     settings: {
       opacity: 0.9,
       alwaysOnTop: true,
-      accent: 'brick',
+      accent: 'orange',
       launchAtStartup: true,
       panels: {
         bar: { width: 620, height: 60, visible: true },

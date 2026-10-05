@@ -36,8 +36,8 @@ export function Nicotine({ data }: { data: AppData }) {
                   k === today ? 'border-accent' : 'border-dark-border'
                 } ${future ? 'opacity-30' : ''}`}
               >
-                <span className="text-[9px] text-muted">{LETTERS[fromDateKey(k).getDay()]}</span>
-                <span className={`flex h-4 w-4 items-center justify-center border text-[10px] leading-none ${on ? 'border-sage bg-sage text-dark' : 'border-muted'}`}>
+                <span className="text-[0.7rem] text-muted">{LETTERS[fromDateKey(k).getDay()]}</span>
+                <span className={`flex h-4 w-4 items-center justify-center border text-[0.75rem] leading-none ${on ? 'border-sage bg-sage text-dark' : 'border-muted'}`}>
                   {on ? '✓' : ''}
                 </span>
               </button>

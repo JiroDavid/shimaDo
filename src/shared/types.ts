@@ -13,7 +13,7 @@ export interface DisplayInfo {
   hasBar: boolean
 }
 
-export type Accent = 'brick' | 'sage' | 'cream'
+export type Accent = 'orange' | 'brick' | 'sage' | 'cream'
 
 export interface Task {
   id: string
@@ -113,7 +113,6 @@ export interface ShimaApi {
   deleteTask(id: string): Promise<void>
   setDone(taskId: string, date: string, done: boolean): Promise<void>
   setNicotine(date: string, on: boolean): Promise<void>
-  resizePanel(id: PanelId, width: number, height: number): void
   hidePanel(id: PanelId): void
   togglePanel(id: PanelId): void
   setSettings(patch: SettingsPatch): Promise<void>

@@ -56,14 +56,6 @@ export class PanelManager {
     return this.wins.get(id)
   }
 
-  setSize(id: PanelId, width: number, height: number): void {
-    const win = this.wins.get(id)
-    if (!win || id === 'bar') return
-    const min = MIN_SIZES[id]
-    win.setSize(Math.max(min.width, Math.round(width)), Math.max(min.height, Math.round(height)))
-    this.saveBounds(id)
-  }
-
   beginResize(id: PanelId, edge: Edge): void {
     const win = this.wins.get(id)
     this.endResize()

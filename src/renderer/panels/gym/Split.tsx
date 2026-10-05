@@ -29,7 +29,7 @@ export function Split({ data, onSaved }: { data: AppData; onSaved: () => void })
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] text-muted">leave a label empty for a rest day. changes apply from today; earlier days keep their old plan.</p>
+      <p className="text-[0.75rem] text-muted">leave a label empty for a rest day. changes apply from today; earlier days keep their old plan.</p>
       {ORDER.map((i) => (
         <div key={i} className="border border-dark-border p-2">
           <div className="flex items-center gap-2">

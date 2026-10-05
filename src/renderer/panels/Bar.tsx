@@ -17,12 +17,10 @@ export function Bar({ data }: { data: AppData }) {
   const profileOpen = data.settings.panels.profile.visible
   return (
     <div className="bar titlebar">
-      <span className="corner corner-tl" />
-      <span className="corner corner-br" />
       <button className="bar-avatar no-drag" data-active={profileOpen} aria-label="Profile" aria-pressed={profileOpen} onClick={() => window.shima.togglePanel('profile')}>
         {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <ProfileIcon />}
       </button>
-      <span className="text-accent px-2 font-bold tracking-widest">To-do</span>
+      <span className="heading text-accent px-2 text-[1.7rem] tracking-wider">To-do</span>
       <span className="bar-sep" />
       {BUTTONS.map((b) => {
         const open = data.settings.panels[b.id].visible

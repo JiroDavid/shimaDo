@@ -57,7 +57,7 @@ export function setNicotine(d: AppData, date: string, on: boolean): void {
   else delete d.nicotine[date]
 }
 
-const ACCENTS: Accent[] = ['brick', 'sage', 'cream']
+const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']
 
 export function sanitizeSettingsPatch(raw: unknown): SettingsPatch {
   if (typeof raw !== 'object' || raw === null) return {}

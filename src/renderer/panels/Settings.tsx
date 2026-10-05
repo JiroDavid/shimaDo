@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Accent, AppData } from '../../shared/types'
 
 const ACCENTS: { id: Accent; color: string }[] = [
+  { id: 'orange', color: '#F2541B' },
   { id: 'brick', color: '#B83A2D' },
   { id: 'sage', color: '#4E6851' },
   { id: 'cream', color: '#DCC9A9' }
@@ -11,7 +12,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
   return (
     <button role="switch" aria-checked={on} onClick={() => onChange(!on)} className="flex w-full items-center justify-between border-b border-dark-border py-2">
       <span>{label}</span>
-      <span className={`flex h-4 w-4 items-center justify-center border text-[10px] leading-none ${on ? 'border-sage bg-sage text-dark' : 'border-muted'}`}>{on ? '✓' : ''}</span>
+      <span className={`flex h-4 w-4 items-center justify-center border text-[0.75rem] leading-none ${on ? 'border-sage bg-sage text-dark' : 'border-muted'}`}>{on ? '✓' : ''}</span>
     </button>
   )
 }

@@ -21,7 +21,7 @@ export function TaskRow({ occ, overdue, showDate, onToggle, actions }: Props) {
         role="checkbox"
         aria-checked={done}
         onClick={onToggle}
-        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border text-[10px] leading-none ${
+        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border text-[0.75rem] leading-none ${
           done ? 'border-sage bg-sage text-dark' : 'border-muted'
         }`}
       >
@@ -29,7 +29,7 @@ export function TaskRow({ occ, overdue, showDate, onToggle, actions }: Props) {
       </button>
       <div className="min-w-0 flex-1">
         <div className={`break-words ${tone}`}>{task.title}</div>
-        <div className="text-[10px] text-muted">
+        <div className="text-[0.75rem] text-muted">
           {showDate ? `${occ.date}  ` : ''}
           {task.time || 'any time'}
           {kind ? `  ${kind}` : ''}

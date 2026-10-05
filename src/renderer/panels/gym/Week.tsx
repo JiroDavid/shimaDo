@@ -40,7 +40,7 @@ export function Week({ data }: { data: AppData }) {
                 onClick={() => setSelected(k)}
                 className={`flex-1 border py-1 text-center ${k === day ? 'border-accent text-accent' : 'border-dark-border'} ${k === today ? 'font-bold' : ''}`}
               >
-                <div className="text-[9px] text-muted">{LETTERS[fromDateKey(k).getDay()]}</div>
+                <div className="text-[0.7rem] text-muted">{LETTERS[fromDateKey(k).getDay()]}</div>
                 <div>{k.slice(8)}</div>
                 <div className={`mx-auto mt-0.5 h-1 w-1 rounded-full ${marker}`} />
               </button>
@@ -54,14 +54,14 @@ export function Week({ data }: { data: AppData }) {
 
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-[10px] text-muted">{formatDay(day)}</div>
+          <div className="text-[0.75rem] text-muted">{formatDay(day)}</div>
           <div className="text-accent font-bold">{plan ? plan.label : 'rest day'}</div>
         </div>
         <button
           role="checkbox"
           aria-checked={done}
           onClick={() => window.shima.setGymDone(day, !done)}
-          className={`flex h-5 w-5 items-center justify-center border text-[11px] leading-none ${done ? 'border-sage bg-sage text-dark' : 'border-muted'}`}
+          className={`flex h-5 w-5 items-center justify-center border text-[0.8rem] leading-none ${done ? 'border-sage bg-sage text-dark' : 'border-muted'}`}
         >
           {done ? '✓' : ''}
         </button>

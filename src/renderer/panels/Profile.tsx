@@ -73,7 +73,7 @@ export function Profile({ data }: { data: AppData }) {
       <div className="border border-dark-border p-2">
         <span className="panel-label">current weight</span>
         <span className="text-accent ml-2 font-bold">{weight === null ? '--' : `${weight} kg`}</span>
-        <span className="ml-2 text-[10px] text-muted">from your latest weigh-in</span>
+        <span className="ml-2 text-[0.75rem] text-muted">from your latest weigh-in</span>
       </div>
       {message && <p className="text-brick">{message}</p>}
       <div className="flex items-center justify-end gap-2">

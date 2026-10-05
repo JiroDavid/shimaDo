@@ -82,9 +82,6 @@ export function registerIpc(store: Store, panels: PanelManager, actions: AppActi
   ipcMain.on('panel:toggle', (_e, id: unknown) => {
     if (isPanelId(id)) panels.toggle(id)
   })
-  ipcMain.on('panel:resize', (_e, id: unknown, w: number, h: number) => {
-    if (isPanelId(id)) panels.setSize(id, w, h)
-  })
   ipcMain.on('panel:hide', (_e, id: unknown) => {
     if (isPanelId(id)) panels.hide(id)
   })

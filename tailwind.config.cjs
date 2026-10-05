@@ -3,17 +3,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        cream: '#DCC9A9',
-        brick: '#B83A2D',
-        sage: '#4E6851',
-        dark: '#0d0c09',
-        'dark-panel': '#111009',
-        'dark-border': '#22211c',
-        muted: '#7a6e5a',
-        dim: '#3a3630',
+        cream: '#F3E9D6',
+        brick: '#E5484D',
+        sage: '#6E9A74',
+        dark: '#14120f',
+        'dark-panel': '#1b1915',
+        'dark-border': 'rgb(243 233 214 / 0.14)',
+        muted: '#A9A08F',
+        dim: 'rgb(243 233 214 / 0.28)',
+        urgent: '#E5484D',
+        must: '#F2541B',
+        important: '#F5C542',
         accent: 'var(--accent)'
       },
-      fontFamily: { mono: ["'JetBrains Mono'", 'Consolas', 'monospace'] }
+      fontFamily: {
+        sans: ["'M PLUS Rounded 1c'", 'system-ui', 'sans-serif'],
+        heading: ["'Barlow Condensed'", "'M PLUS Rounded 1c'", 'sans-serif']
+      }
     }
   },
   plugins: []

@@ -13,7 +13,6 @@ const api: ShimaApi = {
   deleteTask: (id) => ipcRenderer.invoke('task:delete', id),
   setDone: (taskId, date, done) => ipcRenderer.invoke('task:done', taskId, date, done),
   setNicotine: (date, on) => ipcRenderer.invoke('nicotine:set', date, on),
-  resizePanel: (id, width, height) => ipcRenderer.send('panel:resize', id, width, height),
   hidePanel: (id) => ipcRenderer.send('panel:hide', id),
   togglePanel: (id) => ipcRenderer.send('panel:toggle', id),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),

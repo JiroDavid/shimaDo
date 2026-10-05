@@ -28,7 +28,7 @@ export function Checklist({ data }: { data: AppData }) {
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-accent font-bold">{formatDay(today)}</span>
-        <span className="text-[10px] text-muted">
+        <span className="text-[0.75rem] text-muted">
           {finished.length}/{todays.length} done
         </span>
       </div>

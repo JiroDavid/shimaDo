@@ -59,6 +59,10 @@ describe('mutations', () => {
 })
 
 describe('sanitizeSettingsPatch', () => {
+  it('accepts the orange accent and new installs default to it', () => {
+    expect(sanitizeSettingsPatch({ accent: 'orange' })).toEqual({ accent: 'orange' })
+    expect(defaultData().settings.accent).toBe('orange')
+  })
   it('keeps valid fields and clamps opacity', () => {
     expect(sanitizeSettingsPatch({ opacity: 5, accent: 'sage', alwaysOnTop: false, launchAtStartup: true })).toEqual({
       opacity: 1, accent: 'sage', alwaysOnTop: false, launchAtStartup: true

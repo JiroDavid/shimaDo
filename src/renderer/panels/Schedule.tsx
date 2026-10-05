@@ -51,7 +51,7 @@ export function Schedule({ data }: { data: AppData }) {
                   k === today ? 'font-bold' : ''
                 }`}
               >
-                <div className="text-[9px] text-muted">{LETTERS[fromDateKey(k).getDay()]}</div>
+                <div className="text-[0.7rem] text-muted">{LETTERS[fromDateKey(k).getDay()]}</div>
                 <div>{k.slice(8)}</div>
                 <div className={`mx-auto mt-0.5 h-1 w-1 rounded-full ${has ? 'bg-accent' : 'bg-transparent'}`} />
               </button>

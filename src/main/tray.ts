@@ -10,7 +10,7 @@ const TRAY_PANELS: { id: PanelId; label: string }[] = [
   { id: 'nicotine', label: 'Nicotine' }
 ]
 const OPACITIES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-const ACCENTS: Accent[] = ['brick', 'sage', 'cream']
+const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']
 
 interface Options {
   store: Store
