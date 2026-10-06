@@ -1,3 +1,4 @@
+import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
 
@@ -110,6 +111,13 @@ export interface Habit {
 
 export type HabitInput = Omit<Habit, 'id'>
 
+export interface EditState {
+  active: boolean
+  selected: SelectedElement | null
+  canUndo: boolean
+  canRedo: boolean
+}
+
 export interface BackupResult {
   ok: boolean
   message: string
@@ -122,6 +130,7 @@ export interface AppData {
   habits: Habit[]
   habitLog: Record<string, Record<string, true>>
   notes: string
+  design: Design
   pomodoros: Record<string, number>
   pomodoroLog: PomodoroSession[]
   profile: Profile

@@ -4,6 +4,7 @@ import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type Panel
 import { emptyGym } from '../shared/gym'
 import { isValidTime } from '../shared/dates'
 import { MAX_NOTES_LENGTH } from '../shared/notes'
+import { emptyDesign, sanitizeDesign } from '../shared/design'
 import { normaliseAccentInput } from '../shared/theme'
 import { DEFAULT_THEME_ID, themeById } from '../shared/themes'
 import { isHabitIcon, MAX_HABITS, MAX_HABIT_NAME } from '../shared/habits'
@@ -17,6 +18,7 @@ export function defaultData(): AppData {
     habits: [],
     habitLog: {},
     notes: '',
+    design: emptyDesign(),
     pomodoros: {},
     pomodoroLog: [],
     profile: emptyProfile(),
@@ -104,6 +106,7 @@ export function migrate(raw: unknown): AppData {
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     ...pickHabits(r),
     notes: typeof r.notes === 'string' ? r.notes.slice(0, MAX_NOTES_LENGTH) : '',
+    design: sanitizeDesign(r.design),
     pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},
     pomodoroLog: Array.isArray(r.pomodoroLog) ? (r.pomodoroLog as AppData['pomodoroLog']) : [],
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },

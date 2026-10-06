@@ -227,4 +227,29 @@ describe('Store', () => {
     s.load()
     expect(s.data.settings.panels.welcome.visible).toBe(false)
   })
+
+  it('defaults to no design overrides', () => {
+    expect(defaultData().design).toEqual({ overrides: {} })
+  })
+
+  it('loads old files with no design as empty', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [] }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.design).toEqual({ overrides: {} })
+  })
+
+  it('keeps valid overrides and drops stale or invalid ones on load', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, tasks: [], completions: [],
+      design: { overrides: { 'bar.label': { text: 'Hi', color: 'url(x)' }, 'gone.element': { color: '#fff' }, 'group:button': { radius: 99999, background: '#112233' } } }
+    }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.design).toEqual({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { background: '#112233' } } })
+  })
 })
