@@ -3,7 +3,7 @@ import type { PanelId } from '../../shared/types'
 import { Fit } from './Fit'
 import { ResizeHandles } from './ResizeHandles'
 
-export function PanelFrame({ id, title, fit = 'width', children }: { id: PanelId; title: string; fit?: 'width' | 'both'; children: ReactNode }) {
+export function PanelFrame({ id, title, fit = 'width', naturalWidth, children }: { id: PanelId; title: string; fit?: 'width' | 'both'; naturalWidth?: number; children: ReactNode }) {
   const frame = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function PanelFrame({ id, title, fit = 'width', children }: { id: PanelId
         <span className="heading flex-1 text-center text-[1.05rem] tracking-[0.12em] text-muted">{title}</span>
         <span className="w-4" />
       </div>
-      <Fit mode={fit}>{children}</Fit>
+      <Fit mode={fit} naturalWidth={naturalWidth}>{children}</Fit>
       <ResizeHandles id={id} />
     </div>
   )
