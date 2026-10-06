@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BAR_BUTTONS, ELEMENTS, GROUPS, GROUP_PREFIX, isSurfaceKey, labelFor, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
+import { BAR_BUTTONS, ELEMENTS, GROUPS, GROUP_PREFIX, isMovableKey, isSurfaceKey, labelFor, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
 
 describe('element registry', () => {
   it('has unique element ids that are safe to put in a selector', () => {
@@ -153,5 +153,14 @@ describe('designer window', () => {
   it('turns an emptied text box into a clear, not a blank label', () => {
     const designer = readFileSync(join(renderer, 'panels', 'Designer.tsx'), 'utf8')
     expect(designer).toMatch(/text: value\.trim\(\) === '' \? null : value/)
+  })
+})
+
+describe('movable elements', () => {
+  it('lets every element move except window surfaces', () => {
+    expect(isMovableKey('bar.label')).toBe(true)
+    expect(isMovableKey('bar.btn.checklist')).toBe(true)
+    expect(isMovableKey('checklist.heading')).toBe(true)
+    for (const key of ['checklist.panel', 'bar.surface', 'group:button', 'nope', '__proto__', 'constructor', '']) expect(isMovableKey(key), key).toBe(false)
   })
 })

@@ -124,6 +124,11 @@ const byId = new Map(ELEMENTS.map((e) => [e.id, e]))
 const groupsById = new Map(GROUPS.map((g) => [g.id, g]))
 
 export const elementById = (id: string): ElementDef | undefined => byId.get(id)
+
+export const isMovableKey = (key: string): boolean => {
+  const def = byId.get(key)
+  return def !== undefined && !def.id.endsWith('.panel') && def.id !== 'bar.surface'
+}
 export const groupById = (id: string): GroupDef | undefined => groupsById.get(id)
 
 export function labelFor(key: string): string {

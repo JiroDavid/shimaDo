@@ -23,6 +23,11 @@ const SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rec
 const info = (id: string, bytes = 100): AssetInfo => ({ id, ext: 'png', bytes, name: 'a', addedAt: 1 })
 
 describe('sniffAsset', () => {
+  it('still accepts a plain svg with styling and gradients', () => {
+    const fancy = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><defs><linearGradient id="g"><stop offset="0" stop-color="#f00"/></linearGradient></defs><style>.a{fill:url(#g)}</style><rect class="a" width="10" height="10"/></svg>'
+    expect(sniffAsset(text(fancy))).toBe('svg')
+  })
+
   it('recognises real image bytes', () => {
     expect(sniffAsset(png())).toBe('png')
     expect(sniffAsset(jpg())).toBe('jpg')
@@ -43,6 +48,12 @@ describe('sniffAsset', () => {
     ['truncated gif', () => text('GIF89')],
     ['riff that is not webp', () => pad([0x52, 0x49, 0x46, 0x46], 40)],
     ['svg with a script', () => text('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')],
+    ['svg with an event handler', () => text('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><rect/></svg>')],
+    ['svg with a mixed-case event handler', () => text('<svg xmlns="http://www.w3.org/2000/svg"><rect OnClick = "x()"/></svg>')],
+    ['svg with foreignObject', () => text('<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div>hi</div></foreignObject></svg>')],
+    ['svg with a javascript link', () => text('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="javascript:alert(1)"><rect/></a></svg>')],
+    ['svg with an iframe', () => text('<svg xmlns="http://www.w3.org/2000/svg"><iframe src="x"></iframe></svg>')],
+    ['svg with an embedded html data uri', () => text('<svg xmlns="http://www.w3.org/2000/svg"><image href="data:text/html;base64,PGgxPg=="/></svg>')],
     ['svg that never closes', () => text('<svg xmlns="http://www.w3.org/2000/svg"><rect/>')],
     ['xml that is not svg', () => text('<?xml version="1.0"?><note>hi</note>')]
   ])('rejects %s', (_name, make) => {

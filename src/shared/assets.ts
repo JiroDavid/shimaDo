@@ -23,6 +23,16 @@ const MIME: Record<AssetExt, string> = { png: 'image/png', jpg: 'image/jpeg', gi
 export const mimeFor = (ext: AssetExt): string => MIME[ext]
 export const isAssetExt = (v: unknown): v is AssetExt => typeof v === 'string' && (ASSET_EXTS as readonly string[]).includes(v)
 
+const SVG_UNSAFE = [
+  /<script[\s>]/i,
+  /<foreignObject[\s>]/i,
+  /<(?:iframe|embed|object|frame|link|meta|base)[\s>/]/i,
+  /\son[a-z]+\s*=/i,
+  /javascript\s*:/i,
+  /(?:href|src)\s*=\s*["']?\s*data:\s*(?:text\/html|application\/(?:xhtml|xml|javascript))/i,
+  /<!ENTITY/i
+]
+
 export function sniffAsset(bytes: Uint8Array): AssetExt | null {
   const at = (sig: number[], offset = 0) => bytes.length >= offset + sig.length && sig.every((v, i) => bytes[offset + i] === v)
   if (bytes.length >= 33 && at([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'png'
@@ -32,7 +42,7 @@ export function sniffAsset(bytes: Uint8Array): AssetExt | null {
   const head = new TextDecoder('utf-8').decode(bytes.subarray(0, 1024)).replace(/^﻿/, '').trimStart()
   if (!(head.startsWith('<svg') || head.startsWith('<?xml')) || !/<svg[\s>]/i.test(head)) return null
   const full = new TextDecoder('utf-8').decode(bytes)
-  return /<\/svg\s*>/i.test(full) && !/<script[\s>]/i.test(full) ? 'svg' : null
+  return /<\/svg\s*>/i.test(full) && !SVG_UNSAFE.some((re) => re.test(full)) ? 'svg' : null
 }
 
 export type UploadCheck = { ok: true; ext: AssetExt } | { ok: false; error: string }
