@@ -215,3 +215,19 @@ describe('content security policy', () => {
     expect(csp.replace(/img-src[^;]*;?/, '')).not.toContain('shimado-asset:')
   })
 })
+
+describe('placed layers in the markup', () => {
+  it('draws back and front layers in every panel and in the bar', () => {
+    const frame = readFileSync(join(renderer, 'components', 'PanelFrame.tsx'), 'utf8')
+    expect(frame).toContain('<PlacedLayer panel={id} part="back" />')
+    expect(frame).toContain('<PlacedLayer panel={id} part="front" />')
+    const bar = readFileSync(join(renderer, 'panels', 'Bar.tsx'), 'utf8')
+    expect(bar).toContain('<PlacedLayer panel="bar" part="back" />')
+    expect(bar).toContain('<PlacedLayer panel="bar" part="front" />')
+  })
+
+  it('builds image urls only through assetUrl', () => {
+    const offenders = files.filter((f) => f.endsWith('.tsx') || f.endsWith('.ts')).filter((f) => !f.endsWith('assetUrl.ts') && /shimado-asset:/.test(readFileSync(f, 'utf8')))
+    expect(offenders).toEqual([])
+  })
+})

@@ -9,6 +9,8 @@ const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)))
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.svg': 'image/svg+xml' }
 const PANEL_IDS = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile', 'confirm', 'mini', 'welcome', 'designer']
 
+const FIXTURE_ASSETS = ['fixture-png-one', 'fixture-png-two']
+
 const CLICK = (label) => `await w(1200); q(${JSON.stringify(label)}).click(); await w(600)`
 
 export const SHOTS = [
@@ -31,6 +33,8 @@ export const SHOTS = [
     edit: { active: true, selected: { id: 'checklist.heading', panel: 'checklist', computed: { color: 'rgb(243, 233, 214)', background: 'rgba(0, 0, 0, 0)', borderColor: 'rgb(243, 233, 214)', radius: 0, borderWidth: 0, fontSize: 32, bold: true } }, canUndo: true, canRedo: false },
     design: { overrides: { 'checklist.heading': { color: '#ff3366', fontSize: 30 } } }
   },
+  { name: 'placed', hash: 'checklist', size: '380x600', design: { overrides: {}, moves: {}, backgrounds: { 'checklist.panel': { asset: 'fixture-png-two', fit: 'cover', opacity: 0.35 } }, stickers: [{ id: 'stk-one-0001', panel: 'checklist', kind: 'emoji', emoji: '🔥', x: 250, y: 60, size: 56, layer: 'front' }, { id: 'stk-two-0002', panel: 'checklist', kind: 'image', asset: 'fixture-png-one', x: 20, y: 380, size: 72, layer: 'behind' }] } },
+  { name: 'placed-bar', hash: 'bar', size: '740x90', design: { overrides: {}, moves: {}, backgrounds: { 'bar.surface': { asset: 'fixture-png-one', fit: 'tile', opacity: 0.3 } }, stickers: [{ id: 'stk-bar-0003', panel: 'bar', kind: 'emoji', emoji: '⭐', x: 330, y: 8, size: 40, layer: 'front' }] } },
   { name: 'welcome', hash: 'welcome', size: '520x640' }
 ]
 
@@ -64,7 +68,8 @@ function fixture(options) {
     opacity: options.opacity ?? 0.9,
     onboarded: true
   })
-  data.design = options.design ?? { overrides: {} }
+  data.design = options.design ?? { overrides: {}, moves: {}, stickers: [], backgrounds: {} }
+  data.assets = Object.fromEntries(FIXTURE_ASSETS.map((id) => [id, { id, ext: 'png', bytes: 100, name: `${id}.png`, addedAt: 1 }]))
   return data
 }
 
@@ -72,7 +77,7 @@ function page(root, options) {
   const data = fixture(options)
   const timer = { phase: 'focus', running: false, endsAt: null, remainingMs: 1_500_000, cycle: 0, task: '' }
   const edit = options.edit ?? { active: false, selected: null, canUndo: false, canRedo: false }
-  const mock = `<script>window.shima = new Proxy({
+  const mock = `<script>window.__ASSET_BASE__ = '/assets/'; window.shima = new Proxy({
     getData: () => Promise.resolve(${JSON.stringify(data)}),
     onChange: () => () => {},
     getTimer: () => Promise.resolve(${JSON.stringify(timer)}),
@@ -97,6 +102,11 @@ export async function shot(options) {
   cpSync(built, root, { recursive: true })
   page(root, options)
   const server = createServer((req, res) => {
+    const asset = /^\/assets\/(fixture-png-[a-z]+)$/.exec((req.url ?? '').split('?')[0])
+    if (asset) {
+      res.writeHead(200, { 'content-type': 'image/png' }).end(readFileSync(join(ROOT, 'scripts/preview/fixture-assets', `${asset[1]}.png`)))
+      return
+    }
     const file = join(root, decodeURIComponent((req.url ?? '/').split('?')[0]).replace(/^\/$/, '/index.html'))
     if (!file.startsWith(root) || !existsSync(file)) {
       res.writeHead(404).end()

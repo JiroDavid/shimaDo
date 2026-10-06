@@ -81,3 +81,22 @@ describe('edit mode visuals', () => {
     expect(css).toMatch(/\.edit-tag\s*\{[^}]*position: fixed/)
   })
 })
+
+describe('placed layers', () => {
+  it('keeps placed items out of the way outside edit mode', () => {
+    expect(css).toMatch(/\.placed-back,\s*\.placed-front\s*\{[^}]*pointer-events: none/)
+    expect(css).toMatch(/html\[data-edit\] \.sticker\s*\{[^}]*pointer-events: auto/)
+  })
+
+  it('stacks background, content and front stickers in that order', () => {
+    expect(css).toMatch(/\.placed-back\s*\{[^}]*z-index: 0/)
+    expect(css).toMatch(/\.panel > \.titlebar[^{]*\{[^}]*z-index: 1/)
+    expect(css).toMatch(/\.placed-front\s*\{[^}]*z-index: 2/)
+    expect(css).toMatch(/\.panel,\s*\.bar\s*\{[^}]*isolation: isolate/)
+  })
+
+  it('shows the resize handle only on the selected sticker', () => {
+    expect(css).toMatch(/\.sticker-handle\s*\{[^}]*display: none/)
+    expect(css).toMatch(/\.sticker\[data-edit-selected\] \.sticker-handle\s*\{[^}]*display: block/)
+  })
+})

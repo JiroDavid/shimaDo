@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
 import { ChecklistIcon, DumbbellIcon, EditIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
 import { EditableText } from '../components/EditableText'
+import { PlacedLayer } from '../components/PlacedLayer'
 import { ResizeHandles } from '../components/ResizeHandles'
 import { useEditState } from '../hooks/useEditState'
 import { useAvatar } from '../hooks/useData'
@@ -49,6 +50,7 @@ export function Bar({ data }: { data: AppData }) {
   return (
     <div ref={outer} className="relative h-full w-full">
       <div ref={inner} className="bar titlebar" data-el="bar.surface">
+      <PlacedLayer panel="bar" part="back" />
       <button className="bar-avatar no-drag" data-el="bar.avatar" data-active={profileOpen} aria-label="Profile" aria-pressed={profileOpen} onClick={() => window.shima.togglePanel('profile')}>
         {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <ProfileIcon />}
       </button>
@@ -85,6 +87,7 @@ export function Bar({ data }: { data: AppData }) {
         <PowerIcon />
         <span className="bar-label">Exit</span>
       </button>
+      <PlacedLayer panel="bar" part="front" />
       </div>
       <ResizeHandles id="bar" edge={6} corner={14} />
     </div>
