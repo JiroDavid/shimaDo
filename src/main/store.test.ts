@@ -187,4 +187,35 @@ describe('Store', () => {
     const byId = Object.fromEntries(s.data.tasks.map((x) => [x.id, x.endTime]))
     expect(byId).toEqual({ ok: '10:00', early: undefined, bad: undefined, untimed: undefined, none: undefined })
   })
+
+  it('defaults old files to the classic theme, keeps their accent and marks them onboarded', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { accent: 'sage' } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings).toMatchObject({ theme: 'classic', accent: 'sage', onboarded: true })
+  })
+
+  it('falls back from an unknown theme and an invalid accent', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { theme: 'neon', accent: 'purple', onboarded: false } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings).toMatchObject({ theme: 'classic', accent: 'orange', onboarded: false })
+  })
+
+  it('keeps a custom accent as lowercase hex and a known theme', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { theme: 'sakura', accent: '#ABCDEF' } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings).toMatchObject({ theme: 'sakura', accent: '#abcdef' })
+  })
+
+  it('starts a fresh install not onboarded', () => {
+    expect(defaultData().settings).toMatchObject({ theme: 'classic', accent: 'orange', onboarded: false })
+  })
 })

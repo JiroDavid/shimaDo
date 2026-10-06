@@ -1,5 +1,5 @@
 import { Menu, Tray, nativeImage, type MenuItemConstructorOptions } from 'electron'
-import type { Accent, PanelId, SettingsPatch } from '../shared/types'
+import type { PanelId, SettingsPatch } from '../shared/types'
 import type { PanelManager } from './panels'
 import type { Store } from './store'
 
@@ -12,7 +12,7 @@ const TRAY_PANELS: { id: PanelId; label: string }[] = [
   { id: 'notepad', label: 'Notepad' }
 ]
 const OPACITIES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']
+const ACCENTS: string[] = ['orange', 'brick', 'sage', 'cream']
 
 interface Options {
   store: Store

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { Accent, AppData, DisplayInfo } from '../../shared/types'
+import type { AppData, DisplayInfo } from '../../shared/types'
 import { Section } from '../components/Section'
 
-const ACCENTS: { id: Accent; color: string }[] = [
+const ACCENTS: { id: string; color: string }[] = [
   { id: 'orange', color: '#F2541B' },
   { id: 'brick', color: '#E5484D' },
   { id: 'sage', color: '#6E9A74' },

@@ -17,8 +17,6 @@ export interface DisplayInfo {
   hasBar: boolean
 }
 
-export type Accent = 'orange' | 'brick' | 'sage' | 'cream'
-
 export interface Task {
   id: string
   title: string
@@ -61,7 +59,9 @@ export interface PanelState {
 export interface Settings {
   opacity: number
   alwaysOnTop: boolean
-  accent: Accent
+  accent: string
+  theme: string
+  onboarded: boolean
   launchAtStartup: boolean
   textScale: number
   panels: Record<PanelId, PanelState>
@@ -84,7 +84,7 @@ export interface Gym {
   weighIns: Record<string, number>
 }
 
-export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale'>>
+export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'theme' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale'>>
 
 export interface Profile {
   username: string

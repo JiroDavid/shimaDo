@@ -1,8 +1,10 @@
-import type { Accent, AppData, GymDay, Habit, HabitInput, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
+import type { AppData, GymDay, Habit, HabitInput, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
 import { isValidDateKey } from '../shared/dates'
 import { normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateWeighIn } from '../shared/gym'
 import { MAX_HABITS, validateHabitInput } from '../shared/habits'
 import { MAX_NOTES_LENGTH } from '../shared/notes'
+import { normaliseAccentInput } from '../shared/theme'
+import { THEME_IDS } from '../shared/themes'
 import { validateProfile } from '../shared/profile'
 import { validateTaskInput } from '../shared/validate'
 
@@ -93,14 +95,14 @@ export function addPomodoro(d: AppData, date: string, task = '', endedAt = Date.
   d.pomodoroLog.push({ date, endedAt, task })
 }
 
-const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']
-
 export function sanitizeSettingsPatch(raw: unknown): SettingsPatch {
   if (typeof raw !== 'object' || raw === null) return {}
   const r = raw as Record<string, unknown>
   const out: SettingsPatch = {}
   if (typeof r.opacity === 'number' && Number.isFinite(r.opacity)) out.opacity = Math.min(1, Math.max(0.3, r.opacity))
-  if (ACCENTS.includes(r.accent as Accent)) out.accent = r.accent as Accent
+  const accent = normaliseAccentInput(r.accent)
+  if (accent) out.accent = accent
+  if (typeof r.theme === 'string' && THEME_IDS.includes(r.theme)) out.theme = r.theme
   if (typeof r.alwaysOnTop === 'boolean') out.alwaysOnTop = r.alwaysOnTop
   if (typeof r.launchAtStartup === 'boolean') out.launchAtStartup = r.launchAtStartup
   if (typeof r.textScale === 'number' && Number.isFinite(r.textScale)) out.textScale = Math.min(1.4, Math.max(0.8, r.textScale))

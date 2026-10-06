@@ -30,4 +30,12 @@ describe('backup', () => {
     raw.avatar = 'file:///etc/passwd'
     expect(parseBackup(JSON.stringify(raw)).avatar).toBeNull()
   })
+
+  it('falls back to safe theme settings when a backup names unknown ones', () => {
+    const raw = JSON.parse(buildBackup(defaultData(), null))
+    raw.data.settings.theme = 'neon'
+    raw.data.settings.accent = 'purple'
+    const parsed = parseBackup(JSON.stringify(raw))
+    expect(parsed.data.settings).toMatchObject({ theme: 'classic', accent: 'orange' })
+  })
 })

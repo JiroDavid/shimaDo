@@ -79,6 +79,21 @@ describe('mutations', () => {
     expect(d.pomodoroLog).toEqual([{ date: '2026-10-05', endedAt: 123, task: 'Essay' }])
   })
 
+  it('sanitizeSettingsPatch accepts slot ids and normalises custom accents', () => {
+    expect(sanitizeSettingsPatch({ accent: 'brick' })).toEqual({ accent: 'brick' })
+    expect(sanitizeSettingsPatch({ accent: '#ABC' })).toEqual({ accent: '#aabbcc' })
+    expect(sanitizeSettingsPatch({ accent: ' #AbCdEf ' })).toEqual({ accent: '#abcdef' })
+  })
+
+  it('sanitizeSettingsPatch rejects junk accents', () => {
+    for (const accent of ['purple', 'abc', '#12', '#fff; x', 5, null, {}]) expect(sanitizeSettingsPatch({ accent })).toEqual({})
+  })
+
+  it('sanitizeSettingsPatch only accepts known theme ids', () => {
+    expect(sanitizeSettingsPatch({ theme: 'midnight' })).toEqual({ theme: 'midnight' })
+    for (const theme of ['neon', '', 5, null, '__proto__']) expect(sanitizeSettingsPatch({ theme })).toEqual({})
+  })
+
   it('setNotes stores text and caps its length', () => {
     const d = defaultData()
     setNotes(d, 'hello\nworld')

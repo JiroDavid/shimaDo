@@ -4,6 +4,8 @@ import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type Panel
 import { emptyGym } from '../shared/gym'
 import { isValidTime } from '../shared/dates'
 import { MAX_NOTES_LENGTH } from '../shared/notes'
+import { normaliseAccentInput } from '../shared/theme'
+import { DEFAULT_THEME_ID, themeById } from '../shared/themes'
 import { isHabitIcon, MAX_HABITS, MAX_HABIT_NAME } from '../shared/habits'
 import { emptyProfile } from '../shared/profile'
 
@@ -23,6 +25,8 @@ export function defaultData(): AppData {
       opacity: 0.9,
       alwaysOnTop: true,
       accent: 'orange',
+      theme: DEFAULT_THEME_ID,
+      onboarded: false,
       launchAtStartup: true,
       textScale: 1,
       panels: {
@@ -89,6 +93,7 @@ export function migrate(raw: unknown): AppData {
   if (r.version !== 1) throw new Error(`unsupported data version ${String(r.version)}`)
   const def = defaultData()
   const s = (typeof r.settings === 'object' && r.settings !== null ? r.settings : {}) as Partial<Settings>
+  const theme = themeById(typeof s.theme === 'string' ? s.theme : DEFAULT_THEME_ID)
   const panels = {} as Record<PanelId, PanelState>
   const saved = (s.panels ?? {}) as Partial<Record<string, PanelState>>
   for (const id of PANEL_IDS) panels[id] = { ...def.settings.panels[id], ...((id === 'habits' ? saved.habits ?? saved.nicotine : saved[id]) ?? {}) }
@@ -102,7 +107,14 @@ export function migrate(raw: unknown): AppData {
     pomodoroLog: Array.isArray(r.pomodoroLog) ? (r.pomodoroLog as AppData['pomodoroLog']) : [],
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },
     gym: pickGym(r.gym),
-    settings: { ...def.settings, ...s, panels }
+    settings: {
+      ...def.settings,
+      ...s,
+      panels,
+      theme: theme.id,
+      accent: normaliseAccentInput(s.accent) ?? theme.defaultAccent,
+      onboarded: typeof s.onboarded === 'boolean' ? s.onboarded : true
+    }
   }
 }
 
