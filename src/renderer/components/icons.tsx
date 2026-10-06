@@ -65,6 +65,11 @@ const HABIT_PATHS: Record<HabitIconId, ReactNode> = {
 }
 
 export const HabitIcon = ({ id }: { id: HabitIconId }) => <Icon>{HABIT_PATHS[id]}</Icon>
+export const NotepadIcon = () => (
+  <Icon>
+    <path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h3" />
+  </Icon>
+)
 export const FocusIcon = () => (
   <Icon>
     <circle cx="12" cy="13" r="8" />

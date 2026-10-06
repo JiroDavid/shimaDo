@@ -2,6 +2,7 @@ import type { Accent, AppData, GymDay, Habit, HabitInput, ProfileInput, Settings
 import { isValidDateKey } from '../shared/dates'
 import { normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateWeighIn } from '../shared/gym'
 import { MAX_HABITS, validateHabitInput } from '../shared/habits'
+import { MAX_NOTES_LENGTH } from '../shared/notes'
 import { validateProfile } from '../shared/profile'
 import { validateTaskInput } from '../shared/validate'
 
@@ -80,6 +81,10 @@ export function setHabitDay(d: AppData, id: string, date: string, on: boolean): 
   if (!isValidDateKey(date) || !d.habits.some((h) => h.id === id)) return
   if (on) (d.habitLog[id] ??= {})[date] = true
   else if (d.habitLog[id]) delete d.habitLog[id][date]
+}
+
+export function setNotes(d: AppData, text: string): void {
+  if (typeof text === 'string') d.notes = text.slice(0, MAX_NOTES_LENGTH)
 }
 
 export function addPomodoro(d: AppData, date: string, task = '', endedAt = Date.now()): void {

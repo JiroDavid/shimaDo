@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
-import { ChecklistIcon, DumbbellIcon, FocusIcon, MinimizeIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
+import { ChecklistIcon, DumbbellIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
 import { ResizeHandles } from '../components/ResizeHandles'
 import { useAvatar } from '../hooks/useData'
 
@@ -14,6 +14,7 @@ const BUTTONS: { id: PanelId; label: string; icon: ReactNode }[] = [
   { id: 'progress', label: 'Progress', icon: <ProgressIcon /> },
   { id: 'habits', label: 'Habits', icon: <HabitsIcon /> },
   { id: 'focus', label: 'Focus', icon: <FocusIcon /> },
+  { id: 'notepad', label: 'Notepad', icon: <NotepadIcon /> },
   { id: 'settings', label: 'Settings', icon: <SettingsIcon /> }
 ]
 

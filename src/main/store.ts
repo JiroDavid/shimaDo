@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings } from '../shared/types'
 import { emptyGym } from '../shared/gym'
+import { MAX_NOTES_LENGTH } from '../shared/notes'
 import { isHabitIcon, MAX_HABITS, MAX_HABIT_NAME } from '../shared/habits'
 import { emptyProfile } from '../shared/profile'
 
@@ -12,6 +13,7 @@ export function defaultData(): AppData {
     completions: [],
     habits: [],
     habitLog: {},
+    notes: '',
     pomodoros: {},
     pomodoroLog: [],
     profile: emptyProfile(),
@@ -30,6 +32,7 @@ export function defaultData(): AppData {
         progress: { width: 300, height: 380, visible: true },
         habits: { width: 300, height: 350, visible: true },
         focus: { width: 280, height: 360, visible: false },
+        notepad: { width: 300, height: 340, visible: false },
         settings: { width: 330, height: 450, visible: false },
         profile: { width: 315, height: 400, visible: false },
         confirm: { width: 320, height: 190, visible: false },
@@ -87,6 +90,7 @@ export function migrate(raw: unknown): AppData {
     tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']) : [],
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     ...pickHabits(r),
+    notes: typeof r.notes === 'string' ? r.notes.slice(0, MAX_NOTES_LENGTH) : '',
     pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},
     pomodoroLog: Array.isArray(r.pomodoroLog) ? (r.pomodoroLog as AppData['pomodoroLog']) : [],
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },

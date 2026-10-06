@@ -17,6 +17,12 @@ describe('defaultBounds', () => {
     expect(n.x).toBe(1604)
     expect(n.y).toBeGreaterThanOrEqual(p.y + p.height)
   })
+  it('puts the notepad under the focus timer without overlap', () => {
+    const f = defaultBounds('focus', area, panels)
+    const n = defaultBounds('notepad', area, panels)
+    expect(n.x + n.width).toBe(f.x + f.width)
+    expect(n.y).toBeGreaterThanOrEqual(f.y + f.height)
+  })
   it('places schedule to the right of the checklist and gym to the right of schedule', () => {
     expect(defaultBounds('schedule', area, panels)).toMatchObject({ x: 16 + 300 + 12, y: 78 })
     expect(defaultBounds('gym', area, panels)).toMatchObject({ x: 16 + 300 + 12 + 350 + 12, y: 78 })

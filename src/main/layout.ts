@@ -20,6 +20,7 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   progress: { width: 200, height: 180 },
   habits: { width: 200, height: 180 },
   focus: { width: 220, height: 240 },
+  notepad: { width: 220, height: 200 },
   settings: { width: 260, height: 300 },
   profile: { width: 240, height: 300 },
   confirm: { width: 280, height: 160 },
@@ -71,6 +72,8 @@ export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels'
       return { x: right - width, y: top + panels.progress.height + GAP, width, height }
     case 'focus':
       return { x: right - panels.progress.width - GAP - width, y: top, width, height }
+    case 'notepad':
+      return { x: right - panels.progress.width - GAP - width, y: top + panels.focus.height + GAP, width, height }
     case 'settings':
     case 'profile':
     case 'confirm':

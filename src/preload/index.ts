@@ -24,6 +24,7 @@ const api: ShimaApi = {
   addHabit: (input) => ipcRenderer.invoke('habit:add', input),
   updateHabit: (id, input) => ipcRenderer.invoke('habit:update', id, input),
   deleteHabit: (id) => ipcRenderer.invoke('habit:delete', id),
+  setNotes: (text) => ipcRenderer.invoke('notes:set', text),
   setHabitDay: (id, date, on) => ipcRenderer.invoke('habit:set', id, date, on),
   hidePanel: (id) => ipcRenderer.send('panel:hide', id),
   togglePanel: (id) => ipcRenderer.send('panel:toggle', id),

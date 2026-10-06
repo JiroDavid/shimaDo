@@ -9,6 +9,7 @@ import { Focus } from './panels/Focus'
 import { Gym } from './panels/Gym'
 import { Mini } from './panels/Mini'
 import { Habits } from './panels/Habits'
+import { Notepad } from './panels/Notepad'
 import { Profile } from './panels/Profile'
 import { Progress } from './panels/Progress'
 import { Schedule } from './panels/Schedule'
@@ -22,6 +23,7 @@ const TITLES: Record<PanelId, string> = {
   progress: 'progress',
   habits: 'habits',
   focus: 'focus',
+  notepad: 'notepad',
   settings: 'settings',
   profile: 'profile',
   confirm: 'exit',
@@ -57,6 +59,7 @@ export function App() {
       {id === 'progress' && <Progress data={data} />}
       {id === 'habits' && <Habits data={data} />}
       {id === 'focus' && <Focus data={data} />}
+      {id === 'notepad' && <Notepad data={data} />}
       {id === 'settings' && <Settings data={data} />}
       {id === 'profile' && <Profile data={data} />}
       {id === 'confirm' && <Confirm />}

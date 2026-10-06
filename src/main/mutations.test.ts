@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { occurrencesOn } from '../shared/recurrence'
-import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
+import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, setNotes, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
 import { defaultData } from './store'
 
 describe('mutations', () => {
@@ -61,6 +61,16 @@ describe('mutations', () => {
     const d = defaultData()
     addPomodoro(d, '2026-10-05', 'Essay', 123)
     expect(d.pomodoroLog).toEqual([{ date: '2026-10-05', endedAt: 123, task: 'Essay' }])
+  })
+
+  it('setNotes stores text and caps its length', () => {
+    const d = defaultData()
+    setNotes(d, 'hello\nworld')
+    expect(d.notes).toBe('hello\nworld')
+    setNotes(d, 'x'.repeat(60_000))
+    expect(d.notes).toHaveLength(50_000)
+    setNotes(d, 42 as never)
+    expect(d.notes).toHaveLength(50_000)
   })
 
   it('setHabitDay toggles a day for an existing habit', () => {

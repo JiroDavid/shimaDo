@@ -8,7 +8,8 @@ const TRAY_PANELS: { id: PanelId; label: string }[] = [
   { id: 'schedule', label: 'Schedule' },
   { id: 'progress', label: 'Progress' },
   { id: 'habits', label: 'Habits' },
-  { id: 'focus', label: 'Focus' }
+  { id: 'focus', label: 'Focus' },
+  { id: 'notepad', label: 'Notepad' }
 ]
 const OPACITIES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
 const ACCENTS: Accent[] = ['orange', 'brick', 'sage', 'cream']

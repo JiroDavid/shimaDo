@@ -5,8 +5,8 @@ export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'settings' | 'profile' | 'confirm' | 'mini'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'settings', 'profile', 'confirm', 'mini']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'settings' | 'profile' | 'confirm' | 'mini'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile', 'confirm', 'mini']
 export type TimerAction = 'start' | 'pause' | 'reset' | 'skip'
 export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
@@ -119,6 +119,7 @@ export interface AppData {
   completions: Completion[]
   habits: Habit[]
   habitLog: Record<string, Record<string, true>>
+  notes: string
   pomodoros: Record<string, number>
   pomodoroLog: PomodoroSession[]
   profile: Profile
@@ -147,6 +148,7 @@ export interface ShimaApi {
   updateHabit(id: string, input: HabitInput): Promise<void>
   deleteHabit(id: string): Promise<void>
   setHabitDay(id: string, date: string, on: boolean): Promise<void>
+  setNotes(text: string): Promise<void>
   hidePanel(id: PanelId): void
   togglePanel(id: PanelId): void
   setSettings(patch: SettingsPatch): Promise<void>

@@ -4,7 +4,7 @@ import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, 
 import { toDateKey } from '../shared/dates'
 import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
-  setHabitDay, setProfile, setSplit, setWeighIn, updateHabit, updateTask
+  setHabitDay, setNotes, setProfile, setSplit, setWeighIn, updateHabit, updateTask
 } from './mutations'
 import type { PomodoroTimer } from './timer'
 import type { PanelManager } from './panels'
@@ -57,6 +57,10 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   })
   ipcMain.handle('habit:delete', (_e, id: string) => {
     store.update((d) => deleteHabit(d, id))
+    commit()
+  })
+  ipcMain.handle('notes:set', (_e, text: string) => {
+    store.update((d) => setNotes(d, text))
     commit()
   })
   ipcMain.handle('habit:set', (_e, id: string, date: string, on: boolean) => {

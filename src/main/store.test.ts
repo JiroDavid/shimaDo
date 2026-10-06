@@ -160,4 +160,17 @@ describe('Store', () => {
     expect(s.data.habits).toEqual([{ id: 'a', name: 'Read', icon: 'check' }])
     expect(s.data.habitLog).toEqual({ a: { '2026-10-05': true } })
   })
+
+  it('keeps saved notes and defaults old files to an empty note', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], notes: 'remember milk' }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.notes).toBe('remember milk')
+    expect(s.data.settings.panels.notepad.visible).toBe(false)
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], notes: 5 }))
+    s.load()
+    expect(s.data.notes).toBe('')
+  })
 })
