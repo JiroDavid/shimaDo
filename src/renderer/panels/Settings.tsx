@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { AppData, DisplayInfo } from '../../shared/types'
-import { ACCENT_SLOTS } from '../../shared/theme'
-import { themeById } from '../../shared/themes'
+import { AccentPicker } from '../components/AccentPicker'
 import { Section } from '../components/Section'
+import { ThemePicker } from '../components/ThemePicker'
 
 function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -15,7 +15,6 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
 
 export function Settings({ data }: { data: AppData }) {
   const s = data.settings
-  const accents = themeById(s.theme).accents
   const [opacity, setOpacity] = useState(s.opacity)
   const [scale, setScale] = useState(s.textScale)
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
@@ -41,6 +40,10 @@ export function Settings({ data }: { data: AppData }) {
 
   return (
     <div className="space-y-2 pb-2">
+      <Section label="Theme">
+        <ThemePicker settings={s} />
+      </Section>
+
       <Section label="Look">
         <div className="space-y-4 pb-2">
           <div>
@@ -78,21 +81,7 @@ export function Settings({ data }: { data: AppData }) {
             />
             <p className="mt-1 text-[0.8rem] text-muted">Everything resizes and re-wraps. Panels grow or shrink with it.</p>
           </div>
-          <div>
-            <div className="mb-2 font-bold">Accent colour</div>
-            <div className="flex gap-3">
-              {ACCENT_SLOTS.map((slot) => (
-                <button
-                  key={slot}
-                  className="swatch"
-                  aria-label={accents[slot].name}
-                  aria-pressed={s.accent === slot}
-                  onClick={() => window.shima.setSettings({ accent: slot })}
-                  style={{ background: accents[slot].value }}
-                />
-              ))}
-            </div>
-          </div>
+          <AccentPicker settings={s} />
         </div>
       </Section>
 
