@@ -11,7 +11,7 @@ interface Paths {
   file: string
 }
 
-const CENTERED: PanelId[] = ['settings', 'profile', 'confirm']
+const CENTERED: PanelId[] = ['settings', 'profile', 'confirm', 'welcome']
 const UI_SCALE = 0.91
 const RESIZE_POLL_MS = 8
 const RESIZE_SAFETY_MS = 15000

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { occurrencesOn } from '../shared/recurrence'
-import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, setNotes, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
+import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, claimWelcome, setNotes, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
 import { defaultData } from './store'
 
 describe('mutations', () => {
@@ -92,6 +92,19 @@ describe('mutations', () => {
   it('sanitizeSettingsPatch only accepts known theme ids', () => {
     expect(sanitizeSettingsPatch({ theme: 'midnight' })).toEqual({ theme: 'midnight' })
     for (const theme of ['neon', '', 5, null, '__proto__']) expect(sanitizeSettingsPatch({ theme })).toEqual({})
+  })
+
+  it('claimWelcome fires exactly once on a fresh install', () => {
+    const d = defaultData()
+    expect(claimWelcome(d)).toBe(true)
+    expect(d.settings.onboarded).toBe(true)
+    expect(claimWelcome(d)).toBe(false)
+  })
+
+  it('claimWelcome never fires for an upgraded install', () => {
+    const d = defaultData()
+    d.settings.onboarded = true
+    expect(claimWelcome(d)).toBe(false)
   })
 
   it('setNotes stores text and caps its length', () => {

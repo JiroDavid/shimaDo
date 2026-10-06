@@ -218,4 +218,13 @@ describe('Store', () => {
   it('starts a fresh install not onboarded', () => {
     expect(defaultData().settings).toMatchObject({ theme: 'classic', accent: 'orange', onboarded: false })
   })
+
+  it('keeps the welcome panel hidden on load', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { panels: { welcome: { width: 500, height: 500, visible: true } } } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.panels.welcome.visible).toBe(false)
+  })
 })

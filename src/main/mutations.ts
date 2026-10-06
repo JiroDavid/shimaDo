@@ -90,6 +90,12 @@ export function setNotes(d: AppData, text: string): void {
   if (typeof text === 'string') d.notes = text.slice(0, MAX_NOTES_LENGTH)
 }
 
+export function claimWelcome(d: AppData): boolean {
+  if (d.settings.onboarded) return false
+  d.settings.onboarded = true
+  return true
+}
+
 export function addPomodoro(d: AppData, date: string, task = '', endedAt = Date.now()): void {
   d.pomodoros[date] = (d.pomodoros[date] ?? 0) + 1
   d.pomodoroLog.push({ date, endedAt, task })

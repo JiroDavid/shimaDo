@@ -6,7 +6,7 @@ import { PANEL_IDS, type BackupResult, type SettingsPatch } from '../shared/type
 import { chooseAvatar, readAvatarDataUrl, removeAvatar, writeAvatar } from './avatar'
 import { avatarBytes, buildBackup, parseBackup } from './backup'
 import { registerIpc } from './ipc'
-import { addPomodoro, setAvatarStamp } from './mutations'
+import { addPomodoro, claimWelcome, setAvatarStamp } from './mutations'
 import { PomodoroTimer } from './timer'
 import { PanelManager } from './panels'
 import { startScheduler } from './scheduler'
@@ -136,10 +136,11 @@ function boot(): void {
     for (const id of PANEL_IDS) {
       if (id === 'mini') continue
       if (id === 'bar' || id === 'checklist') panels.show(id)
-      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && store.data.settings.panels[id].visible) panels.show(id)
+      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'welcome' && store.data.settings.panels[id].visible) panels.show(id)
     }
 
     panels.fitAll()
+    if (store.update((d) => claimWelcome(d))) panels.show('welcome')
     screen.on('display-added', () => panels.fitAll())
     screen.on('display-removed', () => panels.fitAll())
     screen.on('display-metrics-changed', () => panels.fitAll())

@@ -32,6 +32,11 @@ describe('defaultBounds', () => {
     expect(defaultBounds('profile', area, panels)).toEqual({ x: 803, y: 320, width: 315, height: 400 })
     expect(defaultBounds('confirm', area, panels)).toEqual({ x: 800, y: 425, width: 320, height: 190 })
   })
+  it('centers the welcome panel', () => {
+    const w = defaultBounds('welcome', area, panels)
+    expect(w.x + w.width / 2).toBeCloseTo(area.x + area.width / 2, 0)
+    expect(w.y + w.height / 2).toBeCloseTo(area.y + area.height / 2, 0)
+  })
   it('puts the minimised icon where the bar starts', () => {
     expect(defaultBounds('mini', area, panels)).toEqual({ x: 16, y: 16, width: 64, height: 64 })
   })

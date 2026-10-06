@@ -11,6 +11,7 @@ import { Gym } from './panels/Gym'
 import { Mini } from './panels/Mini'
 import { Habits } from './panels/Habits'
 import { Notepad } from './panels/Notepad'
+import { Welcome } from './panels/Welcome'
 import { Profile } from './panels/Profile'
 import { Progress } from './panels/Progress'
 import { Schedule } from './panels/Schedule'
@@ -25,13 +26,14 @@ const TITLES: Record<PanelId, string> = {
   habits: 'habits',
   focus: 'focus',
   notepad: 'notepad',
+  welcome: 'welcome',
   settings: 'settings',
   profile: 'profile',
   confirm: 'exit',
   mini: 'shimado'
 }
 
-const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both', focus: 'both', settings: 'both', profile: 'both', confirm: 'both' }
+const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both', focus: 'both', settings: 'both', profile: 'both', confirm: 'both', welcome: 'both' }
 
 const NOTEPAD_NATURAL_WIDTH = 200
 
@@ -61,6 +63,7 @@ export function App() {
       {id === 'habits' && <Habits data={data} />}
       {id === 'focus' && <Focus data={data} />}
       {id === 'notepad' && <Notepad data={data} />}
+      {id === 'welcome' && <Welcome data={data} />}
       {id === 'settings' && <Settings data={data} />}
       {id === 'profile' && <Profile data={data} />}
       {id === 'confirm' && <Confirm />}
