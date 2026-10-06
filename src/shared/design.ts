@@ -1,3 +1,5 @@
+import type { AssetInfo } from './assets'
+import { sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, type Background, type Move, type Sticker } from './placement'
 import { PANEL_IDS, type PanelId } from './types'
 import { GROUP_PREFIX, elementById, isKnownKey } from './elements'
 import { colorToHex, parseColor, resolveAccent, type Theme } from './theme'
@@ -15,9 +17,12 @@ export interface StyleOverride {
 
 export interface Design {
   overrides: Record<string, StyleOverride>
+  moves: Record<string, Move>
+  stickers: Sticker[]
+  backgrounds: Record<string, Background>
 }
 
-export const emptyDesign = (): Design => ({ overrides: {} })
+export const emptyDesign = (): Design => ({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
 
 export const COLOR_INPUT_FALLBACK = '#000000'
 export const MAX_TEXT = 60
@@ -52,9 +57,10 @@ export function sanitizeOverride(raw: unknown): StyleOverride {
   return out as StyleOverride
 }
 
-export function sanitizeDesign(raw: unknown): Design {
+export function sanitizeDesign(raw: unknown, assets: Record<string, AssetInfo> = {}): Design {
   const overrides: Record<string, StyleOverride> = {}
-  const src = isObj(raw) ? raw.overrides : undefined
+  const whole = isObj(raw) ? raw : {}
+  const src = whole.overrides
   if (isObj(src)) {
     for (const [key, value] of Object.entries(src)) {
       if (!isKnownKey(key)) continue
@@ -62,7 +68,12 @@ export function sanitizeDesign(raw: unknown): Design {
       if (Object.keys(o).length > 0) overrides[key] = o
     }
   }
-  return { overrides }
+  return {
+    overrides,
+    moves: sanitizeMoves(whole.moves),
+    stickers: sanitizeStickers(whole.stickers, assets),
+    backgrounds: sanitizeBackgrounds(whole.backgrounds, assets)
+  }
 }
 
 export function applyPatch(current: StyleOverride, patch: unknown): StyleOverride {
@@ -94,14 +105,31 @@ export function setOverride(design: Design, key: string, patch: unknown): Design
   const overrides = { ...design.overrides }
   if (Object.keys(next).length === 0) delete overrides[key]
   else overrides[key] = next
-  return { overrides }
+  return { ...design, overrides }
 }
 
 export function clearOverride(design: Design, key: string): Design {
   if (!Object.prototype.hasOwnProperty.call(design.overrides, key)) return design
   const overrides = { ...design.overrides }
   delete overrides[key]
-  return { overrides }
+  return { ...design, overrides }
+}
+
+export function clearElement(design: Design, key: string): Design {
+  const has = (o: object) => Object.prototype.hasOwnProperty.call(o, key)
+  if (!has(design.overrides) && !has(design.moves)) return design
+  const overrides = { ...design.overrides }
+  const moves = { ...design.moves }
+  delete overrides[key]
+  delete moves[key]
+  return { ...design, overrides, moves }
+}
+
+export function removeAssetUsers(design: Design, assetId: string): Design {
+  const stickers = design.stickers.filter((s) => s.asset !== assetId)
+  const entries = Object.entries(design.backgrounds).filter(([, bg]) => bg.asset !== assetId)
+  if (stickers.length === design.stickers.length && entries.length === Object.keys(design.backgrounds).length) return design
+  return { ...design, stickers, backgrounds: Object.fromEntries(entries) }
 }
 
 export function labelBoxValue(typed: string, stored: string | undefined, defaultText: string | undefined, focused: boolean): string {
@@ -133,8 +161,10 @@ export interface SelectedElement {
 const clampNum = (v: unknown, hi: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(0, Math.round(v))) : 0)
 const cssColor = (v: unknown) => (typeof v === 'string' && parseColor(v) ? v : '')
 
-export function parseSelection(raw: unknown): SelectedElement | null {
-  if (!isObj(raw) || typeof raw.id !== 'string' || !isKnownKey(raw.id)) return null
+export function parseSelection(raw: unknown, stickers: Sticker[] = []): SelectedElement | null {
+  if (!isObj(raw) || typeof raw.id !== 'string') return null
+  const known = isKnownKey(raw.id) || (raw.id.startsWith('sticker:') && stickers.some((s) => `sticker:${s.id}` === raw.id))
+  if (!known) return null
   if (typeof raw.panel !== 'string' || !(PANEL_IDS as string[]).includes(raw.panel)) return null
   const c = raw.computed
   if (!isObj(c)) return null

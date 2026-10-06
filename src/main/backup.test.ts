@@ -41,12 +41,12 @@ describe('backup', () => {
 
   it('round-trips design overrides and drops bad ones from a backup', () => {
     const d = defaultData()
-    d.design = { overrides: { 'bar.label': { text: 'Mine', color: '#ff0000' } } }
+    d.design = { ...d.design, overrides: { 'bar.label': { text: 'Mine', color: '#ff0000' } } }
     const parsed = parseBackup(buildBackup(d, null))
     expect(parsed.data.design).toEqual(d.design)
     const raw = JSON.parse(buildBackup(d, null))
     raw.data.design.overrides['nope'] = { color: '#fff' }
     raw.data.design.overrides['bar.label'].text = '<script>'
-    expect(parseBackup(JSON.stringify(raw)).data.design).toEqual({ overrides: { 'bar.label': { color: '#ff0000' } } })
+    expect(parseBackup(JSON.stringify(raw)).data.design).toEqual({ ...defaultData().design, overrides: { 'bar.label': { color: '#ff0000' } } })
   })
 })

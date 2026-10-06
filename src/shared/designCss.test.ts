@@ -68,4 +68,16 @@ describe('designCss', () => {
     expect(designCss({ 'group:bar-button': { radius: 4 } })).toBe('.bar-btn { border-radius: 4px !important }')
     expect(designCss({ 'group:task-title': { color: '#112233' } })).toContain(".task-title:where(:not([data-done='true']))")
   })
+
+  it('writes a translate for movable elements', () => {
+    expect(designCss({}, { 'bar.label': { x: 10, y: -5 } })).toBe('[data-el="bar.label"] { translate: 10px -5px !important }')
+    expect(designCss({ 'bar.label': { color: '#fff' } }, { 'bar.label': { x: 10, y: -5 } })).toBe(
+      '[data-el="bar.label"] { color: #fff !important; translate: 10px -5px !important }'
+    )
+  })
+
+  it('ignores moves for surfaces, groups and unknown keys and clamps the offset', () => {
+    expect(designCss({}, { 'checklist.panel': { x: 1, y: 1 }, 'bar.surface': { x: 1, y: 1 }, 'group:button': { x: 1, y: 1 }, nope: { x: 1, y: 1 } })).toBe('')
+    expect(designCss({}, { 'bar.label': { x: 99999, y: -99999 } })).toBe('[data-el="bar.label"] { translate: 1500px -1500px !important }')
+  })
 })

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  applyPatch, clearOverride, emptyDesign, labelBoxValue, paletteFor, parseSelection, resolveOverride, sanitizeDesign, sanitizeOverride, setOverride, type Design
+  applyPatch, clearElement, clearOverride, emptyDesign, labelBoxValue, paletteFor, parseSelection, resolveOverride, removeAssetUsers, sanitizeDesign, sanitizeOverride, setOverride, type Design
 } from './design'
 import { themeById } from './themes'
 
@@ -31,7 +31,7 @@ describe('sanitizeOverride', () => {
 describe('sanitizeDesign', () => {
   it('drops unknown keys, prototype keys and empty overrides', () => {
     const raw = JSON.parse('{"overrides":{"__proto__":{"color":"#fff"},"nope":{"color":"#fff"},"group:nope":{"color":"#fff"},"bar.label":{"text":"Hi"},"group:button":{"radius":4},"bar.avatar":{}}}')
-    expect(sanitizeDesign(raw)).toEqual({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { radius: 4 } } })
+    expect(sanitizeDesign(raw)).toEqual({ ...emptyDesign(), overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { radius: 4 } } })
     expect(({} as Record<string, unknown>).color).toBeUndefined()
   })
 
@@ -76,12 +76,12 @@ describe('patching', () => {
 
 describe('resolveOverride', () => {
   it('layers the element over its group', () => {
-    const d: Design = { overrides: { 'group:bar-button': { radius: 4, color: '#ff0000' }, 'bar.exit': { color: '#0000ff' } } }
+    const d: Design = { ...emptyDesign(), overrides: { 'group:bar-button': { radius: 4, color: '#ff0000' }, 'bar.exit': { color: '#0000ff' } } }
     expect(resolveOverride(d, 'bar.exit')).toEqual({ radius: 4, color: '#0000ff' })
   })
 
   it('uses only the element when it has no group', () => {
-    const d: Design = { overrides: { 'bar.label': { color: '#0000ff' } } }
+    const d: Design = { ...emptyDesign(), overrides: { 'bar.label': { color: '#0000ff' } } }
     expect(resolveOverride(d, 'bar.label')).toEqual({ color: '#0000ff' })
     expect(resolveOverride(d, 'nope')).toEqual({})
   })
@@ -158,5 +158,58 @@ describe('labelBoxValue', () => {
   it('falls back to the default label, then to empty', () => {
     expect(labelBoxValue('old', undefined, 'Things to do today', false)).toBe('Things to do today')
     expect(labelBoxValue('old', undefined, undefined, false)).toBe('')
+  })
+})
+
+describe('design placement fields', () => {
+  const assets = { 'asset-aaaa-1': { id: 'asset-aaaa-1', ext: 'png' as const, bytes: 5, name: 'a', addedAt: 1 } }
+  const sticker = { id: 'stk-aaaa-0001', panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 2, size: 40, layer: 'front' }
+
+  it('starts empty in every field', () => {
+    expect(emptyDesign()).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+  })
+
+  it('sanitises moves, stickers and backgrounds with the asset index', () => {
+    const raw = {
+      overrides: {},
+      moves: { 'bar.label': { x: 5, y: 6 }, 'checklist.panel': { x: 1, y: 1 } },
+      stickers: [sticker, { ...sticker, id: 'stk-bbbb-0002', asset: 'gone-asset-1' }],
+      backgrounds: { 'bar.surface': { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 }, 'bar.label': { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 } }
+    }
+    const d = sanitizeDesign(raw, assets)
+    expect(d.moves).toEqual({ 'bar.label': { x: 5, y: 6 } })
+    expect(d.stickers).toEqual([sticker])
+    expect(Object.keys(d.backgrounds)).toEqual(['bar.surface'])
+    expect(sanitizeDesign(raw).stickers).toEqual([])
+  })
+
+  it('keeps moves, stickers and backgrounds when an override changes', () => {
+    const base = { ...emptyDesign(), moves: { 'bar.label': { x: 1, y: 1 } } }
+    const next = setOverride(base, 'bar.label', { color: '#fff' })
+    expect(next.moves).toEqual(base.moves)
+    expect(clearOverride(next, 'bar.label').moves).toEqual(base.moves)
+  })
+
+  it('clears an element override and move together', () => {
+    const d = { ...emptyDesign(), overrides: { 'bar.label': { color: '#fff' } }, moves: { 'bar.label': { x: 1, y: 1 }, 'bar.exit': { x: 2, y: 2 } } }
+    const next = clearElement(d, 'bar.label')
+    expect(next.overrides).toEqual({})
+    expect(next.moves).toEqual({ 'bar.exit': { x: 2, y: 2 } })
+    expect(clearElement(d, 'nope')).toBe(d)
+  })
+
+  it('removes stickers and backgrounds that use a deleted asset', () => {
+    const d = sanitizeDesign({ overrides: {}, moves: {}, stickers: [sticker], backgrounds: { 'bar.surface': { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 } } }, assets)
+    const next = removeAssetUsers(d, 'asset-aaaa-1')
+    expect(next.stickers).toEqual([])
+    expect(next.backgrounds).toEqual({})
+    expect(removeAssetUsers(d, 'other-asset-1')).toBe(d)
+  })
+
+  it('accepts a sticker selection only for a sticker that exists', () => {
+    const computed = { color: '', background: '', borderColor: '', radius: 0, borderWidth: 0, fontSize: 0, bold: false }
+    expect(parseSelection({ id: 'sticker:stk-aaaa-0001', panel: 'bar', computed }, [sticker as never])?.id).toBe('sticker:stk-aaaa-0001')
+    expect(parseSelection({ id: 'sticker:stk-aaaa-0001', panel: 'bar', computed }, [])).toBeNull()
+    expect(parseSelection({ id: 'sticker:stk-aaaa-0001', panel: 'bar', computed })).toBeNull()
   })
 })

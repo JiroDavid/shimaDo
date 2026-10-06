@@ -1,4 +1,5 @@
-import { ELEMENTS, GROUPS, GROUP_PREFIX, isSurfaceKey } from './elements'
+import { ELEMENTS, GROUPS, GROUP_PREFIX, isMovableKey, isSurfaceKey } from './elements'
+import type { Move } from './placement'
 import type { StyleOverride } from './design'
 import { parseColor } from './theme'
 
@@ -32,7 +33,7 @@ function declarations(o: StyleOverride, surface: boolean): string[] {
   return out
 }
 
-export function designCss(overrides: Record<string, StyleOverride>): string {
+export function designCss(overrides: Record<string, StyleOverride>, moves: Record<string, Move> = {}): string {
   const rules: string[] = []
   for (const g of GROUPS) {
     const key = GROUP_PREFIX + g.id
@@ -41,6 +42,12 @@ export function designCss(overrides: Record<string, StyleOverride>): string {
   }
   for (const e of ELEMENTS) {
     const d = declarations(overrides[e.id] ?? {}, isSurfaceKey(e.id))
+    const m = isMovableKey(e.id) && Object.prototype.hasOwnProperty.call(moves, e.id) ? moves[e.id] : undefined
+    if (m) {
+      const x = Math.min(1500, Math.max(-1500, Math.round(m.x)))
+      const y = Math.min(1500, Math.max(-1500, Math.round(m.y)))
+      if (Number.isFinite(x) && Number.isFinite(y)) d.push(`translate: ${x}px ${y}px !important`)
+    }
     if (d.length > 0) rules.push(`[data-el="${e.id}"] { ${d.join('; ')} }`)
   }
   return rules.join('\n')

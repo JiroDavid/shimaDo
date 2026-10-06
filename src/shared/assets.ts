@@ -30,7 +30,8 @@ const SVG_UNSAFE = [
   /\son[a-z]+\s*=/i,
   /javascript\s*:/i,
   /(?:href|src)\s*=\s*["']?\s*data:\s*(?:text\/html|application\/(?:xhtml|xml|javascript))/i,
-  /<!ENTITY/i
+  /<!ENTITY/i,
+  /&#/
 ]
 
 export function sniffAsset(bytes: Uint8Array): AssetExt | null {

@@ -229,7 +229,7 @@ describe('Store', () => {
   })
 
   it('defaults to no design overrides', () => {
-    expect(defaultData().design).toEqual({ overrides: {} })
+    expect(defaultData().design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
   })
 
   it('loads old files with no design as empty', () => {
@@ -238,7 +238,7 @@ describe('Store', () => {
     fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [] }))
     const s = new Store(file)
     s.load()
-    expect(s.data.design).toEqual({ overrides: {} })
+    expect(s.data.design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
   })
 
   it('keeps valid overrides and drops stale or invalid ones on load', () => {
@@ -250,7 +250,7 @@ describe('Store', () => {
     }))
     const s = new Store(file)
     s.load()
-    expect(s.data.design).toEqual({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { background: '#112233' } } })
+    expect(s.data.design).toMatchObject({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { background: '#112233' } }, moves: {}, stickers: [], backgrounds: {} })
   })
 
   it('never starts with the designer window open', () => {
@@ -260,5 +260,23 @@ describe('Store', () => {
     const s = new Store(file)
     s.load()
     expect(s.data.settings.panels.designer.visible).toBe(false)
+  })
+
+  it('defaults to no assets and drops stickers whose asset is not in the index', () => {
+    expect(defaultData().assets).toEqual({})
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, tasks: [], completions: [],
+      assets: { 'asset-aaaa-1': { id: 'asset-aaaa-1', ext: 'png', bytes: 5, name: 'a', addedAt: 1 } },
+      design: { overrides: {}, stickers: [
+        { id: 'stk-aaaa-0001', panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 1, size: 40, layer: 'front' },
+        { id: 'stk-bbbb-0002', panel: 'bar', kind: 'image', asset: 'gone-asset-1', x: 1, y: 1, size: 40, layer: 'front' }
+      ] }
+    }))
+    const s = new Store(file)
+    s.load()
+    expect(Object.keys(s.data.assets)).toEqual(['asset-aaaa-1'])
+    expect(s.data.design.stickers.map((x) => x.id)).toEqual(['stk-aaaa-0001'])
   })
 })

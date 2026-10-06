@@ -4,6 +4,7 @@ import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type Panel
 import { emptyGym } from '../shared/gym'
 import { isValidTime } from '../shared/dates'
 import { MAX_NOTES_LENGTH } from '../shared/notes'
+import { sanitizeAssets } from '../shared/assets'
 import { emptyDesign, sanitizeDesign } from '../shared/design'
 import { normaliseAccentInput } from '../shared/theme'
 import { DEFAULT_THEME_ID, themeById } from '../shared/themes'
@@ -19,6 +20,7 @@ export function defaultData(): AppData {
     habitLog: {},
     notes: '',
     design: emptyDesign(),
+    assets: {},
     pomodoros: {},
     pomodoroLog: [],
     profile: emptyProfile(),
@@ -96,6 +98,7 @@ export function migrate(raw: unknown): AppData {
   const r = raw as Record<string, unknown>
   if (r.version !== 1) throw new Error(`unsupported data version ${String(r.version)}`)
   const def = defaultData()
+  const assets = sanitizeAssets(r.assets)
   const s = (typeof r.settings === 'object' && r.settings !== null ? r.settings : {}) as Partial<Settings>
   const theme = themeById(typeof s.theme === 'string' ? s.theme : DEFAULT_THEME_ID)
   const panels = {} as Record<PanelId, PanelState>
@@ -107,7 +110,8 @@ export function migrate(raw: unknown): AppData {
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     ...pickHabits(r),
     notes: typeof r.notes === 'string' ? r.notes.slice(0, MAX_NOTES_LENGTH) : '',
-    design: sanitizeDesign(r.design),
+    design: sanitizeDesign(r.design, assets),
+    assets,
     pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},
     pomodoroLog: Array.isArray(r.pomodoroLog) ? (r.pomodoroLog as AppData['pomodoroLog']) : [],
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },

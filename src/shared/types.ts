@@ -1,3 +1,4 @@
+import type { AssetInfo } from './assets'
 import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
@@ -131,6 +132,7 @@ export interface AppData {
   habitLog: Record<string, Record<string, true>>
   notes: string
   design: Design
+  assets: Record<string, AssetInfo>
   pomodoros: Record<string, number>
   pomodoroLog: PomodoroSession[]
   profile: Profile

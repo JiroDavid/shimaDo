@@ -10,5 +10,5 @@ export function applyDesign(design: Design, doc: Document = document): void {
     el.id = STYLE_ID
     doc.head.appendChild(el)
   }
-  el.textContent = designCss(design.overrides)
+  el.textContent = designCss(design.overrides, design.moves)
 }

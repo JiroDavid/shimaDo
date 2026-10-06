@@ -28,6 +28,11 @@ describe('sniffAsset', () => {
     expect(sniffAsset(text(fancy))).toBe('svg')
   })
 
+  it('still accepts an svg that carries a doctype, as design tools export', () => {
+    const doc = '<?xml version="1.0"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>'
+    expect(sniffAsset(text(doc))).toBe('svg')
+  })
+
   it('recognises real image bytes', () => {
     expect(sniffAsset(png())).toBe('png')
     expect(sniffAsset(jpg())).toBe('jpg')
@@ -54,6 +59,7 @@ describe('sniffAsset', () => {
     ['svg with a javascript link', () => text('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="javascript:alert(1)"><rect/></a></svg>')],
     ['svg with an iframe', () => text('<svg xmlns="http://www.w3.org/2000/svg"><iframe src="x"></iframe></svg>')],
     ['svg with an embedded html data uri', () => text('<svg xmlns="http://www.w3.org/2000/svg"><image href="data:text/html;base64,PGgxPg=="/></svg>')],
+    ['svg hiding a javascript link in character references', () => text('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="&#106;avascript:alert(1)"><rect/></a></svg>')],
     ['svg that never closes', () => text('<svg xmlns="http://www.w3.org/2000/svg"><rect/>')],
     ['xml that is not svg', () => text('<?xml version="1.0"?><note>hi</note>')]
   ])('rejects %s', (_name, make) => {

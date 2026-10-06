@@ -135,7 +135,7 @@ describe('EditSession', () => {
 
   it('starts a fresh history each time edit mode begins', () => {
     const { session, data } = setup()
-    data.design = { overrides: { 'bar.label': { color: '#abcdef' } } }
+    data.design = { ...data.design, overrides: { 'bar.label': { color: '#abcdef' } } }
     session.setActive(true)
     expect(session.state.canUndo).toBe(false)
     session.setActive(false)
