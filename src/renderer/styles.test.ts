@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { THEME_FONTS } from '../shared/theme'
 
 const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8')
 
@@ -51,5 +52,12 @@ describe('colour audit', () => {
     const app = readFileSync(join(renderer, 'App.tsx'), 'utf8')
     expect(app).toMatch(/useLayoutEffect\(\(\) => \{\s*if \(data\) applyTheme\(data\.settings\)/)
     expect(app).not.toMatch(/dataset\.accent/)
+  })
+})
+
+describe('bundled fonts', () => {
+  it.each([...THEME_FONTS])('imports %s in main.tsx', (font) => {
+    const main = readFileSync(join(renderer, 'main.tsx'), 'utf8')
+    expect(main).toContain(`@fontsource/${font.toLowerCase().replace(/ /g, '-')}/`)
   })
 })
