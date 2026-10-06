@@ -1,10 +1,13 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import type { PanelId } from '../../shared/types'
+import { isEditablePanel } from '../../shared/elements'
+import { EditableText } from './EditableText'
 import { Fit } from './Fit'
 import { ResizeHandles } from './ResizeHandles'
 
 export function PanelFrame({ id, title, fit = 'width', naturalWidth, children }: { id: PanelId; title: string; fit?: 'width' | 'both'; naturalWidth?: number; children: ReactNode }) {
   const frame = useRef<HTMLDivElement>(null)
+  const editable = isEditablePanel(id)
 
   useEffect(() => {
     const onVisible = () => {
@@ -22,10 +25,15 @@ export function PanelFrame({ id, title, fit = 'width', naturalWidth, children }:
   }, [])
 
   return (
-    <div className="panel panel-enter" ref={frame}>
+    <div className="panel panel-enter" ref={frame} data-el={editable ? `${id}.panel` : undefined}>
       <div className="titlebar flex items-center gap-3 px-5 pb-1 pt-4">
         <button className="dot-btn no-drag" aria-label="Hide panel" onClick={() => window.shima.hidePanel(id)} />
-        <span className="heading flex-1 text-center text-[1.05rem] tracking-[0.12em] text-muted">{title}</span>
+        <span
+          className="panel-title heading flex-1 text-center text-[1.05rem] tracking-[0.12em] text-muted"
+          data-el={editable ? `${id}.title` : undefined}
+        >
+          {editable ? <EditableText id={`${id}.title`} fallback={title} /> : title}
+        </span>
         <span className="w-4" />
       </div>
       <Fit mode={fit} naturalWidth={naturalWidth}>{children}</Fit>

@@ -131,7 +131,7 @@ export function Habits({ data }: { data: AppData }) {
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 pt-1">
         <div>
           <div className="panel-label">Streak</div>
-          <div className="heading text-[2.5rem] text-accent">{streak} {streak === 1 ? 'day' : 'days'}</div>
+          <div className="heading text-[2.5rem] text-accent" data-el="habits.streak">{streak} {streak === 1 ? 'day' : 'days'}</div>
         </div>
         <div className="pb-1 text-right">
           <div className="panel-label">This week</div>

@@ -3,6 +3,7 @@ import { TASK_TAGS, TAG_LABELS, type AppData, type Occurrence, type TaskTag } fr
 import { dueMs, formatDay } from '../../shared/dates'
 import { occurrencesOn, overdueOnce } from '../../shared/recurrence'
 import { validateTaskInput } from '../../shared/validate'
+import { EditableText } from '../components/EditableText'
 import { Section } from '../components/Section'
 import { TaskRow } from '../components/TaskRow'
 import { useNow, useToday } from '../hooks/useData'
@@ -97,9 +98,11 @@ export function Checklist({ data }: { data: AppData }) {
   return (
     <div className="flex min-h-full flex-col">
       <div className="pt-2">
-        <h1 className="heading text-[2.3rem]">Things to do today</h1>
+        <h1 className="heading text-[2.3rem]" data-el="checklist.heading">
+          <EditableText id="checklist.heading" fallback="Things to do today" />
+        </h1>
         <div className="mt-2 flex items-center justify-between gap-3">
-          <span className="font-bold text-muted">{formatDay(today)}</span>
+          <span className="font-bold text-muted" data-el="checklist.date">{formatDay(today)}</span>
           <span className="font-extrabold text-accent">
             {finished.length}/{todays.length} done
           </span>

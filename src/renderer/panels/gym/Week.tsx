@@ -62,7 +62,7 @@ export function Week({ data }: { data: AppData }) {
       <div className="card space-y-3">
         <div className="card-label">{formatDay(day)}</div>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="heading text-[1.9rem]">{plan ? plan.label : 'Rest day'}</h2>
+          <h2 className="heading text-[1.9rem]" data-el="gym.heading">{plan ? plan.label : 'Rest day'}</h2>
           <div className="flex items-center gap-2.5">
             <span className={`font-extrabold ${done ? 'text-accent' : 'text-muted'}`}>{done ? 'Done' : 'Not yet'}</span>
             <Check checked={done} onChange={() => window.shima.setGymDone(day, !done)} label="mark day done" />

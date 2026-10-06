@@ -57,19 +57,23 @@ function fixture(options) {
     opacity: options.opacity ?? 0.9,
     onboarded: true
   })
+  data.design = options.design ?? { overrides: {} }
   return data
 }
 
 function page(root, options) {
   const data = fixture(options)
   const timer = { phase: 'focus', running: false, endsAt: null, remainingMs: 1_500_000, cycle: 0, task: '' }
+  const edit = options.edit ?? { active: false, selected: null, canUndo: false, canRedo: false }
   const mock = `<script>window.shima = new Proxy({
     getData: () => Promise.resolve(${JSON.stringify(data)}),
     onChange: () => () => {},
     getTimer: () => Promise.resolve(${JSON.stringify(timer)}),
     onTimer: () => () => {},
     getAvatar: () => Promise.resolve(null),
-    listDisplays: () => Promise.resolve([])
+    listDisplays: () => Promise.resolve([]),
+    getEditState: () => Promise.resolve(${JSON.stringify(edit)}),
+    onEditState: () => () => {}
   }, { get: (t, k) => (k in t ? t[k] : () => Promise.resolve()) })</script>`
   const driver = options.steps
     ? `<script>const q = (t) => [...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === t || b.textContent.trim() === t); const w = (ms) => new Promise((r) => setTimeout(r, ms)); (async () => { ${options.steps} })()</script>`
@@ -115,6 +119,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const i = process.argv.indexOf(`--${name}`)
     return i === -1 ? fallback : process.argv[i + 1]
   }
-  const out = await shot({ hash: arg('panel', 'checklist'), size: arg('size', '420x760'), out: arg('out', 'shot.png'), theme: arg('theme'), accent: arg('accent'), steps: arg('steps') })
+  const out = await shot({ hash: arg('panel', 'checklist'), size: arg('size', '420x760'), out: arg('out', 'shot.png'), theme: arg('theme'), accent: arg('accent'), steps: arg('steps'), design: arg('design') ? JSON.parse(arg('design')) : undefined, edit: arg('edit') ? JSON.parse(arg('edit')) : undefined })
   console.log(out)
 }

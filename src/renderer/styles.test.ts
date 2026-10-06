@@ -48,10 +48,16 @@ describe('colour audit', () => {
     expect(main.indexOf('applyTheme(')).toBeLessThan(main.indexOf('createRoot('))
   })
 
-  it('App applies the saved theme in a layout effect', () => {
+  it('App applies the saved theme and design in a layout effect', () => {
     const app = readFileSync(join(renderer, 'App.tsx'), 'utf8')
-    expect(app).toMatch(/useLayoutEffect\(\(\) => \{\s*if \(data\) applyTheme\(data\.settings\)/)
+    expect(app).toMatch(/useLayoutEffect\(\(\) => \{\s*if \(data\) \{\s*applyTheme\(data\.settings\)/)
+    expect(app).toContain('applyDesign(')
     expect(app).not.toMatch(/dataset\.accent/)
+  })
+
+  it('App never applies overrides to the designer window', () => {
+    const app = readFileSync(join(renderer, 'App.tsx'), 'utf8')
+    expect(app).toMatch(/applyDesign\(id === 'designer' \? emptyDesign\(\) : data\.design\)/)
   })
 })
 

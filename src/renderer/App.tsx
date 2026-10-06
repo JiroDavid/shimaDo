@@ -1,6 +1,10 @@
 import { useLayoutEffect } from 'react'
+import { emptyDesign } from '../shared/design'
+import { PANEL_TITLES } from '../shared/elements'
 import type { PanelId } from '../shared/types'
 import { PanelFrame } from './components/PanelFrame'
+import { DesignContext } from './components/EditableText'
+import { applyDesign } from './lib/applyDesign'
 import { applyTheme } from './lib/applyTheme'
 import { useData } from './hooks/useData'
 import { Bar } from './panels/Bar'
@@ -17,22 +21,7 @@ import { Progress } from './panels/Progress'
 import { Schedule } from './panels/Schedule'
 import { Settings } from './panels/Settings'
 
-const TITLES: Record<PanelId, string> = {
-  bar: 'to-do',
-  checklist: 'checklist',
-  schedule: 'schedule',
-  gym: 'gym',
-  progress: 'progress',
-  habits: 'habits',
-  focus: 'focus',
-  notepad: 'notepad',
-  welcome: 'welcome',
-  designer: 'designer',
-  settings: 'settings',
-  profile: 'profile',
-  confirm: 'exit',
-  mini: 'shimado'
-}
+const TITLES: Record<PanelId, string> = { ...PANEL_TITLES, bar: 'to-do', mini: 'shimado', designer: 'designer' }
 
 const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both', focus: 'both', profile: 'both', confirm: 'both', welcome: 'both' }
 
@@ -48,26 +37,32 @@ export function App() {
   const id = currentPanel()
 
   useLayoutEffect(() => {
-    if (data) applyTheme(data.settings)
+    if (data) {
+      applyTheme(data.settings)
+      applyDesign(id === 'designer' ? emptyDesign() : data.design)
+    }
   }, [data])
 
   if (!data) return null
-  if (id === 'bar') return <Bar data={data} />
-  if (id === 'mini') return <Mini />
-
-  return (
-    <PanelFrame id={id} title={TITLES[id]} fit={FIT[id] ?? 'width'} naturalWidth={id === 'notepad' ? NOTEPAD_NATURAL_WIDTH : undefined}>
-      {id === 'checklist' && <Checklist data={data} />}
-      {id === 'schedule' && <Schedule data={data} />}
-      {id === 'gym' && <Gym data={data} />}
-      {id === 'progress' && <Progress data={data} />}
-      {id === 'habits' && <Habits data={data} />}
-      {id === 'focus' && <Focus data={data} />}
-      {id === 'notepad' && <Notepad data={data} />}
-      {id === 'welcome' && <Welcome data={data} />}
-      {id === 'settings' && <Settings data={data} />}
-      {id === 'profile' && <Profile data={data} />}
-      {id === 'confirm' && <Confirm />}
-    </PanelFrame>
-  )
+  const body =
+    id === 'bar' ? (
+      <Bar data={data} />
+    ) : id === 'mini' ? (
+      <Mini />
+    ) : (
+      <PanelFrame id={id} title={TITLES[id]} fit={FIT[id] ?? 'width'} naturalWidth={id === 'notepad' ? NOTEPAD_NATURAL_WIDTH : undefined}>
+        {id === 'checklist' && <Checklist data={data} />}
+        {id === 'schedule' && <Schedule data={data} />}
+        {id === 'gym' && <Gym data={data} />}
+        {id === 'progress' && <Progress data={data} />}
+        {id === 'habits' && <Habits data={data} />}
+        {id === 'focus' && <Focus data={data} />}
+        {id === 'notepad' && <Notepad data={data} />}
+        {id === 'welcome' && <Welcome data={data} />}
+        {id === 'settings' && <Settings data={data} />}
+        {id === 'profile' && <Profile data={data} />}
+        {id === 'confirm' && <Confirm />}
+      </PanelFrame>
+    )
+  return <DesignContext.Provider value={data.design}>{body}</DesignContext.Provider>
 }

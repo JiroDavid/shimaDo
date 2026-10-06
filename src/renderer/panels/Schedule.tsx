@@ -105,7 +105,7 @@ export function Schedule({ data }: { data: AppData }) {
     <div className="space-y-4 pt-1">
       <div className="flex items-center justify-between gap-2">
         <button className="flex items-center gap-2 text-left" onClick={() => view === 'list' && setExpanded((e) => !e)} aria-expanded={expanded} disabled={view !== 'list'}>
-          <span className="heading text-[1.75rem]">
+          <span className="heading text-[1.75rem]" data-el="schedule.month">
             {MONTHS[monthIndex - 1]} {year}
           </span>
           <svg

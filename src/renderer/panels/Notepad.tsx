@@ -50,6 +50,7 @@ export function Notepad({ data }: { data: AppData }) {
     <div className="flex flex-col gap-2 pb-2 pt-2" style={{ minHeight: 'inherit' }}>
       <textarea
         ref={area}
+        data-el="notepad.text"
         className="field min-h-0 flex-1 resize-none overflow-y-auto !rounded-2xl py-3 leading-relaxed"
         placeholder="Jot something down..."
         aria-label="Notepad"

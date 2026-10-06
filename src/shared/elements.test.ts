@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { ELEMENTS, GROUPS, GROUP_PREFIX, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
 
 describe('element registry', () => {
@@ -49,5 +52,40 @@ describe('element registry', () => {
   it('orders button-primary after button so it wins', () => {
     const order = GROUPS.map((g) => g.id)
     expect(order.indexOf('button-primary')).toBeGreaterThan(order.indexOf('button'))
+  })
+})
+
+const renderer = fileURLToPath(new URL('../renderer', import.meta.url))
+const walk = (dir: string): string[] =>
+  readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]))
+const files = walk(renderer)
+const tsx = files.filter((f) => f.endsWith('.tsx')).map((f) => readFileSync(f, 'utf8')).join('\n')
+const css = readFileSync(join(renderer, 'styles.css'), 'utf8')
+
+describe('registry against the markup', () => {
+  const generated = new Set(EDITABLE_PANELS.flatMap((p) => [`${p}.panel`, `${p}.title`]))
+
+  it('uses only registered ids in static data-el attributes', () => {
+    const used = [...tsx.matchAll(/data-el="([a-z0-9.-]+)"/g)].map((m) => m[1])
+    for (const id of used) expect(elementById(id), id).toBeDefined()
+  })
+
+  it('puts every non-generated registry id in the markup', () => {
+    const used = new Set([...tsx.matchAll(/data-el="([a-z0-9.-]+)"/g)].map((m) => m[1]))
+    for (const e of ELEMENTS) if (!generated.has(e.id)) expect(used.has(e.id), e.id).toBe(true)
+  })
+
+  it('generates the window and title ids in PanelFrame', () => {
+    const frame = readFileSync(join(renderer, 'components', 'PanelFrame.tsx'), 'utf8')
+    expect(frame).toMatch(/data-el=\{editable \? `\$\{id\}\.panel` : undefined\}/)
+    expect(frame).toMatch(/data-el=\{editable \? `\$\{id\}\.title` : undefined\}/)
+    expect(frame).toContain('panel-title')
+  })
+
+  it('has every group selector class defined in the css or used in the markup', () => {
+    for (const g of GROUPS) {
+      const cls = g.selector.slice(1)
+      expect(css.includes(g.selector) || tsx.includes(cls), g.id).toBe(true)
+    }
   })
 })

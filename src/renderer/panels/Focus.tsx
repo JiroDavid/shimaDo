@@ -62,7 +62,9 @@ export function Focus({ data }: { data: AppData }) {
               <option key={t} value={t} />
             ))}
           </datalist>
-          <div className={`heading text-[3rem] ${isFocus ? 'text-accent' : ''}`}>{formatClock(left)}</div>
+          <div className={`heading text-[3rem] ${isFocus ? 'text-accent' : ''}`} data-el="focus.clock">
+            {formatClock(left)}
+          </div>
           <div className="mx-auto my-2 h-1.5 w-full overflow-hidden rounded-full bg-overlay">
             <div className="h-full bg-accent" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>

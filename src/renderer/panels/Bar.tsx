@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
 import { ChecklistIcon, DumbbellIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
+import { EditableText } from '../components/EditableText'
 import { ResizeHandles } from '../components/ResizeHandles'
 import { useAvatar } from '../hooks/useData'
 
@@ -45,11 +46,13 @@ export function Bar({ data }: { data: AppData }) {
 
   return (
     <div ref={outer} className="relative h-full w-full">
-      <div ref={inner} className="bar titlebar">
-      <button className="bar-avatar no-drag" data-active={profileOpen} aria-label="Profile" aria-pressed={profileOpen} onClick={() => window.shima.togglePanel('profile')}>
+      <div ref={inner} className="bar titlebar" data-el="bar.surface">
+      <button className="bar-avatar no-drag" data-el="bar.avatar" data-active={profileOpen} aria-label="Profile" aria-pressed={profileOpen} onClick={() => window.shima.togglePanel('profile')}>
         {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <ProfileIcon />}
       </button>
-      <span className="heading text-accent shrink-0 whitespace-nowrap px-2 text-[1.5rem] tracking-wider">To-do</span>
+      <span className="heading text-accent shrink-0 whitespace-nowrap px-2 text-[1.5rem] tracking-wider" data-el="bar.label">
+        <EditableText id="bar.label" fallback="To-do" />
+      </span>
       <span className="bar-sep" />
       {BUTTONS.map((b) => {
         const open = data.settings.panels[b.id].visible
@@ -64,7 +67,7 @@ export function Bar({ data }: { data: AppData }) {
         <MinimizeIcon />
         <span className="bar-label">Minimise</span>
       </button>
-      <button className="bar-btn bar-exit no-drag" aria-label="Exit ShimaDo" onClick={() => window.shima.requestExit()}>
+      <button className="bar-btn bar-exit no-drag" data-el="bar.exit" aria-label="Exit ShimaDo" onClick={() => window.shima.requestExit()}>
         <PowerIcon />
         <span className="bar-label">Exit</span>
       </button>
