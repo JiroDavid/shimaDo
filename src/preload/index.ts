@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TimerState } from '../shared/pomodoro'
-import type { AppData, ShimaApi } from '../shared/types'
+import type { AppData, EditState, ShimaApi } from '../shared/types'
 
 const api: ShimaApi = {
   getData: () => ipcRenderer.invoke('data:get'),
@@ -31,6 +31,19 @@ const api: ShimaApi = {
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
   requestExit: () => ipcRenderer.invoke('app:exit'),
   confirmExit: () => ipcRenderer.invoke('app:confirm-exit'),
+  getEditState: () => ipcRenderer.invoke('edit:get-state'),
+  onEditState: (cb) => {
+    const handler = (_e: unknown, s: EditState) => cb(s)
+    ipcRenderer.on('edit:state', handler)
+    return () => ipcRenderer.removeListener('edit:state', handler)
+  },
+  setEditActive: (on) => ipcRenderer.send('edit:set-active', on),
+  editSelect: (selection) => ipcRenderer.send('edit:select', selection),
+  editPatch: (key, patch) => ipcRenderer.send('edit:patch', key, patch),
+  editUndo: () => ipcRenderer.send('edit:undo'),
+  editRedo: () => ipcRenderer.send('edit:redo'),
+  editReset: (key) => ipcRenderer.send('edit:reset', key),
+  editResetAll: () => ipcRenderer.send('edit:reset-all'),
   expandPanel: (id, width, height) => ipcRenderer.send('panel:expand', id, width, height),
   collapsePanel: (id) => ipcRenderer.send('panel:collapse', id),
   beginResize: (id, edge) => ipcRenderer.send('panel:resize-begin', id, edge),

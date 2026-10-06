@@ -41,6 +41,7 @@ export function defaultData(): AppData {
         focus: { width: 280, height: 360, visible: false },
         notepad: { width: 300, height: 340, visible: false },
         welcome: { width: 520, height: 600, visible: false },
+        designer: { width: 320, height: 640, visible: false },
         settings: { width: 330, height: 450, visible: false },
         profile: { width: 315, height: 400, visible: false },
         confirm: { width: 320, height: 190, visible: false },
@@ -128,6 +129,7 @@ export function hideTransientPanels(d: AppData): void {
   p.profile.visible = false
   p.confirm.visible = false
   p.welcome.visible = false
+  p.designer.visible = false
   p.mini.visible = false
 }
 

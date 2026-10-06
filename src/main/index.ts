@@ -11,6 +11,7 @@ import { PomodoroTimer } from './timer'
 import { PanelManager } from './panels'
 import { startScheduler } from './scheduler'
 import { Store, hideTransientPanels } from './store'
+import { EditSession } from './edit'
 import { createTray } from './tray'
 
 app.setAppUserModelId('com.jirodavid.shimado')
@@ -33,6 +34,15 @@ function boot(): void {
       panels.broadcast('data:changed', store.data)
     }
   )
+
+  const edit = new EditSession({
+    data: () => store.data,
+    update: (fn) => store.update(fn),
+    show: (id) => panels.show(id),
+    hide: (id) => panels.hide(id),
+    broadcast: (channel, payload) => panels.broadcast(channel, payload),
+    changed: () => tray?.refresh()
+  })
 
   const timer = new PomodoroTimer({
     onChange: (s) => panels.broadcast('timer:changed', s),
@@ -130,13 +140,13 @@ function boot(): void {
 
   app.whenReady().then(() => {
     store.load()
-    registerIpc(store, panels, timer, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup })
-    tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit() })
+    registerIpc(store, panels, timer, edit, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup })
+    tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit(), isEditing: () => edit.state.active, onEdit: (on) => edit.setActive(on) })
 
     for (const id of PANEL_IDS) {
       if (id === 'mini') continue
       if (id === 'bar' || id === 'checklist') panels.show(id)
-      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'welcome' && store.data.settings.panels[id].visible) panels.show(id)
+      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'welcome' && id !== 'designer' && store.data.settings.panels[id].visible) panels.show(id)
     }
 
     panels.fitAll()

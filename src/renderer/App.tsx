@@ -27,6 +27,7 @@ const TITLES: Record<PanelId, string> = {
   focus: 'focus',
   notepad: 'notepad',
   welcome: 'welcome',
+  designer: 'designer',
   settings: 'settings',
   profile: 'profile',
   confirm: 'exit',

@@ -37,6 +37,11 @@ describe('defaultBounds', () => {
     expect(w.x + w.width / 2).toBeCloseTo(area.x + area.width / 2, 0)
     expect(w.y + w.height / 2).toBeCloseTo(area.y + area.height / 2, 0)
   })
+  it('puts the designer on the right edge at the top', () => {
+    const d = defaultBounds('designer', area, panels)
+    expect(d.x + d.width).toBe(area.x + area.width - 16)
+    expect(d.y).toBe(16)
+  })
   it('puts the minimised icon where the bar starts', () => {
     expect(defaultBounds('mini', area, panels)).toEqual({ x: 16, y: 16, width: 64, height: 64 })
   })

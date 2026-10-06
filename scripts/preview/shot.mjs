@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)))
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.svg': 'image/svg+xml' }
-const PANEL_IDS = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile', 'confirm', 'mini', 'welcome']
+const PANEL_IDS = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile', 'confirm', 'mini', 'welcome', 'designer']
 
 const CLICK = (label) => `await w(1200); q(${JSON.stringify(label)}).click(); await w(600)`
 

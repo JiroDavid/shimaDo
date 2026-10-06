@@ -252,4 +252,13 @@ describe('Store', () => {
     s.load()
     expect(s.data.design).toEqual({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { background: '#112233' } } })
   })
+
+  it('never starts with the designer window open', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { panels: { designer: { width: 320, height: 640, visible: true } } } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.panels.designer.visible).toBe(false)
+  })
 })

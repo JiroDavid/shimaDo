@@ -21,9 +21,11 @@ interface Options {
   iconPath: string
   onSettings: (patch: SettingsPatch) => void
   onExit: () => void
+  isEditing: () => boolean
+  onEdit: (on: boolean) => void
 }
 
-export function createTray({ store, panels, iconPath, onSettings, onExit }: Options) {
+export function createTray({ store, panels, iconPath, onSettings, onExit, isEditing, onEdit }: Options) {
   const tray = new Tray(nativeImage.createFromPath(iconPath))
   tray.setToolTip('ShimaDo')
 
@@ -36,6 +38,7 @@ export function createTray({ store, panels, iconPath, onSettings, onExit }: Opti
         checked: s.panels[id].visible,
         click: () => panels.toggle(id)
       })),
+      { label: 'Edit mode', type: 'checkbox', checked: isEditing(), click: (i) => onEdit(i.checked) },
       { type: 'separator' },
       { label: 'Always on top', type: 'checkbox', checked: s.alwaysOnTop, click: (i) => onSettings({ alwaysOnTop: i.checked }) },
       {

@@ -286,7 +286,7 @@ export class PanelManager {
   }
 
   private applyTop(id: PanelId, win: BrowserWindow): void {
-    win.setAlwaysOnTop(id === 'mini' || this.store.data.settings.alwaysOnTop, 'screen-saver')
+    win.setAlwaysOnTop(id === 'mini' || id === 'designer' || this.store.data.settings.alwaysOnTop, 'screen-saver')
   }
 
   private setVisible(id: PanelId, visible: boolean): void {

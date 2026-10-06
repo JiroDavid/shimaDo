@@ -6,6 +6,7 @@ import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setHabitDay, setNotes, setProfile, setSplit, setWeighIn, updateHabit, updateTask
 } from './mutations'
+import type { EditSession } from './edit'
 import type { PomodoroTimer } from './timer'
 import type { PanelManager } from './panels'
 import type { Store } from './store'
@@ -25,7 +26,7 @@ export interface AppActions {
 
 const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
 
-export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroTimer, actions: AppActions): void {
+export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroTimer, edit: EditSession, actions: AppActions): void {
   const today = () => toDateKey(new Date())
   const commit = () => panels.broadcast('data:changed', store.data)
 
@@ -129,6 +130,18 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     if (isPanelId(id)) panels.toggle(id)
   })
   ipcMain.on('panel:hide', (_e, id: unknown) => {
-    if (isPanelId(id)) panels.hide(id)
+    if (!isPanelId(id)) return
+    if (id === 'designer') edit.setActive(false)
+    else panels.hide(id)
   })
+  ipcMain.handle('edit:get-state', () => edit.state)
+  ipcMain.on('edit:set-active', (_e, on: unknown) => {
+    if (typeof on === 'boolean') edit.setActive(on)
+  })
+  ipcMain.on('edit:select', (_e, selection: unknown) => edit.select(selection))
+  ipcMain.on('edit:patch', (_e, key: unknown, patch: unknown) => edit.patch(key, patch))
+  ipcMain.on('edit:undo', () => edit.undo())
+  ipcMain.on('edit:redo', () => edit.redo())
+  ipcMain.on('edit:reset', (_e, key: unknown) => edit.reset(key))
+  ipcMain.on('edit:reset-all', () => edit.resetAll())
 }
