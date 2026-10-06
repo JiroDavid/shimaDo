@@ -89,3 +89,15 @@ describe('registry against the markup', () => {
     }
   })
 })
+
+describe('edit mode exits stay reachable', () => {
+  it('marks the bar edit button as exempt from click blocking', () => {
+    const bar = readFileSync(join(renderer, 'panels', 'Bar.tsx'), 'utf8')
+    expect(bar).toMatch(/data-edit-exempt[^>]*aria-label="Edit mode"|aria-label="Edit mode"[^>]*data-edit-exempt/)
+  })
+
+  it('exempts the panel dot and resize handles in the edit layer', () => {
+    const layer = readFileSync(join(renderer, 'components', 'EditLayer.tsx'), 'utf8')
+    for (const needle of ['[data-edit-exempt]', '.resize-handle', '.dot-btn']) expect(layer).toContain(needle)
+  })
+})

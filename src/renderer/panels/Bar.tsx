@@ -1,11 +1,12 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
-import { ChecklistIcon, DumbbellIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
+import { ChecklistIcon, DumbbellIcon, EditIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
 import { EditableText } from '../components/EditableText'
 import { ResizeHandles } from '../components/ResizeHandles'
+import { useEditState } from '../hooks/useEditState'
 import { useAvatar } from '../hooks/useData'
 
-const NATURAL_W = 640
+const NATURAL_W = 690
 const NATURAL_H = 56
 
 const BUTTONS: { id: PanelId; label: string; icon: ReactNode }[] = [
@@ -21,6 +22,7 @@ const BUTTONS: { id: PanelId; label: string; icon: ReactNode }[] = [
 
 export function Bar({ data }: { data: AppData }) {
   const avatar = useAvatar(data.profile)
+  const edit = useEditState()
   const profileOpen = data.settings.panels.profile.visible
   const outer = useRef<HTMLDivElement>(null)
   const inner = useRef<HTMLDivElement>(null)
@@ -63,7 +65,18 @@ export function Bar({ data }: { data: AppData }) {
           </button>
         )
       })}
-      <button className="bar-btn no-drag ml-auto" aria-label="Minimise to icon" onClick={() => window.shima.minimizeAll()}>
+      <button
+        className="bar-btn no-drag ml-auto"
+        data-edit-exempt
+        data-active={edit.active}
+        aria-pressed={edit.active}
+        aria-label="Edit mode"
+        onClick={() => window.shima.setEditActive(!edit.active)}
+      >
+        <EditIcon />
+        <span className="bar-label">Edit</span>
+      </button>
+      <button className="bar-btn no-drag" aria-label="Minimise to icon" onClick={() => window.shima.minimizeAll()}>
         <MinimizeIcon />
         <span className="bar-label">Minimise</span>
       </button>

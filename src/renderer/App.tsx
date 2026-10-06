@@ -4,6 +4,7 @@ import { PANEL_TITLES } from '../shared/elements'
 import type { PanelId } from '../shared/types'
 import { PanelFrame } from './components/PanelFrame'
 import { DesignContext } from './components/EditableText'
+import { EditLayer } from './components/EditLayer'
 import { applyDesign } from './lib/applyDesign'
 import { applyTheme } from './lib/applyTheme'
 import { useData } from './hooks/useData'
@@ -64,5 +65,10 @@ export function App() {
         {id === 'confirm' && <Confirm />}
       </PanelFrame>
     )
-  return <DesignContext.Provider value={data.design}>{body}</DesignContext.Provider>
+  return (
+    <DesignContext.Provider value={data.design}>
+      {id !== 'mini' && id !== 'designer' && <EditLayer panel={id} />}
+      {body}
+    </DesignContext.Provider>
+  )
 }
