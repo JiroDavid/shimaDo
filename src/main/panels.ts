@@ -1,6 +1,6 @@
 import { BrowserWindow, nativeImage, screen } from 'electron'
 import { PANEL_IDS, type DisplayInfo, type Edge, type PanelId, type PanelState } from '../shared/types'
-import { defaultBounds, effectiveSize, minSize, scaledPanels, type Rect } from './layout'
+import { defaultBounds, effectiveSize, minSize, scaledPanels, shouldStayOnTop, type Rect } from './layout'
 import { fitOnScreen, resizeBounds, translateBounds } from './resize'
 import { defaultData, type Store } from './store'
 
@@ -286,7 +286,7 @@ export class PanelManager {
   }
 
   private applyTop(id: PanelId, win: BrowserWindow): void {
-    win.setAlwaysOnTop(id === 'mini' || id === 'designer' || this.store.data.settings.alwaysOnTop, 'screen-saver')
+    win.setAlwaysOnTop(shouldStayOnTop(id, this.store.data.settings.alwaysOnTop), 'screen-saver')
   }
 
   private setVisible(id: PanelId, visible: boolean): void {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { defaultBounds, effectiveSize, MIN_SIZES, scaledPanels } from './layout'
+import { defaultBounds, effectiveSize, MIN_SIZES, scaledPanels, shouldStayOnTop } from './layout'
 import { defaultData } from './store'
 
 const panels = defaultData().settings.panels
@@ -84,5 +84,19 @@ describe('effectiveSize', () => {
   it('lets the data panels shrink well below their default size', () => {
     expect(MIN_SIZES.progress.width).toBeLessThanOrEqual(220)
     expect(MIN_SIZES.habits.height).toBeLessThanOrEqual(200)
+  })
+})
+
+describe('shouldStayOnTop', () => {
+  it('follows the always-on-top setting for every ordinary panel and the minimised icon', () => {
+    for (const id of ['bar', 'checklist', 'schedule', 'progress', 'habits', 'focus', 'notepad', 'settings', 'mini'] as const) {
+      expect(shouldStayOnTop(id, true), id).toBe(true)
+      expect(shouldStayOnTop(id, false), id).toBe(false)
+    }
+  })
+
+  it('keeps the designer above the panels it edits whatever the setting says', () => {
+    expect(shouldStayOnTop('designer', false)).toBe(true)
+    expect(shouldStayOnTop('designer', true)).toBe(true)
   })
 })

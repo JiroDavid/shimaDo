@@ -32,6 +32,10 @@ export const MIN_SIZES: Record<PanelId, Size> = {
 const MARGIN = 16
 const GAP = 12
 
+export function shouldStayOnTop(id: PanelId, alwaysOnTop: boolean): boolean {
+  return id === 'designer' || alwaysOnTop
+}
+
 export function minSize(id: PanelId, scale = 1): Size {
   return { width: Math.round(MIN_SIZES[id].width * scale), height: Math.round(MIN_SIZES[id].height * scale) }
 }
