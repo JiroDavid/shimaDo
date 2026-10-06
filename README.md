@@ -24,10 +24,11 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 - **Profile** - username, name, date of birth, height and a profile picture
 - **Gym** - weekly workout split with a list of exercises per day, flexible swaps and rest days, a done tick per day, and consistency and weight charts
 - **Checklist** - a big "things to do today" list with overdue carry-over and quick add with a time and a priority tag
-- **Schedule** - week strip with a dropdown month calendar, daily and weekly recurring tasks ("every Monday 9pm"), and URGENT / MUST DO / IMPORTANT tags
+- **Schedule** - week strip with a dropdown month calendar, daily and weekly recurring tasks ("every Monday 9pm"), and URGENT / MUST DO / IMPORTANT tags; a Week view shows every day as an hourly timeline with colour-coded blocks, and tasks can have an optional end time
 - **Reminders** - a Windows notification when a task comes due
 - **Progress** - consistency line graph and daily completion bar chart
 - **Habits** - track as many daily habits as you like (no nicotine, reading, water), each with its own name, icon, weekly tickboxes, streak and weekly graph
+- **Notepad** - a simple autosaving scratch pad in its own window
 - **Always on top** - drag, resize and hide panels like sticky notes
 - **Multi-monitor** - resize panels from any edge, move everything to another monitor, or reset the layout from Settings
 - **Tray control** - opacity, accent colour, always-on-top, launch at startup, Exit

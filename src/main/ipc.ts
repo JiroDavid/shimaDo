@@ -88,6 +88,12 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.on('panel:resize-begin', (_e, id: unknown, edge: Edge) => {
     if (isPanelId(id) && EDGES.includes(edge)) panels.beginResize(id, edge)
   })
+  ipcMain.on('panel:expand', (_e, id: unknown, width: unknown, height: unknown) => {
+    if (isPanelId(id) && Number.isFinite(width) && Number.isFinite(height)) panels.expand(id, Number(width), Number(height))
+  })
+  ipcMain.on('panel:collapse', (_e, id: unknown) => {
+    if (isPanelId(id)) panels.collapse(id)
+  })
   ipcMain.on('panel:resize-end', () => panels.endResize())
   ipcMain.on('app:minimize', () => panels.minimizeAll())
   ipcMain.on('app:restore', () => panels.restoreAll())

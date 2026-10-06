@@ -38,7 +38,7 @@ export function TaskRow({ occ, overdue, showDate, onToggle, actions }: Props) {
           {task.title}
         </span>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          {task.time && <span className="time-pill">{task.time}</span>}
+          {task.time && <span className="time-pill">{task.endTime ? `${task.time}-${task.endTime}` : task.time}</span>}
           {showDate && <span className="time-pill">{occ.date}</span>}
           {kind && <span className="text-[0.8rem] font-bold text-muted">{kind}</span>}
           {task.tag && <TagPill tag={task.tag} />}

@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TAG_LABELS, type AppData, type Occurrence, type Task, type TaskTag } from '../../shared/types'
 import { addDays, formatDay, fromDateKey, weekDays } from '../../shared/dates'
 import { monthGrid, shiftMonth } from '../../shared/calendar'
 import { occurrencesOn } from '../../shared/recurrence'
+import { ScheduleWeek } from './ScheduleWeek'
 import { TaskForm } from '../components/TaskForm'
 import { TAG_COLOR, TaskRow } from '../components/TaskRow'
 import { useToday } from '../hooks/useData'
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const WEEK_PANEL = { width: 720, height: 600 }
 const TAG_ORDER: TaskTag[] = ['urgent', 'must', 'important']
 
 function topTag(occs: Occurrence[]): TaskTag | undefined {
@@ -59,8 +61,15 @@ export function Schedule({ data }: { data: AppData }) {
   const [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(false)
+  const [week, setWeek] = useState(false)
+  const [slotTime, setSlotTime] = useState<string | undefined>()
   const [month, setMonth] = useState<string | null>(null)
   const [editing, setEditing] = useState<Task | 'new' | null>(null)
+
+  useEffect(() => {
+    if (week) window.shima.expandPanel('schedule', WEEK_PANEL.width, WEEK_PANEL.height)
+    else window.shima.collapsePanel('schedule')
+  }, [week])
 
   const day = selected ?? today
   const days = weekDays(addDays(today, offset * 7))
@@ -92,7 +101,7 @@ export function Schedule({ data }: { data: AppData }) {
   return (
     <div className="space-y-4 pt-1">
       <div className="flex items-center justify-between gap-2">
-        <button className="flex items-center gap-2 text-left" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
+        <button className="flex items-center gap-2 text-left" onClick={() => !week && setExpanded((e) => !e)} aria-expanded={expanded} disabled={week}>
           <span className="heading text-[1.75rem]">
             {MONTHS[monthIndex - 1]} {year}
           </span>
@@ -105,17 +114,49 @@ export function Schedule({ data }: { data: AppData }) {
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={`text-accent transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+            className={`text-accent transition-transform duration-300 ${expanded ? 'rotate-180' : ''} ${week ? 'hidden' : ''}`}
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
-        <button className="btn" onClick={() => pick(today)}>
-          Today
-        </button>
+        <div className="flex gap-2">
+          <button className={`btn ${week ? 'btn-active' : ''}`} onClick={() => setWeek((w) => !w)} aria-pressed={week}>
+            Week
+          </button>
+          <button className="btn" onClick={() => pick(today)}>
+            Today
+          </button>
+        </div>
       </div>
 
-      {expanded ? (
+      {week ? (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <button className="btn !px-3" onClick={() => setOffset(offset - 1)} aria-label="previous week">
+              ‹
+            </button>
+            <span className="font-extrabold">
+              {formatDay(days[0])} - {formatDay(days[6])}
+            </span>
+            <button className="btn !px-3" onClick={() => setOffset(offset + 1)} aria-label="next week">
+              ›
+            </button>
+          </div>
+          <ScheduleWeek
+            data={data}
+            days={days}
+            today={today}
+            selected={day}
+            onPickDay={pick}
+            onEdit={(task) => setEditing(task)}
+            onCreate={(date, time) => {
+              pick(date)
+              setSlotTime(time)
+              setEditing('new')
+            }}
+          />
+        </>
+      ) : expanded ? (
         <div className="card !mt-3 space-y-2">
           <div className="flex items-center justify-between">
             <button className="btn !px-3" onClick={() => setMonth(shiftMonth(shownMonth, -1))} aria-label="previous month">
@@ -161,16 +202,23 @@ export function Schedule({ data }: { data: AppData }) {
 
       <div className="flex items-center justify-between gap-2 pt-1">
         <h2 className="heading text-[1.4rem]">{formatDay(day)}</h2>
-        <button className="btn btn-primary" onClick={() => setEditing('new')}>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setSlotTime(undefined)
+            setEditing('new')
+          }}
+        >
           + Task
         </button>
       </div>
 
       {editing && (
         <TaskForm
-          key={editing === 'new' ? 'new' : editing.id}
+          key={editing === 'new' ? `new-${day}-${slotTime ?? ''}` : editing.id}
           initial={editing === 'new' ? undefined : editing}
           defaultDate={day}
+          defaultTime={editing === 'new' ? slotTime : undefined}
           onCancel={() => setEditing(null)}
           onSubmit={(input) => {
             if (editing === 'new') window.shima.addTask(input)
@@ -180,7 +228,7 @@ export function Schedule({ data }: { data: AppData }) {
         />
       )}
 
-      <div>
+      <div className={week ? 'hidden' : ''}>
         {occurrences.length === 0 && <p className="py-6 text-center text-lg font-bold text-muted">Nothing on this day</p>}
         {occurrences.map((o) => (
           <TaskRow key={o.task.id} occ={o} onToggle={() => window.shima.setDone(o.task.id, o.date, !o.done)} actions={actions(o)} />

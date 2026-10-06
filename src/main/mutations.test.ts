@@ -12,6 +12,22 @@ describe('mutations', () => {
     expect(d.tasks).toHaveLength(1)
   })
 
+  it('addTask keeps a valid end time and drops a blank one', () => {
+    const d = defaultData()
+    expect(addTask(d, { title: 'Study', kind: 'daily', time: '09:00', endTime: '10:30' }, '2026-10-05', 'a').endTime).toBe('10:30')
+    expect(addTask(d, { title: 'Study', kind: 'daily', time: '09:00', endTime: '' }, '2026-10-05', 'b')).not.toHaveProperty('endTime')
+    expect(() => addTask(d, { title: 'Study', kind: 'daily', time: '09:00', endTime: '08:00' }, '2026-10-05', 'c')).toThrow(/after/i)
+  })
+
+  it('updateTask can add and remove an end time', () => {
+    const d = defaultData()
+    addTask(d, { title: 'Study', kind: 'daily', time: '09:00' }, '2026-10-05', 'a')
+    updateTask(d, 'a', { title: 'Study', kind: 'daily', time: '09:00', endTime: '11:00' }, '2026-10-05', 'n')
+    expect(d.tasks[0].endTime).toBe('11:00')
+    updateTask(d, 'a', { title: 'Study', kind: 'daily', time: '09:00' }, '2026-10-05', 'n')
+    expect(d.tasks[0]).not.toHaveProperty('endTime')
+  })
+
   it('addTask rejects invalid input without changing data', () => {
     const d = defaultData()
     expect(() => addTask(d, { title: '', kind: 'daily', time: '' }, '2026-10-05', 'x')).toThrow(/title/i)

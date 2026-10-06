@@ -28,6 +28,7 @@ export class PanelManager {
   private wins = new Map<PanelId, BrowserWindow>()
   private saveTimers = new Map<PanelId, NodeJS.Timeout>()
   private session: ResizeSession | null = null
+  private expanded = new Map<PanelId, { before: { width: number; height: number }; to: { width: number; height: number } }>()
 
   private get scale(): number {
     return this.store.data.settings.textScale
@@ -104,6 +105,28 @@ export class PanelManager {
     }, RESIZE_POLL_MS)
     const safety = setTimeout(() => this.endResize(), RESIZE_SAFETY_MS)
     this.session = { id, timer, safety }
+  }
+
+  expand(id: PanelId, width: number, height: number): void {
+    const win = this.wins.get(id)
+    if (!win) return
+    const cur = win.getBounds()
+    const before = this.expanded.get(id)?.before ?? { width: cur.width, height: cur.height }
+    const next = fitOnScreen(
+      { ...cur, width: Math.max(cur.width, Math.round(width * this.scale)), height: Math.max(cur.height, Math.round(height * this.scale)) },
+      this.areas()
+    )
+    this.expanded.set(id, { before, to: { width: next.width, height: next.height } })
+    win.setBounds(next)
+  }
+
+  collapse(id: PanelId): void {
+    const saved = this.expanded.get(id)
+    this.expanded.delete(id)
+    const win = this.wins.get(id)
+    if (!saved || !win || win.isDestroyed()) return
+    const cur = win.getBounds()
+    if (cur.width === saved.to.width && cur.height === saved.to.height) win.setBounds({ ...cur, ...saved.before })
   }
 
   beginResize(id: PanelId, edge: Edge): void {

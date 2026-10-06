@@ -173,4 +173,18 @@ describe('Store', () => {
     s.load()
     expect(s.data.notes).toBe('')
   })
+
+  it('drops end times that cannot be valid when loading', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    const t = (id: string, time: string, endTime?: string) => ({ id, title: id, kind: 'daily', time, endTime, createdOn: '2026-10-01' })
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, completions: [],
+      tasks: [t('ok', '09:00', '10:00'), t('early', '09:00', '08:00'), t('bad', '09:00', 'soon'), t('untimed', '', '10:00'), t('none', '09:00')]
+    }))
+    const s = new Store(file)
+    s.load()
+    const byId = Object.fromEntries(s.data.tasks.map((x) => [x.id, x.endTime]))
+    expect(byId).toEqual({ ok: '10:00', early: undefined, bad: undefined, untimed: undefined, none: undefined })
+  })
 })

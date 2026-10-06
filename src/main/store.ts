@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings } from '../shared/types'
+import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings, type Task } from '../shared/types'
 import { emptyGym } from '../shared/gym'
+import { isValidTime } from '../shared/dates'
 import { MAX_NOTES_LENGTH } from '../shared/notes'
 import { isHabitIcon, MAX_HABITS, MAX_HABIT_NAME } from '../shared/habits'
 import { emptyProfile } from '../shared/profile'
@@ -54,6 +55,12 @@ function pickGym(raw: unknown): Gym {
   }
 }
 
+function cleanTask(t: Task): Task {
+  if (t.endTime === undefined) return t
+  const { endTime, ...rest } = t
+  return isValidTime(endTime) && typeof t.time === 'string' && t.time !== '' && endTime > t.time ? t : rest
+}
+
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 function pickHabits(r: Record<string, unknown>): Pick<AppData, 'habits' | 'habitLog'> {
@@ -87,7 +94,7 @@ export function migrate(raw: unknown): AppData {
   for (const id of PANEL_IDS) panels[id] = { ...def.settings.panels[id], ...((id === 'habits' ? saved.habits ?? saved.nicotine : saved[id]) ?? {}) }
   return {
     version: 1,
-    tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']) : [],
+    tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']).map(cleanTask) : [],
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     ...pickHabits(r),
     notes: typeof r.notes === 'string' ? r.notes.slice(0, MAX_NOTES_LENGTH) : '',

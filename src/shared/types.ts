@@ -26,6 +26,7 @@ export interface Task {
   kind: TaskKind
   date?: string
   time: string
+  endTime?: string
   weekdays?: number[]
   tag?: TaskTag
   createdOn: string
@@ -38,6 +39,7 @@ export interface TaskInput {
   kind: TaskKind
   date?: string
   time: string
+  endTime?: string
   weekdays?: number[]
   tag?: TaskTag
 }
@@ -149,6 +151,8 @@ export interface ShimaApi {
   deleteHabit(id: string): Promise<void>
   setHabitDay(id: string, date: string, on: boolean): Promise<void>
   setNotes(text: string): Promise<void>
+  expandPanel(id: PanelId, width: number, height: number): void
+  collapsePanel(id: PanelId): void
   hidePanel(id: PanelId): void
   togglePanel(id: PanelId): void
   setSettings(patch: SettingsPatch): Promise<void>
