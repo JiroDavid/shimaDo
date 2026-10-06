@@ -83,6 +83,11 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05)
 }
 
+export function colorToHex(value: string): string | null {
+  const c = parseColor(value)
+  return c ? toHex(c) : null
+}
+
 export const DARK_INK = '#1a1410'
 export const FALLBACK_CUSTOM_ACCENT = '#7b5cff'
 

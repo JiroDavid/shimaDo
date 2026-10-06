@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  accentChoices, accentToCommit, contrastRatio, isLowContrast, normaliseAccentInput, onAccentFor, parseColor,
+  accentChoices, accentToCommit, colorToHex, contrastRatio, isLowContrast, normaliseAccentInput, onAccentFor, parseColor,
   resolveAccent, resolveColors, themeVars, validateTheme, type Theme
 } from './theme'
 
@@ -190,5 +190,17 @@ describe('accentToCommit', () => {
   })
   it.each(['ff8800', 'abc', '#12', 'sage', '#fff; x', ''])('commits nothing for %j', (typed) => {
     expect(accentToCommit(typed, true, 'orange')).toBeUndefined()
+  })
+})
+
+describe('colorToHex', () => {
+  it('converts computed-style colours to hex', () => {
+    expect(colorToHex('rgb(243, 233, 214)')).toBe('#f3e9d6')
+    expect(colorToHex('rgba(0, 0, 0, 0)')).toBe('#000000')
+    expect(colorToHex('#ABC')).toBe('#aabbcc')
+  })
+  it('returns null for anything else', () => {
+    expect(colorToHex('nope')).toBeNull()
+    expect(colorToHex('')).toBeNull()
   })
 })
