@@ -250,6 +250,32 @@ describe('EditSession', () => {
       expect(data.design.backgrounds).toEqual({})
     })
 
+    it('reorders stickers in one undo step and only in Edit mode', () => {
+      const { session, data } = setup()
+      session.reorderSticker('stk-test-0001', 'forward')
+      session.setActive(true)
+      session.addSticker(draft)
+      session.addSticker(draft)
+      const [first, second] = data.design.stickers.map((s) => s.id)
+      session.reorderSticker(first, 'forward')
+      expect(data.design.stickers.map((s) => s.id)).toEqual([second, first])
+      session.reorderSticker(first, 'forward')
+      expect(data.design.stickers.map((s) => s.id)).toEqual([second, first])
+      session.undo()
+      expect(data.design.stickers.map((s) => s.id)).toEqual([first, second])
+      session.reorderSticker(first, 7)
+      session.reorderSticker(42, 'forward')
+      expect(data.design.stickers.map((s) => s.id)).toEqual([first, second])
+    })
+
+    it('stores background scale and position and undoes them', () => {
+      const { session, data } = setup()
+      session.setActive(true)
+      session.setBackground('checklist.panel', { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 })
+      session.setBackground('checklist.panel', { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1, scale: 2, x: 10, y: -5 })
+      expect(data.design.backgrounds['checklist.panel']).toEqual({ asset: 'asset-aaaa-1', fit: 'cover', opacity: 1, scale: 2, x: 10, y: -5 })
+    })
+
     it('deleting an image removes what uses it, resets undo and asks the host to remove the file', () => {
       const { session, data, removed } = setup()
       session.setActive(true)

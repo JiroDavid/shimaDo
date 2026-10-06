@@ -12,10 +12,15 @@ export const MAX_STICKERS_PER_PANEL = 60
 const POS: [number, number] = [-200, 4000]
 const SIZE: [number, number] = [16, 600]
 const OPACITY: [number, number] = [0.05, 1]
+const BG_SCALE: [number, number] = [0.25, 4]
+const BG_OFFSET: [number, number] = [-2000, 2000]
 const STICKER_ID = /^[a-z0-9-]{8,40}$/
 
 export type StickerPanel = EditablePanel | 'bar'
 export const isStickerPanel = (v: unknown): v is StickerPanel => typeof v === 'string' && (v === 'bar' || isEditablePanel(v))
+
+export type StickerLayer = 'behind' | 'between' | 'front'
+const isLayer = (v: unknown): v is StickerLayer => v === 'behind' || v === 'between' || v === 'front'
 
 export interface Sticker {
   id: string
@@ -26,7 +31,7 @@ export interface Sticker {
   x: number
   y: number
   size: number
-  layer: 'front' | 'behind'
+  layer: StickerLayer
 }
 
 export type StickerDraft = Omit<Sticker, 'id'>
@@ -35,6 +40,9 @@ export interface Background {
   asset: string
   fit: 'cover' | 'contain' | 'tile'
   opacity: number
+  scale?: number
+  x?: number
+  y?: number
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -69,7 +77,7 @@ function parseSticker(raw: unknown, assets: Record<string, AssetInfo>, forcedId?
   if (typeof id !== 'string' || !STICKER_ID.test(id)) return null
   if (!isStickerPanel(raw.panel)) return null
   const layer = raw.layer
-  if (layer !== 'front' && layer !== 'behind') return null
+  if (!isLayer(layer)) return null
   const x = int(raw.x, POS)
   const y = int(raw.y, POS)
   const size = int(raw.size, SIZE)
@@ -104,7 +112,15 @@ function parseBackground(raw: unknown, assets: Record<string, AssetInfo>): Backg
   if (typeof raw.asset !== 'string' || !ASSET_ID.test(raw.asset) || !Object.prototype.hasOwnProperty.call(assets, raw.asset)) return null
   if (raw.fit !== 'cover' && raw.fit !== 'contain' && raw.fit !== 'tile') return null
   const opacity = num(raw.opacity, OPACITY)
-  return opacity === null ? null : { asset: raw.asset, fit: raw.fit, opacity }
+  if (opacity === null) return null
+  const out: Background = { asset: raw.asset, fit: raw.fit, opacity }
+  const scale = num(raw.scale, BG_SCALE)
+  const x = int(raw.x, BG_OFFSET)
+  const y = int(raw.y, BG_OFFSET)
+  if (scale !== null && scale !== 1) out.scale = Math.round(scale * 100) / 100
+  if (x !== null && x !== 0) out.x = x
+  if (y !== null && y !== 0) out.y = y
+  return out
 }
 
 export function sanitizeBackgrounds(raw: unknown, assets: Record<string, AssetInfo>): Record<string, Background> {
@@ -179,7 +195,7 @@ export function setBackground(backgrounds: Record<string, Background>, key: stri
     return copy
   }
   const next = parseBackground(bg, assets)
-  if (!next || (existing && existing.asset === next.asset && existing.fit === next.fit && existing.opacity === next.opacity)) return backgrounds
+  if (!next || (existing && existing.asset === next.asset && existing.fit === next.fit && existing.opacity === next.opacity && existing.scale === next.scale && existing.x === next.x && existing.y === next.y)) return backgrounds
   return { ...backgrounds, [key]: next }
 }
 
@@ -190,4 +206,21 @@ export function stickerStart(count: number): { x: number; y: number } {
 
 export function movedOn(moves: Record<string, Move>, panel: StickerPanel): string[] {
   return Object.keys(moves).filter((key) => elementById(key)?.panel === panel)
+}
+
+export function reorderSticker(stickers: Sticker[], id: string, direction: 'forward' | 'back'): Sticker[] {
+  if (direction !== 'forward' && direction !== 'back') return stickers
+  const index = stickers.findIndex((s) => s.id === id)
+  if (index === -1) return stickers
+  const self = stickers[index]
+  const step = direction === 'forward' ? 1 : -1
+  for (let i = index + step; i >= 0 && i < stickers.length; i += step) {
+    if (stickers[i].panel === self.panel && stickers[i].layer === self.layer) {
+      const copy = stickers.slice()
+      copy[index] = stickers[i]
+      copy[i] = self
+      return copy
+    }
+  }
+  return stickers
 }

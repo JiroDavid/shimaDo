@@ -8,6 +8,7 @@ interface Props {
   windowName: string
 }
 
+const LEVELS = { behind: 'Behind all', between: 'Between', front: 'In front' } as const
 const ZERO = { color: '', background: '', borderColor: '', radius: 0, borderWidth: 0, fontSize: 0, bold: false }
 
 export function StickerControls({ sticker, onThisWindow, windowName }: Props) {
@@ -18,7 +19,7 @@ export function StickerControls({ sticker, onThisWindow, windowName }: Props) {
           <div className="space-y-3 pb-2">
             <SliderControl label="Size" min={16} max={300} value={sticker.size} onChange={(v) => window.shima.editStickerUpdate(sticker.id, { size: v })} />
             <div className="flex gap-1.5" role="radiogroup" aria-label="Layer">
-              {(['front', 'behind'] as const).map((l) => (
+              {(['behind', 'between', 'front'] as const).map((l) => (
                 <button
                   key={l}
                   role="radio"
@@ -26,9 +27,18 @@ export function StickerControls({ sticker, onThisWindow, windowName }: Props) {
                   className={`btn flex-1 !px-2 ${sticker.layer === l ? 'btn-active' : ''}`}
                   onClick={() => window.shima.editStickerUpdate(sticker.id, { layer: l })}
                 >
-                  {l === 'front' ? 'In front' : 'Behind'}
+                  {LEVELS[l]}
                 </button>
               ))}
+            </div>
+            <p className="text-[0.78rem] text-muted">Between sits above cards and text but under buttons and fields.</p>
+            <div className="flex gap-1.5">
+              <button className="btn flex-1" onClick={() => window.shima.editStickerOrder(sticker.id, 'back')}>
+                Back
+              </button>
+              <button className="btn flex-1" onClick={() => window.shima.editStickerOrder(sticker.id, 'forward')}>
+                Forward
+              </button>
             </div>
             <div className="flex gap-1.5">
               <button className="btn flex-1" onClick={() => window.shima.editStickerDuplicate(sticker.id)}>

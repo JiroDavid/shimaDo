@@ -4,6 +4,7 @@ import { PANEL_TITLES } from '../shared/elements'
 import type { PanelId } from '../shared/types'
 import { PanelFrame } from './components/PanelFrame'
 import { DesignContext } from './components/EditableText'
+import { BackgroundGestures } from './components/BackgroundGestures'
 import { DropGuard } from './components/DropGuard'
 import { EditLayer } from './components/EditLayer'
 import { applyDesign } from './lib/applyDesign'
@@ -71,6 +72,7 @@ export function App() {
   return (
     <DesignContext.Provider value={data.design}>
       <DropGuard panel={id} />
+      {id !== 'mini' && id !== 'designer' && <BackgroundGestures panel={id} />}
       {id !== 'mini' && id !== 'designer' && <EditLayer panel={id} />}
       {body}
     </DesignContext.Provider>

@@ -114,3 +114,25 @@ describe('behind stickers in edit mode', () => {
     expect(css).toMatch(/html\[data-edit\] \.placed-back:has\(\.sticker\[data-edit-selected\]\)\s*\{[^}]*z-index: 3/)
   })
 })
+
+describe('between layer', () => {
+  it('lifts buttons and fields above a middle layer that sits above cards and text', () => {
+    expect(css).toMatch(/\.placed-mid\s*\{[^}]*z-index: 1/)
+    expect(css).toMatch(/\.panel\.has-between :is\([^)]*\.btn[^)]*\)[^{]*\{[^}]*z-index: 2/)
+    expect(css).toMatch(/\.panel\.has-between > \.win-body[^{]*\{[^}]*z-index: auto/)
+  })
+
+  it('renders the middle layer and flags windows that use it', () => {
+    const layer = readFileSync(join(renderer, 'components', 'PlacedLayer.tsx'), 'utf8')
+    expect(layer).toContain("'between'")
+    expect(readFileSync(join(renderer, 'components', 'PanelFrame.tsx'), 'utf8')).toContain('has-between')
+    expect(readFileSync(join(renderer, 'panels', 'Bar.tsx'), 'utf8')).toContain('has-between')
+  })
+})
+
+describe('background gestures', () => {
+  it('moves and scales with Alt only, in Edit mode', () => {
+    const g = readFileSync(join(renderer, 'components', 'BackgroundGestures.tsx'), 'utf8')
+    for (const needle of ['e.altKey', 'edit.active', "'wheel'", 'editBackground']) expect(g, needle).toContain(needle)
+  })
+})

@@ -29,9 +29,18 @@ export function BackgroundSection({ surfaceKey, bg, assets }: Props) {
             ))}
           </div>
           <SliderControl label="Opacity" min={5} max={100} unit="%" value={Math.round(bg.opacity * 100)} onChange={(v) => set({ opacity: v / 100 })} />
-          <button className="btn" onClick={() => window.shima.editBackground(surfaceKey, null)}>
-            Remove
-          </button>
+          <SliderControl label="Scale" min={25} max={400} unit="%" value={Math.round((bg.scale ?? 1) * 100)} onChange={(v) => set({ scale: v / 100 })} />
+          <SliderControl label="Left / right" min={-500} max={500} unit="px" value={bg.x ?? 0} onChange={(v) => set({ x: v })} />
+          <SliderControl label="Up / down" min={-500} max={500} unit="px" value={bg.y ?? 0} onChange={(v) => set({ y: v })} />
+          <p className="text-[0.78rem] text-muted">Or hold Alt and drag the window to move the image, Alt + mouse wheel to scale it.</p>
+          <div className="flex gap-1.5">
+            <button className="btn flex-1" onClick={() => set({ scale: 1, x: 0, y: 0 })}>
+              Reset view
+            </button>
+            <button className="btn flex-1" onClick={() => window.shima.editBackground(surfaceKey, null)}>
+              Remove
+            </button>
+          </div>
         </div>
       )}
     </Section>

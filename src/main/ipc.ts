@@ -156,6 +156,7 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.on('edit:sticker-update', (_e, id: unknown, patch: unknown) => edit.updateSticker(id, patch))
   ipcMain.on('edit:sticker-delete', (_e, id: unknown) => edit.deleteSticker(id))
   ipcMain.on('edit:sticker-duplicate', (_e, id: unknown) => edit.duplicateSticker(id))
+  ipcMain.on('edit:sticker-order', (_e, id: unknown, direction: unknown) => edit.reorderSticker(id, direction))
   ipcMain.on('edit:background', (_e, key: unknown, bg: unknown) => edit.setBackground(key, bg))
   ipcMain.on('asset:delete', (_e, id: unknown) => edit.deleteAsset(id))
 }

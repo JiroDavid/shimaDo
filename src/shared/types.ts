@@ -178,6 +178,7 @@ export interface ShimaApi {
   editStickerUpdate(id: string, patch: Record<string, unknown>): void
   editStickerDelete(id: string): void
   editStickerDuplicate(id: string): void
+  editStickerOrder(id: string, direction: 'forward' | 'back'): void
   editBackground(key: string, bg: Background | null): void
   assetAdd(name: string, bytes: Uint8Array): Promise<AssetResult>
   assetChoose(): Promise<AssetResult>

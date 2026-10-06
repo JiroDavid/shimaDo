@@ -5,6 +5,7 @@ import type { PanelId } from '../../shared/types'
 import { useEditState } from '../hooks/useEditState'
 import { dragOffset, dropPosition, elementScale, exceedsThreshold, nudgeDelta, stickerPosition, stickerResize } from '../lib/dragMove'
 import { fileBytes, isImageFile } from '../lib/files'
+import { measureScale } from '../lib/measureScale'
 import { snapshotElement } from '../lib/snapshotElement'
 import { toast } from '../lib/toast'
 import { DesignContext } from './EditableText'
@@ -61,16 +62,6 @@ function placeTag(kind: TagKind, node: Element | null, text: string) {
 }
 
 const removeTags = () => document.querySelectorAll('.edit-tag').forEach((t) => t.remove())
-
-function measureScale(container: Element | null): number {
-  if (!container) return 1
-  const probe = document.createElement('div')
-  probe.style.cssText = 'position:absolute;left:0;top:0;width:100px;height:0;visibility:hidden;pointer-events:none'
-  container.appendChild(probe)
-  const width = probe.getBoundingClientRect().width
-  probe.remove()
-  return width > 0 ? width / 100 : 1
-}
 
 const labelOf = (id: string, stickerEmoji?: string) => (id.startsWith('sticker:') ? (stickerEmoji ? `Sticker ${stickerEmoji}` : 'Image sticker') : labelFor(id))
 

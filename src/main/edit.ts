@@ -1,6 +1,6 @@
 import type { AppData, EditState, PanelId } from '../shared/types'
 import { clearElement, emptyDesign, parseSelection, removeAssetUsers, setOverride, type Design } from '../shared/design'
-import { addSticker, deleteSticker, duplicateSticker, setBackground, setMove, updateSticker } from '../shared/placement'
+import { addSticker, deleteSticker, duplicateSticker, reorderSticker, setBackground, setMove, updateSticker } from '../shared/placement'
 import { canRedo, canUndo, createHistory, record, redo, undo, type History } from '../shared/history'
 
 export interface EditHost {
@@ -105,6 +105,14 @@ export class EditSession {
     const stickers = updateSticker(d.stickers, id, patch, this.host.data().assets)
     if (stickers === d.stickers) return
     this.commit({ ...d, stickers }, `sticker:${id}`)
+  }
+
+  reorderSticker(id: unknown, direction: unknown): void {
+    if (!this.active || typeof id !== 'string' || (direction !== 'forward' && direction !== 'back')) return
+    const d = this.host.data().design
+    const stickers = reorderSticker(d.stickers, id, direction)
+    if (stickers === d.stickers) return
+    this.commit({ ...d, stickers }, `sticker-order:${id}:${this.now()}`)
   }
 
   deleteSticker(id: unknown): void {

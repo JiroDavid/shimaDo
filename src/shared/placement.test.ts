@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  MAX_STICKERS_PER_PANEL, movedOn, stickerStart, addSticker, deleteSticker, duplicateSticker, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, setBackground, setMove,
+  MAX_STICKERS_PER_PANEL, movedOn, reorderSticker, stickerStart, addSticker, deleteSticker, duplicateSticker, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, setBackground, setMove,
   updateSticker, type Sticker
 } from './placement'
 import type { AssetInfo } from './assets'
@@ -170,5 +170,67 @@ describe('movedOn', () => {
 
   it('ignores keys that are not elements', () => {
     expect(movedOn({ nope: { x: 1, y: 1 } } as never, 'bar')).toEqual([])
+  })
+})
+
+describe('between layer', () => {
+  it('accepts the between layer on load and on update', () => {
+    expect(sanitizeStickers([emoji({ layer: 'between' })], assets)[0].layer).toBe('between')
+    const list = [emoji()]
+    expect(updateSticker(list, 'stk-aaaa-0001', { layer: 'between' }, assets)[0].layer).toBe('between')
+    expect(updateSticker(list, 'stk-aaaa-0001', { layer: 'middle' }, assets)).toBe(list)
+  })
+})
+
+describe('reorderSticker', () => {
+  const a = emoji({ id: 'stk-aaaa-0001' })
+  const b = emoji({ id: 'stk-bbbb-0002' })
+  const c = emoji({ id: 'stk-cccc-0003' })
+  const other = emoji({ id: 'stk-dddd-0004', panel: 'gym' })
+  const ids = (l: Sticker[]) => l.map((s) => s.id)
+
+  it('moves a sticker forward or back past its neighbour on the same window and layer', () => {
+    expect(ids(reorderSticker([a, b, c], 'stk-aaaa-0001', 'forward'))).toEqual(['stk-bbbb-0002', 'stk-aaaa-0001', 'stk-cccc-0003'])
+    expect(ids(reorderSticker([a, b, c], 'stk-cccc-0003', 'back'))).toEqual(['stk-aaaa-0001', 'stk-cccc-0003', 'stk-bbbb-0002'])
+  })
+
+  it('skips stickers on other windows or layers', () => {
+    const front = emoji({ id: 'stk-eeee-0005', layer: 'between' })
+    expect(ids(reorderSticker([a, other, front, b], 'stk-aaaa-0001', 'forward'))).toEqual(['stk-bbbb-0002', 'stk-dddd-0004', 'stk-eeee-0005', 'stk-aaaa-0001'])
+  })
+
+  it('returns the same array at the ends or for unknown ids', () => {
+    const list = [a, b]
+    expect(reorderSticker(list, 'stk-bbbb-0002', 'forward')).toBe(list)
+    expect(reorderSticker(list, 'stk-aaaa-0001', 'back')).toBe(list)
+    expect(reorderSticker(list, 'stk-zzzz-0009', 'forward')).toBe(list)
+    expect(reorderSticker(list, 'stk-aaaa-0001', 'sideways' as never)).toBe(list)
+  })
+})
+
+describe('background scale and position', () => {
+  const base = { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 }
+
+  it('keeps old backgrounds without scale or offset unchanged', () => {
+    expect(sanitizeBackgrounds({ 'bar.surface': base }, assets)).toEqual({ 'bar.surface': base })
+  })
+
+  it('keeps scale and offsets, clamps them, and drops defaults', () => {
+    expect(sanitizeBackgrounds({ 'bar.surface': { ...base, scale: 2, x: 30, y: -20 } }, assets)['bar.surface']).toEqual({ ...base, scale: 2, x: 30, y: -20 })
+    expect(sanitizeBackgrounds({ 'bar.surface': { ...base, scale: 99, x: 99999, y: -99999 } }, assets)['bar.surface']).toEqual({ ...base, scale: 4, x: 2000, y: -2000 })
+    expect(sanitizeBackgrounds({ 'bar.surface': { ...base, scale: 0.01 } }, assets)['bar.surface']).toEqual({ ...base, scale: 0.25 })
+    expect(sanitizeBackgrounds({ 'bar.surface': { ...base, scale: 1, x: 0, y: 0 } }, assets)['bar.surface']).toEqual(base)
+  })
+
+  it('ignores non-numeric scale and offsets', () => {
+    expect(sanitizeBackgrounds({ 'bar.surface': { ...base, scale: 'big', x: NaN, y: {} } }, assets)['bar.surface']).toEqual(base)
+  })
+
+  it('treats a changed scale or offset as a change, and the same values as a no-op', () => {
+    const set = setBackground({}, 'bar.surface', base, assets)
+    const scaled = setBackground(set, 'bar.surface', { ...base, scale: 1.5 }, assets)
+    expect(scaled).not.toBe(set)
+    expect(setBackground(scaled, 'bar.surface', { ...base, scale: 1.5 }, assets)).toBe(scaled)
+    expect(setBackground(scaled, 'bar.surface', { ...base, scale: 1.5, x: 4 }, assets)).not.toBe(scaled)
   })
 })

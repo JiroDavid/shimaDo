@@ -50,6 +50,7 @@ const api: ShimaApi = {
   editStickerUpdate: (id, patch) => ipcRenderer.send('edit:sticker-update', id, patch),
   editStickerDelete: (id) => ipcRenderer.send('edit:sticker-delete', id),
   editStickerDuplicate: (id) => ipcRenderer.send('edit:sticker-duplicate', id),
+  editStickerOrder: (id, direction) => ipcRenderer.send('edit:sticker-order', id, direction),
   editBackground: (key, bg) => ipcRenderer.send('edit:background', key, bg),
   assetAdd: (name, bytes) => ipcRenderer.invoke('asset:add', name, bytes),
   assetChoose: () => ipcRenderer.invoke('asset:choose'),
