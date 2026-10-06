@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  accentChoices, contrastRatio, isLowContrast, normaliseAccentInput, onAccentFor, parseColor,
+  accentChoices, accentToCommit, contrastRatio, isLowContrast, normaliseAccentInput, onAccentFor, parseColor,
   resolveAccent, resolveColors, themeVars, validateTheme, type Theme
 } from './theme'
 
@@ -174,5 +174,21 @@ describe('validateTheme', () => {
   })
   it.each([null, undefined, 5, 'x', []])('rejects non-object %j', (v) => {
     expect(validateTheme(v)).toBeNull()
+  })
+})
+
+describe('accentToCommit', () => {
+  it('commits nothing when the field was never edited, even if it holds a valid hex', () => {
+    expect(accentToCommit('#7b5cff', false, 'orange')).toBeUndefined()
+  })
+  it('commits a normalised hex once edited', () => {
+    expect(accentToCommit('#ABCDEF', true, 'orange')).toBe('#abcdef')
+    expect(accentToCommit(' #abc ', true, 'sage')).toBe('#aabbcc')
+  })
+  it('commits nothing when the edit equals the current accent', () => {
+    expect(accentToCommit('#ABCDEF', true, '#abcdef')).toBeUndefined()
+  })
+  it.each(['ff8800', 'abc', '#12', 'sage', '#fff; x', ''])('commits nothing for %j', (typed) => {
+    expect(accentToCommit(typed, true, 'orange')).toBeUndefined()
   })
 })

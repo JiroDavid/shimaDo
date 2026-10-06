@@ -101,6 +101,12 @@ export function normaliseAccentInput(value: unknown): string | undefined {
   return m[1].length === 3 ? `#${[...m[1]].map((c) => c + c).join('')}` : v
 }
 
+export function accentToCommit(typed: string, edited: boolean, current: string): string | undefined {
+  if (!edited) return undefined
+  const normal = normaliseAccentInput(typed)
+  return normal?.startsWith('#') && normal !== current ? normal : undefined
+}
+
 export function resolveAccent(theme: Theme, accent: string): string {
   const normal = normaliseAccentInput(accent) ?? theme.defaultAccent
   return normal.startsWith('#') ? normal : theme.accents[normal as AccentSlot].value

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Settings } from '../../shared/types'
-import { ACCENT_SLOTS, FALLBACK_CUSTOM_ACCENT, isLowContrast, normaliseAccentInput } from '../../shared/theme'
+import { ACCENT_SLOTS, FALLBACK_CUSTOM_ACCENT, accentToCommit, isLowContrast, normaliseAccentInput } from '../../shared/theme'
 import { themeById } from '../../shared/themes'
 
 const COMMIT_DELAY_MS = 150
@@ -10,17 +10,28 @@ export function AccentPicker({ settings }: { settings: Settings }) {
   const custom = settings.accent.startsWith('#')
   const [hex, setHex] = useState(custom ? settings.accent : FALLBACK_CUSTOM_ACCENT)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const edited = useRef(false)
+  const current = useRef(settings.accent)
+  current.current = settings.accent
 
   useEffect(() => {
+    edited.current = false
     if (settings.accent.startsWith('#')) setHex(settings.accent)
   }, [settings.accent])
 
   const commit = (value: string) => {
-    const normal = normaliseAccentInput(value)
-    if (normal?.startsWith('#')) window.shima.setSettings({ accent: normal })
+    const next = accentToCommit(value, edited.current, current.current)
+    edited.current = false
+    if (next) window.shima.setSettings({ accent: next })
+  }
+
+  const type = (value: string) => {
+    edited.current = true
+    setHex(value)
   }
 
   const pick = (value: string) => {
+    edited.current = true
     setHex(value)
     clearTimeout(timer.current)
     timer.current = setTimeout(() => commit(value), COMMIT_DELAY_MS)
@@ -49,7 +60,7 @@ export function AccentPicker({ settings }: { settings: Settings }) {
           aria-label="Custom colour hex"
           value={hex}
           maxLength={7}
-          onChange={(e) => setHex(e.target.value)}
+          onChange={(e) => type(e.target.value)}
           onBlur={() => commit(hex)}
           onKeyDown={(e) => e.key === 'Enter' && commit(hex)}
         />
