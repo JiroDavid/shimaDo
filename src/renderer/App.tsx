@@ -11,6 +11,7 @@ import { useData } from './hooks/useData'
 import { Bar } from './panels/Bar'
 import { Checklist } from './panels/Checklist'
 import { Confirm } from './panels/Confirm'
+import { Designer } from './panels/Designer'
 import { Focus } from './panels/Focus'
 import { Gym } from './panels/Gym'
 import { Mini } from './panels/Mini'
@@ -63,6 +64,7 @@ export function App() {
         {id === 'settings' && <Settings data={data} />}
         {id === 'profile' && <Profile data={data} />}
         {id === 'confirm' && <Confirm />}
+        {id === 'designer' && <Designer data={data} />}
       </PanelFrame>
     )
   return (

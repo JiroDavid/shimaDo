@@ -19,6 +19,7 @@ export interface Design {
 
 export const emptyDesign = (): Design => ({ overrides: {} })
 
+export const COLOR_INPUT_FALLBACK = '#000000'
 export const MAX_TEXT = 60
 const TEXT_OK = /^[^\u0000-\u001f<>{};]+$/
 const FIELDS = ['color', 'background', 'borderColor', 'radius', 'borderWidth', 'fontSize', 'bold', 'text'] as const

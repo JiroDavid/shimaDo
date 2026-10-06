@@ -24,6 +24,13 @@ export const SHOTS = [
   { name: 'settings', hash: 'settings', size: '400x860' },
   { name: 'gym', hash: 'gym', size: '380x640' },
   { name: 'profile', hash: 'profile', size: '360x520' },
+  {
+    name: 'designer',
+    hash: 'designer',
+    size: '340x760',
+    edit: { active: true, selected: { id: 'checklist.heading', panel: 'checklist', computed: { color: 'rgb(243, 233, 214)', background: 'rgba(0, 0, 0, 0)', borderColor: 'rgb(243, 233, 214)', radius: 0, borderWidth: 0, fontSize: 32, bold: true } }, canUndo: true, canRedo: false },
+    design: { overrides: { 'checklist.heading': { color: '#ff3366', fontSize: 30 } } }
+  },
   { name: 'welcome', hash: 'welcome', size: '520x640' }
 ]
 

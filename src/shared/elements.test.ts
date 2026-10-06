@@ -101,3 +101,20 @@ describe('edit mode exits stay reachable', () => {
     for (const needle of ['[data-edit-exempt]', '.resize-handle', '.dot-btn']) expect(layer).toContain(needle)
   })
 })
+
+describe('designer window', () => {
+  it('renders the designer panel from App', () => {
+    const app = readFileSync(join(renderer, 'App.tsx'), 'utf8')
+    expect(app).toContain("id === 'designer' && <Designer data={data} />")
+  })
+
+  it('never marks up its own controls as editable elements', () => {
+    const designer = readFileSync(join(renderer, 'panels', 'Designer.tsx'), 'utf8')
+    expect(designer).not.toContain('data-el')
+  })
+
+  it('turns an emptied text box into a clear, not a blank label', () => {
+    const designer = readFileSync(join(renderer, 'panels', 'Designer.tsx'), 'utf8')
+    expect(designer).toMatch(/text: value\.trim\(\) === '' \? null : value/)
+  })
+})
