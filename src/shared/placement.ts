@@ -1,5 +1,5 @@
 import { ASSET_ID, type AssetInfo } from './assets'
-import { isEditablePanel, isKnownKey, isMovableKey, isSurfaceKey, type EditablePanel } from './elements'
+import { elementById, isEditablePanel, isKnownKey, isMovableKey, isSurfaceKey, type EditablePanel } from './elements'
 import { isEmoji } from './emoji'
 
 export interface Move {
@@ -186,4 +186,8 @@ export function setBackground(backgrounds: Record<string, Background>, key: stri
 export function stickerStart(count: number): { x: number; y: number } {
   const step = (count % 10) * 24
   return { x: 40 + step, y: 90 + step }
+}
+
+export function movedOn(moves: Record<string, Move>, panel: StickerPanel): string[] {
+  return Object.keys(moves).filter((key) => elementById(key)?.panel === panel)
 }

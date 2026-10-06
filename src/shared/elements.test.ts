@@ -269,3 +269,44 @@ describe('designer media controls', () => {
     for (const f of ['AddSection', 'EmojiGrid', 'ImageGallery', 'BackgroundSection', 'StickerControls']) expect(read('components', 'design', `${f}.tsx`)).not.toContain('data-el')
   })
 })
+
+describe('edit layer zoom handling', () => {
+  it('measures the placed layer scale for sticker drags and drops', () => {
+    const layer = readFileSync(join(renderer, 'components', 'EditLayer.tsx'), 'utf8')
+    expect(layer).toContain('dropPosition(')
+    expect(layer).toContain("closest('.placed-front, .placed-back')")
+  })
+})
+
+describe('recovery and reachability', () => {
+  const read = (...p: string[]) => readFileSync(join(renderer, ...p), 'utf8')
+
+  it('offers Bring back for a sticker and a list of moved items with resets', () => {
+    expect(read('components', 'design', 'StickerControls.tsx')).toContain('Bring back')
+    const d = read('panels', 'Designer.tsx')
+    for (const needle of ['Moved items', 'movedOn(', 'Reset all positions']) expect(d, needle).toContain(needle)
+  })
+
+  it('marks a sticker selected from the designer in its own window', () => {
+    const layer = read('components', 'EditLayer.tsx')
+    expect(layer).toContain('.sticker[data-sticker=')
+    expect(layer).toContain('CSS.escape(')
+  })
+})
+
+describe('navigation and drop guards', () => {
+  const read = (...p: string[]) => readFileSync(join(renderer, ...p), 'utf8')
+
+  it('stops windows navigating away and opening new windows', () => {
+    const panels = readFileSync(join(renderer, '..', 'main', 'panels.ts'), 'utf8')
+    expect(panels).toContain("'will-navigate'")
+    expect(panels).toContain('shouldBlockNavigation(')
+    expect(panels).toContain('setWindowOpenHandler(')
+  })
+
+  it('swallows stray file drops in every window and explains outside edit mode', () => {
+    const guard = read('components', 'DropGuard.tsx')
+    for (const needle of ["'dragover'", "'drop'", 'preventDefault()', 'Turn on Edit mode to add images']) expect(guard, needle).toContain(needle)
+    expect(read('App.tsx')).toContain('<DropGuard')
+  })
+})

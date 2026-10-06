@@ -22,7 +22,12 @@ export function Fit({ mode, naturalWidth = 340, children }: Props) {
     i.style.minHeight = '0'
     i.style.width = `${naturalWidth}px`
     let k = w / naturalWidth
-    if (mode === 'both') k = Math.min(k, h / Math.max(i.scrollHeight, 1))
+    if (mode === 'both') {
+      i.classList.add('fit-measure')
+      const natural = i.scrollHeight
+      i.classList.remove('fit-measure')
+      k = Math.min(k, h / Math.max(natural, 1))
+    }
     k = Math.min(Math.max(k, 0.35), 1)
     i.style.zoom = String(k)
     i.style.width = `${w / k}px`

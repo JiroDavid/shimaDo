@@ -20,6 +20,8 @@ export interface AssetHost {
 }
 
 const FILE_NAME = /^([a-z0-9-]{8,40})\.(png|jpg|gif|svg|webp)$/
+const TRASH = '.trash'
+const TRASH_DAYS = 30
 
 const own = <T>(o: Record<string, T>, key: string): T | undefined => (Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined)
 
@@ -31,6 +33,25 @@ export class AssetStore {
     private newId: () => string = randomUUID
   ) {}
 
+  private moveToTrash(name: string): void {
+    const trash = join(this.dir, TRASH)
+    fs.mkdirSync(trash, { recursive: true })
+    let target = join(trash, name)
+    if (fs.existsSync(target)) target = join(trash, `${name}.${this.now()}`)
+    fs.renameSync(join(this.dir, name), target)
+  }
+
+  private purgeTrash(): void {
+    const trash = join(this.dir, TRASH)
+    if (!fs.existsSync(trash)) return
+    const limit = TRASH_DAYS * 24 * 60 * 60 * 1000
+    for (const entry of fs.readdirSync(trash, { withFileTypes: true })) {
+      if (!entry.isFile()) continue
+      const file = join(trash, entry.name)
+      if (this.now() - fs.statSync(file).mtimeMs > limit) fs.rmSync(file, { force: true })
+    }
+  }
+
   init(): void {
     fs.mkdirSync(this.dir, { recursive: true })
     const index = this.host.data().assets
@@ -38,8 +59,9 @@ export class AssetStore {
       if (!entry.isFile()) continue
       const m = FILE_NAME.exec(entry.name)
       if (m && own(index, m[1])?.ext === m[2]) continue
-      fs.rmSync(join(this.dir, entry.name), { force: true })
+      this.moveToTrash(entry.name)
     }
+    this.purgeTrash()
     this.host.update((d) => {
       for (const [id, info] of Object.entries(d.assets)) {
         const file = resolveAssetPath(this.dir, id, info.ext)

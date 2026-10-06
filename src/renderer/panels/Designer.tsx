@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
 import { GROUP_PREFIX, elementById, groupById, isEditablePanel, isMovableKey, isSurfaceKey, type EditableProp } from '../../shared/elements'
-import type { StickerPanel } from '../../shared/placement'
+import { movedOn, type StickerPanel } from '../../shared/placement'
 import { labelBoxValue, paletteFor, resolveOverride, type StyleOverride } from '../../shared/design'
 import { colorToHex } from '../../shared/theme'
 import { themeById } from '../../shared/themes'
@@ -84,6 +84,8 @@ export function Designer({ data }: { data: AppData }) {
   const backgroundTarget = surfaceKey ?? (lastWindow === 'bar' ? 'bar.surface' : `${lastWindow}.panel`)
   const setBackgroundFrom = (asset: string) => window.shima.editBackground(backgroundTarget, { asset, fit: 'cover', opacity: 1 })
 
+  const moved = movedOn(data.design.moves, lastWindow)
+
   const resetAll = () => {
     if (!confirmAll) return setConfirmAll(true)
     window.shima.editResetAll()
@@ -109,6 +111,23 @@ export function Designer({ data }: { data: AppData }) {
       <AddSection data={data} target={lastWindow} targetName={windowName} canBackground onBackground={setBackgroundFrom} />
       {(isSticker || data.design.stickers.some((s) => s.panel === lastWindow)) && (
         <StickerControls sticker={sticker} onThisWindow={data.design.stickers.filter((s) => s.panel === lastWindow)} windowName={windowName} />
+      )}
+      {moved.length > 0 && (
+        <Section label="Moved items" count={`on ${windowName}`}>
+          <div className="space-y-1.5 pb-2">
+            {moved.map((k) => (
+              <div key={k} className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-[0.85rem] font-bold">{elementById(k)?.name ?? k}</span>
+                <button className="btn !min-h-[26px] !px-2.5 !text-[0.78rem]" onClick={() => window.shima.editResetPosition(k)}>
+                  Reset
+                </button>
+              </div>
+            ))}
+            <button className="btn" onClick={() => moved.forEach((k) => window.shima.editResetPosition(k))}>
+              Reset all positions
+            </button>
+          </div>
+        </Section>
       )}
       {surfaceKey && <BackgroundSection surfaceKey={surfaceKey} bg={data.design.backgrounds[surfaceKey]} assets={data.assets} />}
 

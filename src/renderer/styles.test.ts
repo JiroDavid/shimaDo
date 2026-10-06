@@ -100,3 +100,17 @@ describe('placed layers', () => {
     expect(css).toMatch(/\.sticker\[data-edit-selected\] \.sticker-handle\s*\{[^}]*display: block/)
   })
 })
+
+describe('fit measuring', () => {
+  it('ignores moved elements while the panel measures its content height', () => {
+    expect(css).toMatch(/\.fit-measure \[data-el\]\s*\{[^}]*translate: none !important/)
+    const fit = readFileSync(join(renderer, 'components', 'Fit.tsx'), 'utf8')
+    expect(fit).toContain('fit-measure')
+  })
+})
+
+describe('behind stickers in edit mode', () => {
+  it('lifts a selected behind sticker above the panel content so it can be dragged', () => {
+    expect(css).toMatch(/html\[data-edit\] \.placed-back:has\(\.sticker\[data-edit-selected\]\)\s*\{[^}]*z-index: 3/)
+  })
+})

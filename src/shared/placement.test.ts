@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  MAX_STICKERS_PER_PANEL, stickerStart, addSticker, deleteSticker, duplicateSticker, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, setBackground, setMove,
+  MAX_STICKERS_PER_PANEL, movedOn, stickerStart, addSticker, deleteSticker, duplicateSticker, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, setBackground, setMove,
   updateSticker, type Sticker
 } from './placement'
 import type { AssetInfo } from './assets'
@@ -149,5 +149,26 @@ describe('stickerStart', () => {
     expect(stickerStart(1)).toEqual({ x: 64, y: 114 })
     const seen = new Set(Array.from({ length: 12 }, (_, i) => JSON.stringify(stickerStart(i))))
     expect(seen.size).toBe(10)
+  })
+})
+
+describe('movedOn', () => {
+  const moves = {
+    'bar.label': { x: 5, y: 5 },
+    'bar.btn.checklist': { x: 1, y: 1 },
+    'checklist.heading': { x: 9, y: 9 },
+    'checklist.card.overdue': { x: 3, y: 3 },
+    'settings.export': { x: 2, y: 2 }
+  }
+
+  it('lists the moved elements that belong to a window', () => {
+    expect(movedOn(moves, 'bar').sort()).toEqual(['bar.btn.checklist', 'bar.label'])
+    expect(movedOn(moves, 'checklist').sort()).toEqual(['checklist.card.overdue', 'checklist.heading'])
+    expect(movedOn(moves, 'settings')).toEqual(['settings.export'])
+    expect(movedOn(moves, 'gym')).toEqual([])
+  })
+
+  it('ignores keys that are not elements', () => {
+    expect(movedOn({ nope: { x: 1, y: 1 } } as never, 'bar')).toEqual([])
   })
 })

@@ -524,3 +524,7 @@ html[data-drop] .panel, html[data-drop] .bar { outline: 3px dashed var(--accent)
   pointer-events: none;
 }
 html[data-edit] [data-el]:not(.sticker):not(.panel):not(.bar) { cursor: move; }
+
+.fit-measure [data-el] { translate: none !important; }
+
+html[data-edit] .placed-back:has(.sticker[data-edit-selected]) { z-index: 3; }

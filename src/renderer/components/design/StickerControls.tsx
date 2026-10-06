@@ -1,4 +1,4 @@
-import type { Sticker } from '../../../shared/placement'
+import { stickerStart, type Sticker } from '../../../shared/placement'
 import { Section } from '../Section'
 import { SliderControl } from './SliderControl'
 
@@ -38,6 +38,9 @@ export function StickerControls({ sticker, onThisWindow, windowName }: Props) {
                 Delete
               </button>
             </div>
+            <button className="btn" onClick={() => window.shima.editStickerUpdate(sticker.id, stickerStart(0))}>
+              Bring back
+            </button>
           </div>
         </Section>
       )}

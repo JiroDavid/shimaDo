@@ -3,9 +3,10 @@ import { GROUPS, GROUP_PREFIX, isMovableKey, labelFor } from '../../shared/eleme
 import type { StickerPanel } from '../../shared/placement'
 import type { PanelId } from '../../shared/types'
 import { useEditState } from '../hooks/useEditState'
-import { dragOffset, elementScale, exceedsThreshold, nudgeDelta, stickerPosition, stickerResize } from '../lib/dragMove'
+import { dragOffset, dropPosition, elementScale, exceedsThreshold, nudgeDelta, stickerPosition, stickerResize } from '../lib/dragMove'
 import { fileBytes, isImageFile } from '../lib/files'
 import { snapshotElement } from '../lib/snapshotElement'
+import { toast } from '../lib/toast'
 import { DesignContext } from './EditableText'
 
 const TARGET = ['[data-el]', '.sticker', ...GROUPS.map((g) => g.selector)].join(',')
@@ -61,13 +62,14 @@ function placeTag(kind: TagKind, node: Element | null, text: string) {
 
 const removeTags = () => document.querySelectorAll('.edit-tag').forEach((t) => t.remove())
 
-function toast(message: string) {
-  if (!message) return
-  const el = document.createElement('div')
-  el.className = 'edit-toast'
-  el.textContent = message
-  document.body.appendChild(el)
-  setTimeout(() => el.remove(), 3000)
+function measureScale(container: Element | null): number {
+  if (!container) return 1
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:absolute;left:0;top:0;width:100px;height:0;visibility:hidden;pointer-events:none'
+  container.appendChild(probe)
+  const width = probe.getBoundingClientRect().width
+  probe.remove()
+  return width > 0 ? width / 100 : 1
 }
 
 const labelOf = (id: string, stickerEmoji?: string) => (id.startsWith('sticker:') ? (stickerEmoji ? `Sticker ${stickerEmoji}` : 'Image sticker') : labelFor(id))
@@ -172,9 +174,10 @@ export function EditLayer({ panel }: { panel: PanelId }) {
       if (hit.id.startsWith('sticker:')) {
         const s = stickerOf(hit.id)
         if (!s) return
+        const scale = measureScale(node.closest('.placed-front, .placed-back'))
         drag = handle
-          ? { ...base, id: s.id, kind: 'resize', origin: { x: s.x, y: s.y }, size: s.size, scale: 1, last: s.size }
-          : { ...base, id: s.id, kind: 'sticker', origin: { x: s.x, y: s.y }, size: s.size, scale: 1, last: { x: s.x, y: s.y } }
+          ? { ...base, id: s.id, kind: 'resize', origin: { x: s.x, y: s.y }, size: s.size, scale, last: s.size }
+          : { ...base, id: s.id, kind: 'sticker', origin: { x: s.x, y: s.y }, size: s.size, scale, last: { x: s.x, y: s.y } }
       } else if (isMovableKey(hit.id)) {
         const origin = designRef.current.moves[hit.id] ?? { x: 0, y: 0 }
         drag = { ...base, kind: 'move', origin, size: 0, scale: elementScale(node.getBoundingClientRect().width, node.offsetWidth), last: origin }
@@ -193,12 +196,12 @@ export function EditLayer({ panel }: { panel: PanelId }) {
         drag.last = next
         drag.node.style.setProperty('translate', `${next.x}px ${next.y}px`, 'important')
       } else if (drag.kind === 'sticker') {
-        const next = stickerPosition(drag.origin, delta)
+        const next = stickerPosition(drag.origin, delta, drag.scale)
         drag.last = next
         drag.node.style.left = `${next.x}px`
         drag.node.style.top = `${next.y}px`
       } else {
-        const size = stickerResize(drag.size, delta)
+        const size = stickerResize(drag.size, delta, drag.scale)
         drag.last = size
         drag.node.style.width = `${size}px`
         drag.node.style.height = `${size}px`
@@ -274,6 +277,7 @@ export function EditLayer({ panel }: { panel: PanelId }) {
       const surface = document.querySelector('.panel, .bar')
       if (!surface) return
       const rect = surface.getBoundingClientRect()
+      const scale = measureScale(surface)
       const target = (panel === 'bar' ? 'bar' : panel) as StickerPanel
       let placed = 0
       for (const file of Array.from(e.dataTransfer?.files ?? []).filter(isImageFile).slice(0, 5)) {
@@ -283,21 +287,16 @@ export function EditLayer({ panel }: { panel: PanelId }) {
           continue
         }
         const size = 96
-        window.shima.editStickerAdd({
-          panel: target,
-          kind: 'image',
-          asset: result.id,
-          x: Math.round(e.clientX - rect.left - size / 2 + placed * 20),
-          y: Math.round(e.clientY - rect.top - size / 2 + placed * 20),
-          size,
-          layer: 'front'
-        })
+        const { x, y } = dropPosition({ x: e.clientX, y: e.clientY }, rect, size, scale, placed)
+        window.shima.editStickerAdd({ panel: target, kind: 'image', asset: result.id, x, y, size, layer: 'front' })
         placed++
       }
     }
 
     const syncSelection = () => {
-      if (selected && !document.querySelector('[data-edit-selected]')) selected = null
+      const marked = document.querySelector('[data-edit-selected]')
+      if (!marked) selected = null
+      else if (selected?.node !== marked) selected = resolve(marked) ?? selected
       refresh()
     }
     const timer = setInterval(syncSelection, 300)
@@ -341,11 +340,18 @@ export function EditLayer({ panel }: { panel: PanelId }) {
   }, [edit.active, panel])
 
   useEffect(() => {
-    if (edit.selected?.panel !== panel) {
+    const sel = edit.selected
+    if (sel?.panel === panel && sel.id.startsWith('sticker:')) {
+      const node = document.querySelector(`.sticker[data-sticker="${CSS.escape(sel.id.slice('sticker:'.length))}"]`)
+      if (node) {
+        clearMarks('data-edit-selected', node)
+        node.setAttribute('data-edit-selected', '')
+      }
+    } else if (sel?.panel !== panel) {
       clearMarks('data-edit-selected')
       document.querySelector<HTMLElement>('.edit-tag[data-kind="selected"]')?.style.setProperty('display', 'none')
     }
-  }, [edit.selected, panel])
+  }, [edit.selected, design.stickers, panel])
 
   return null
 }

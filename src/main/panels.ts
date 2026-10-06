@@ -1,6 +1,7 @@
 import { BrowserWindow, nativeImage, screen } from 'electron'
 import { PANEL_IDS, type DisplayInfo, type Edge, type PanelId, type PanelState } from '../shared/types'
 import { defaultBounds, effectiveSize, minSize, scaledPanels, shouldStayOnTop, type Rect } from './layout'
+import { shouldBlockNavigation } from './navigation'
 import { fitOnScreen, resizeBounds, translateBounds } from './resize'
 import { defaultData, type Store } from './store'
 
@@ -348,6 +349,10 @@ export class PanelManager {
       e.preventDefault()
       this.hide(id)
     })
+    win.webContents.on('will-navigate', (e, url) => {
+      if (shouldBlockNavigation(win.webContents.getURL(), url)) e.preventDefault()
+    })
+    win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
     win.webContents.on('render-process-gone', () => {
       if (!win.isDestroyed()) win.reload()
     })

@@ -102,7 +102,8 @@ describe('AssetStore.init', () => {
       { id: 'stk-bbbb-0002', panel: 'bar', kind: 'image', asset: 'asset-lost-0003', x: 1, y: 1, size: 40, layer: 'front' }
     ]
     new AssetStore(dir, { data: () => store.data, update: (fn) => store.update(fn) }).init()
-    expect(fs.readdirSync(dir).sort()).toEqual(['asset-keep-0001.png', 'subfolder'])
+    expect(fs.readdirSync(dir).sort()).toEqual(['.trash', 'asset-keep-0001.png', 'subfolder'])
+    expect(fs.readdirSync(path.join(dir, '.trash')).sort()).toEqual(['asset-keep-0001.png.tmp', 'asset-orphan-02.png', 'notes.txt'])
     expect(Object.keys(store.data.assets)).toEqual(['asset-keep-0001'])
     expect(store.data.design.stickers.map((s) => s.id)).toEqual(['stk-aaaa-0001'])
     expect(fs.existsSync(path.join(root, 'outside.txt'))).toBe(true)
@@ -140,5 +141,61 @@ describe('serveAsset', () => {
     expect(serveAsset(assets, 'shimado-asset://asset/../x').status).toBe(400)
     expect(serveAsset(assets, 'file:///etc/passwd').status).toBe(400)
     expect(serveAsset(assets, 'shimado-asset://asset/asset-zzzz-9999').status).toBe(404)
+  })
+})
+
+describe('AssetStore.init is not destructive', () => {
+  const info = (id: string): AssetInfo => ({ id, ext: 'png', bytes: 40, name: 'x', addedAt: 1 })
+
+  it('keeps every image when the data file was lost or corrupt', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'shimado-assets-'))
+    const dir = path.join(root, 'assets')
+    fs.mkdirSync(dir)
+    fs.writeFileSync(path.join(dir, 'asset-aaaa-0001.png'), png())
+    fs.writeFileSync(path.join(dir, 'asset-bbbb-0002.png'), png())
+    const store = new Store(path.join(root, 'data.json'))
+    new AssetStore(dir, { data: () => store.data, update: (fn) => store.update(fn) }).init()
+    expect(Object.keys(store.data.assets)).toEqual([])
+    expect(fs.readdirSync(path.join(dir, '.trash')).sort()).toEqual(['asset-aaaa-0001.png', 'asset-bbbb-0002.png'])
+    expect(fs.readFileSync(path.join(dir, '.trash', 'asset-aaaa-0001.png')).length).toBe(40)
+  })
+
+  it('does not overwrite an earlier trashed file with the same name', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'shimado-assets-'))
+    const dir = path.join(root, 'assets')
+    fs.mkdirSync(path.join(dir, '.trash'), { recursive: true })
+    fs.writeFileSync(path.join(dir, '.trash', 'asset-aaaa-0001.png'), 'old')
+    fs.writeFileSync(path.join(dir, 'asset-aaaa-0001.png'), png())
+    const store = new Store(path.join(root, 'data.json'))
+    new AssetStore(dir, { data: () => store.data, update: (fn) => store.update(fn) }).init()
+    const kept = fs.readdirSync(path.join(dir, '.trash'))
+    expect(kept).toHaveLength(2)
+    expect(fs.readFileSync(path.join(dir, '.trash', 'asset-aaaa-0001.png'), 'utf8')).toBe('old')
+  })
+
+  it('purges trashed files older than thirty days and keeps recent ones', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'shimado-assets-'))
+    const dir = path.join(root, 'assets')
+    fs.mkdirSync(path.join(dir, '.trash'), { recursive: true })
+    const oldFile = path.join(dir, '.trash', 'old.png')
+    const newFile = path.join(dir, '.trash', 'new.png')
+    fs.writeFileSync(oldFile, 'x')
+    fs.writeFileSync(newFile, 'x')
+    const day = 24 * 60 * 60 * 1000
+    fs.utimesSync(oldFile, new Date(Date.now() - 40 * day), new Date(Date.now() - 40 * day))
+    const store = new Store(path.join(root, 'data.json'))
+    new AssetStore(dir, { data: () => store.data, update: (fn) => store.update(fn) }).init()
+    expect(fs.existsSync(oldFile)).toBe(false)
+    expect(fs.existsSync(newFile)).toBe(true)
+  })
+
+  it('never touches files outside the asset folder', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'shimado-assets-'))
+    fs.writeFileSync(path.join(root, 'outside.png'), png())
+    const store = new Store(path.join(root, 'data.json'))
+    const dir = path.join(root, 'assets')
+    store.data.assets = { 'asset-keep-0001': info('asset-keep-0001') }
+    new AssetStore(dir, { data: () => store.data, update: (fn) => store.update(fn) }).init()
+    expect(fs.existsSync(path.join(root, 'outside.png'))).toBe(true)
   })
 })

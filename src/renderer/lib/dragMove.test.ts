@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DRAG_THRESHOLD, dragOffset, elementScale, exceedsThreshold, nudgeDelta, stickerPosition, stickerResize } from './dragMove'
+import { DRAG_THRESHOLD, dragOffset, dropPosition, elementScale, exceedsThreshold, nudgeDelta, stickerPosition, stickerResize } from './dragMove'
 
 describe('exceedsThreshold', () => {
   it('starts a drag only after a few pixels of movement', () => {
@@ -58,5 +58,31 @@ describe('nudgeDelta', () => {
     expect(nudgeDelta('ArrowUp', false)).toEqual({ x: 0, y: -1 })
     expect(nudgeDelta('ArrowDown', true)).toEqual({ x: 0, y: 10 })
     expect(nudgeDelta('a', false)).toBeNull()
+  })
+})
+
+describe('sticker drag and resize inside a zoomed container', () => {
+  it('divides pointer movement by the container scale so the sticker follows the pointer', () => {
+    expect(stickerPosition({ x: 10, y: 10 }, { dx: 20, dy: -10 }, 2)).toEqual({ x: 20, y: 5 })
+    expect(stickerPosition({ x: 10, y: 10 }, { dx: 20, dy: -10 }, 0.5)).toEqual({ x: 50, y: -10 })
+    expect(stickerResize(64, { dx: 20, dy: 20 }, 2)).toBe(74)
+    expect(stickerResize(64, { dx: 20, dy: 20 }, 0.5)).toBe(104)
+  })
+
+  it('treats a missing or bad scale as 1', () => {
+    expect(stickerPosition({ x: 10, y: 10 }, { dx: 5, dy: 5 }, 0)).toEqual({ x: 15, y: 15 })
+    expect(stickerResize(64, { dx: 10, dy: 10 }, Number.NaN)).toBe(74)
+  })
+})
+
+describe('dropPosition', () => {
+  it('centres a dropped sticker on the pointer in the container own units', () => {
+    expect(dropPosition({ x: 150, y: 120 }, { left: 50, top: 20 }, 96, 1)).toEqual({ x: 52, y: 52 })
+    expect(dropPosition({ x: 150, y: 120 }, { left: 50, top: 20 }, 96, 2)).toEqual({ x: 2, y: 2 })
+    expect(dropPosition({ x: 150, y: 120 }, { left: 50, top: 20 }, 96, 0)).toEqual({ x: 52, y: 52 })
+  })
+
+  it('offsets later files so they do not stack', () => {
+    expect(dropPosition({ x: 150, y: 120 }, { left: 50, top: 20 }, 96, 1, 2)).toEqual({ x: 92, y: 92 })
   })
 })
