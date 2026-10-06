@@ -110,8 +110,15 @@ describe('fit measuring', () => {
 })
 
 describe('behind stickers in edit mode', () => {
-  it('lifts a selected behind sticker above the panel content so it can be dragged', () => {
-    expect(css).toMatch(/html\[data-edit\] \.placed-back:has\(\.sticker\[data-edit-selected\]\)\s*\{[^}]*z-index: 3/)
+  it('keeps the real stacking order and outlines the selected sticker on top instead', () => {
+    expect(css).not.toMatch(/placed-(back|mid):has\(\.sticker\[data-edit-selected\]\)/)
+    expect(css).toMatch(/\.edit-box\s*\{[^}]*pointer-events: none/)
+  })
+
+  it('picks a sticker under the pointer when the click lands on the window surface', () => {
+    const layer = readFileSync(join(renderer, 'components', 'EditLayer.tsx'), 'utf8')
+    expect(layer).toContain('elementsFromPoint')
+    expect(layer).toContain('placeBox(')
   })
 })
 

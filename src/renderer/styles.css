@@ -527,7 +527,6 @@ html[data-edit] [data-el]:not(.sticker):not(.panel):not(.bar) { cursor: move; }
 
 .fit-measure [data-el] { translate: none !important; }
 
-html[data-edit] .placed-back:has(.sticker[data-edit-selected]) { z-index: 3; }
 
 .placed-mid { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; border-radius: inherit; }
 .panel.has-between > .titlebar,
@@ -535,4 +534,4 @@ html[data-edit] .placed-back:has(.sticker[data-edit-selected]) { z-index: 3; }
 .bar.has-between > :not(.placed-back):not(.placed-mid):not(.placed-front):not(button) { position: static; z-index: auto; }
 .panel.has-between :is(button, input, textarea, select, .btn, .field, .check, .switch):not(.absolute):not(.fixed):not(.resize-handle),
 .bar.has-between > button:not(.placed-back) { position: relative; z-index: 2; }
-html[data-edit] .placed-mid:has(.sticker[data-edit-selected]) { z-index: 3; }
+.edit-box { position: fixed; z-index: 99998; display: none; pointer-events: none; border: 2px solid var(--accent); border-radius: 4px; box-shadow: 0 0 0 1px var(--panel-solid); }

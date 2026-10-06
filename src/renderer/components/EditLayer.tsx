@@ -15,8 +15,13 @@ const EXEMPT = '[data-edit-exempt], .resize-handle, .dot-btn'
 const FOCUSABLE = 'input, textarea, select, button'
 const ZERO = { color: '', background: '', borderColor: '', radius: 0, borderWidth: 0, fontSize: 0, bold: false }
 
-function resolve(target: Element): { node: Element; id: string } | null {
-  const node = target.closest(TARGET)
+function resolve(target: Element, point?: { x: number; y: number }): { node: Element; id: string } | null {
+  let node = target.closest(TARGET)
+  const surface = node?.getAttribute('data-el')
+  if (point && (!node || surface === 'bar.surface' || surface?.endsWith('.panel'))) {
+    const under = document.elementsFromPoint(point.x, point.y).find((n) => n.classList.contains('sticker'))
+    if (under) node = under
+  }
   if (!node) return null
   const stickerId = (node as HTMLElement).dataset?.sticker
   if (stickerId) return { node, id: `sticker:${stickerId}` }
@@ -31,6 +36,25 @@ const clearMarks = (attr: string, keep: Element | null = null) => {
   document.querySelectorAll(`[${attr}]`).forEach((n) => {
     if (n !== keep) n.removeAttribute(attr)
   })
+}
+
+function placeBox(node: Element | null) {
+  let box = document.querySelector<HTMLElement>('.edit-box')
+  if (!box) {
+    box = document.createElement('div')
+    box.className = 'edit-box'
+    document.body.appendChild(box)
+  }
+  if (!node || !node.isConnected) {
+    box.style.display = 'none'
+    return
+  }
+  const r = node.getBoundingClientRect()
+  box.style.display = 'block'
+  box.style.left = `${r.left}px`
+  box.style.top = `${r.top}px`
+  box.style.width = `${r.width}px`
+  box.style.height = `${r.height}px`
 }
 
 type TagKind = 'hover' | 'selected'
@@ -111,6 +135,7 @@ export function EditLayer({ panel }: { panel: PanelId }) {
 
     const refresh = () => {
       placeTag('selected', selected?.node ?? null, selected ? nameOf(selected) : '')
+      placeBox(selected?.node.classList.contains('sticker') ? selected.node : null)
       const showHover = hovered !== null && hovered.node !== selected?.node
       placeTag('hover', showHover ? hovered!.node : null, showHover ? nameOf(hovered!) : '')
     }
@@ -119,7 +144,7 @@ export function EditLayer({ panel }: { panel: PanelId }) {
 
     const onMove = (e: MouseEvent) => {
       if (drag?.active) return
-      const hit = e.target instanceof Element ? resolve(e.target) : null
+      const hit = e.target instanceof Element ? resolve(e.target, { x: e.clientX, y: e.clientY }) : null
       if ((hit?.node ?? null) === (hovered?.node ?? null)) return
       hovered = hit
       clearMarks('data-edit-hover', hit?.node ?? null)
@@ -151,14 +176,14 @@ export function EditLayer({ panel }: { panel: PanelId }) {
       if (exempt(e) || !(e.target instanceof Element)) return
       e.preventDefault()
       e.stopPropagation()
-      const hit = resolve(e.target)
+      const hit = resolve(e.target, { x: e.clientX, y: e.clientY })
       if (hit) select(hit)
     }
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0 || exempt(e) || !(e.target instanceof Element)) return
       const handle = e.target.closest('[data-sticker-handle]')
-      const hit = resolve(e.target)
+      const hit = resolve(e.target, { x: e.clientX, y: e.clientY })
       if (!hit) return
       const node = hit.node as HTMLElement
       const base = { id: hit.id, node, startX: e.clientX, startY: e.clientY, active: false }
