@@ -31,6 +31,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 - **Notepad** - a simple autosaving scratch pad in its own window
 - **Themes** - five built-in looks (Classic, Paper, Terminal, Sakura, Midnight) chosen on first launch or in Settings, each with four accent colours plus a custom colour picker
 - **Edit mode** - click the pencil on the bar to restyle any panel element: colours, corner radius, border, text size and weight, and labels, for one element or a whole group, with undo and live autosave
+- **Placement and media** - in Edit mode drag any element to a new spot, add emoji or your own images and GIFs as stickers, and use an image as a window or bar background (drop, pick or paste to upload)
 - **Always on top** - drag, resize and hide panels like sticky notes
 - **Multi-monitor** - resize panels from any edge, move everything to another monitor, or reset the layout from Settings
 - **Tray control** - opacity, accent colour, always-on-top, launch at startup, Exit
