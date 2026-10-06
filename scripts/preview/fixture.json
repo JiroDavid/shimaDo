@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "tasks": [
+    { "id": "study", "title": "Study maths", "kind": "daily", "time": "09:00", "endTime": "11:30", "tag": "must", "createdOn": "2026-09-01" },
+    { "id": "standup", "title": "Standup", "kind": "daily", "time": "10:00", "endTime": "10:30", "tag": "urgent", "createdOn": "2026-09-01" },
+    { "id": "email", "title": "Email", "kind": "daily", "time": "10:15", "tag": "important", "createdOn": "2026-09-01" },
+    { "id": "vitamins", "title": "Take vitamins", "kind": "daily", "time": "", "createdOn": "2026-09-01" },
+    { "id": "lunch", "title": "Lunch", "kind": "daily", "time": "12:30", "endTime": "13:15", "createdOn": "2026-09-01" },
+    { "id": "review", "title": "Review PRs", "kind": "weekly", "weekdays": [2, 4], "time": "14:00", "tag": "important", "createdOn": "2026-09-01" },
+    { "id": "gym", "title": "Gym", "kind": "weekly", "weekdays": [1, 3, 5], "time": "17:00", "endTime": "18:30", "createdOn": "2026-09-01" }
+  ],
+  "completions": [],
+  "habits": [
+    { "id": "h1", "name": "No nicotine", "icon": "ban" },
+    { "id": "h2", "name": "Read", "icon": "book" }
+  ],
+  "habitLog": {},
+  "notes": "Shopping list\n- milk\n- eggs\n- coffee",
+  "pomodoros": {},
+  "pomodoroLog": [],
+  "profile": { "username": "jiro", "firstName": "Jiro", "dateOfBirth": "2000-01-01", "heightCm": 178, "avatarUpdatedAt": null },
+  "gym": {
+    "splits": [
+      {
+        "from": "2026-09-01",
+        "days": [null, { "label": "Push", "exercises": ["Bench press", "Overhead press"] }, { "label": "Pull", "exercises": ["Rows", "Pull-ups"] }, { "label": "Legs", "exercises": ["Squat"] }, null, { "label": "Push", "exercises": ["Bench press"] }, { "label": "Pull", "exercises": ["Rows"] }]
+      }
+    ],
+    "overrides": {},
+    "done": {},
+    "weighIns": {}
+  },
+  "settings": { "alwaysOnTop": true, "launchAtStartup": false, "textScale": 1, "panels": {} }
+}

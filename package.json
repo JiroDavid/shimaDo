@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "icon": "node scripts/make-icon.mjs",
+    "preview": "node scripts/preview/all.mjs",
+    "preview:diff": "node scripts/preview/diff.mjs",
     "dist": "electron-vite build && electron-builder --win"
   },
   "build": {
