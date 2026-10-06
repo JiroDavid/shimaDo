@@ -67,3 +67,17 @@ describe('bundled fonts', () => {
     expect(main).toContain(`@fontsource/${font.toLowerCase().replace(/ /g, '-')}/`)
   })
 })
+
+describe('edit mode visuals', () => {
+  it('marks an open bar button with an underline that overrides cannot hide', () => {
+    expect(css).toMatch(/\.bar-btn\[data-active='true'\]\s*\{[^}]*box-shadow/)
+  })
+
+  it('draws window and bar selections inside the window edge', () => {
+    expect(css).toMatch(/html\[data-edit\] \.panel\[data-edit-selected\][^{]*\{[^}]*outline-offset: -/)
+  })
+
+  it('has a name tag style for the hovered and selected element', () => {
+    expect(css).toMatch(/\.edit-tag\s*\{[^}]*position: fixed/)
+  })
+})

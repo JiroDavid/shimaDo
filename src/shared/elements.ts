@@ -40,7 +40,7 @@ export const GROUPS: GroupDef[] = [
   { id: 'task-title', name: 'Task titles', selector: '.task-title', rest: ":where(:not([data-done='true']))", props: TEXT },
   { id: 'check', name: 'Tick boxes', selector: '.check', rest: ":where(:not([aria-checked='true']))", props: SURFACE },
   { id: 'switch', name: 'Switches', selector: '.switch', rest: ":where(:not([aria-checked='true']))", props: ['background', 'border'] },
-  { id: 'bar-button', name: 'Bar buttons', selector: '.bar-btn', rest: ":where(:not([data-active='true']))", props: ['color', 'background', 'border', 'radius'] }
+  { id: 'bar-button', name: 'Bar buttons', selector: '.bar-btn', props: ['color', 'background', 'border', 'radius'] }
 ]
 
 export const EDITABLE_PANELS = ['checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'settings', 'profile', 'confirm'] as const
@@ -74,6 +74,21 @@ const PANEL_NAMES: Record<EditablePanel, string> = {
   confirm: 'Exit prompt'
 }
 
+export const BAR_BUTTONS = ['checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings'] as const
+
+const BAR_BUTTON_NAMES: Record<string, string> = {
+  checklist: 'Checklist',
+  schedule: 'Schedule',
+  gym: 'Gym',
+  progress: 'Progress',
+  habits: 'Habits',
+  focus: 'Focus',
+  notepad: 'Notepad',
+  settings: 'Settings',
+  edit: 'Edit',
+  minimize: 'Minimise'
+}
+
 export const isSurfaceKey = (key: string): boolean => key === `${GROUP_PREFIX}panel` || key === 'bar.surface' || key.endsWith('.panel')
 
 export const isEditablePanel = (id: string): id is EditablePanel => (EDITABLE_PANELS as readonly string[]).includes(id)
@@ -88,6 +103,13 @@ export const ELEMENTS: ElementDef[] = [
   { id: 'bar.surface', name: 'Bar', panel: 'bar', props: SURFACE },
   { id: 'bar.avatar', name: 'Bar profile picture', panel: 'bar', props: ['background', 'border', 'radius'] },
   { id: 'bar.label', name: 'Bar label', panel: 'bar', props: ['color', 'font', 'text'], defaultText: 'To-do' },
+  ...[...BAR_BUTTONS, 'edit', 'minimize'].map((id) => ({
+    id: `bar.btn.${id}`,
+    name: `Bar button: ${BAR_BUTTON_NAMES[id]}`,
+    panel: 'bar' as const,
+    group: 'bar-button',
+    props: ['color', 'background', 'border', 'radius'] as EditableProp[]
+  })),
   { id: 'bar.exit', name: 'Bar exit button', panel: 'bar', group: 'bar-button', props: ['color', 'background', 'border', 'radius'] },
   { id: 'checklist.heading', name: 'Checklist heading', panel: 'checklist', props: ['color', 'font', 'text'], defaultText: 'Things to do today' },
   { id: 'checklist.date', name: 'Checklist date', panel: 'checklist', props: TEXT },
@@ -103,6 +125,14 @@ const groupsById = new Map(GROUPS.map((g) => [g.id, g]))
 
 export const elementById = (id: string): ElementDef | undefined => byId.get(id)
 export const groupById = (id: string): GroupDef | undefined => groupsById.get(id)
+
+export function labelFor(key: string): string {
+  if (key.startsWith(GROUP_PREFIX)) {
+    const g = groupsById.get(key.slice(GROUP_PREFIX.length))
+    return g ? `${g.name} (all)` : ''
+  }
+  return byId.get(key)?.name ?? ''
+}
 
 export function isKnownKey(key: string): boolean {
   if (typeof key !== 'string') return false

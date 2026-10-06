@@ -59,7 +59,7 @@ export function Bar({ data }: { data: AppData }) {
       {BUTTONS.map((b) => {
         const open = data.settings.panels[b.id].visible
         return (
-          <button key={b.id} className="bar-btn no-drag" data-active={open} aria-label={b.label} aria-pressed={open} onClick={() => window.shima.togglePanel(b.id)}>
+          <button key={b.id} className="bar-btn no-drag" data-el={`bar.btn.${b.id}`} data-active={open} aria-label={b.label} aria-pressed={open} onClick={() => window.shima.togglePanel(b.id)}>
             {b.icon}
             <span className="bar-label">{b.label}</span>
           </button>
@@ -67,6 +67,7 @@ export function Bar({ data }: { data: AppData }) {
       })}
       <button
         className="bar-btn no-drag ml-auto"
+        data-el="bar.btn.edit"
         data-edit-exempt
         data-active={edit.active}
         aria-pressed={edit.active}
@@ -76,7 +77,7 @@ export function Bar({ data }: { data: AppData }) {
         <EditIcon />
         <span className="bar-label">Edit</span>
       </button>
-      <button className="bar-btn no-drag" aria-label="Minimise to icon" onClick={() => window.shima.minimizeAll()}>
+      <button className="bar-btn no-drag" data-el="bar.btn.minimize" aria-label="Minimise to icon" onClick={() => window.shima.minimizeAll()}>
         <MinimizeIcon />
         <span className="bar-label">Minimise</span>
       </button>

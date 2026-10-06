@@ -206,7 +206,7 @@ textarea.field { padding: 10px 14px; }
 }
 .bar-btn:hover { color: var(--text); background: var(--overlay); }
 .bar-btn:active { transform: scale(0.93); }
-.bar-btn[data-active='true'] { color: var(--accent); background: var(--overlay); border-color: var(--line-strong); }
+.bar-btn[data-active='true'] { color: var(--accent); background: var(--overlay); border-color: var(--line-strong); box-shadow: inset 0 -3px 0 var(--accent); }
 .bar-label {
   max-width: 0;
   margin-left: 0;
@@ -432,12 +432,44 @@ textarea.field { padding: 10px 14px; }
 
 html[data-edit] [data-edit-hover] { outline: 2px dashed var(--accent); outline-offset: 2px; }
 html[data-edit] [data-edit-selected] {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 28%, transparent);
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: edit-pulse 1.4s ease-in-out infinite;
+}
+html[data-edit] .panel[data-edit-hover],
+html[data-edit] .bar[data-edit-hover] { outline-offset: -3px; }
+html[data-edit] .panel[data-edit-selected],
+html[data-edit] .bar[data-edit-selected] {
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: edit-pulse-inset 1.4s ease-in-out infinite;
+}
+@keyframes edit-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent); }
+  50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 55%, transparent); }
+}
+@keyframes edit-pulse-inset {
+  0%, 100% { box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent); }
+  50% { box-shadow: inset 0 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
 }
 html[data-edit] .bar.titlebar,
 html[data-edit] .titlebar [data-el] { -webkit-app-region: no-drag; }
+.edit-tag {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.edit-tag[data-kind='hover'] { background: var(--panel-solid); color: var(--text); border: 1.5px dashed var(--accent); }
 .swatch-sm {
   width: 22px;
   height: 22px;

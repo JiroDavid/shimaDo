@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ELEMENTS, GROUPS, GROUP_PREFIX, isSurfaceKey, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
+import { BAR_BUTTONS, ELEMENTS, GROUPS, GROUP_PREFIX, isSurfaceKey, labelFor, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
 
 describe('element registry', () => {
   it('has unique element ids that are safe to put in a selector', () => {
@@ -25,7 +25,7 @@ describe('element registry', () => {
       if (g.rest === undefined) continue
       expect(g.rest, g.id).toMatch(/^:where\(:not\([a-z0-9.,:\[\]='\- ]+\)\)$/)
     }
-    expect(GROUPS.filter((g) => g.rest !== undefined).map((g) => g.id).sort()).toEqual(['bar-button', 'button', 'check', 'switch', 'task-title'])
+    expect(GROUPS.filter((g) => g.rest !== undefined).map((g) => g.id).sort()).toEqual(['button', 'check', 'switch', 'task-title'])
   })
 
   it('only references groups that exist', () => {
@@ -57,6 +57,23 @@ describe('element registry', () => {
     for (const id of ['bar', 'mini', 'designer', 'nope']) expect(isEditablePanel(id), id).toBe(false)
   })
 
+  it('gives every bar button its own element in the bar-button group', () => {
+    for (const id of [...BAR_BUTTONS, 'edit', 'minimize']) {
+      const def = elementById(`bar.btn.${id}`)
+      expect(def, id).toBeDefined()
+      expect(def?.group).toBe('bar-button')
+      expect(def?.panel).toBe('bar')
+    }
+  })
+
+  it('names what is selected for the on-screen tag', () => {
+    expect(labelFor('bar.label')).toBe('Bar label')
+    expect(labelFor('checklist.panel')).toBe('Checklist window')
+    expect(labelFor('bar.btn.checklist')).toBe('Bar button: Checklist')
+    expect(labelFor('group:card')).toBe('Cards (all)')
+    expect(labelFor('nope')).toBe('')
+  })
+
   it('recognises window surface keys', () => {
     for (const key of ['group:panel', 'bar.surface', 'checklist.panel', 'settings.panel']) expect(isSurfaceKey(key), key).toBe(true)
     for (const key of ['group:card', 'bar.label', 'checklist.title', 'notepad.text', 'group:panel-title']) expect(isSurfaceKey(key), key).toBe(false)
@@ -76,7 +93,7 @@ const tsx = files.filter((f) => f.endsWith('.tsx')).map((f) => readFileSync(f, '
 const css = readFileSync(join(renderer, 'styles.css'), 'utf8')
 
 describe('registry against the markup', () => {
-  const generated = new Set(EDITABLE_PANELS.flatMap((p) => [`${p}.panel`, `${p}.title`]))
+  const generated = new Set([...EDITABLE_PANELS.flatMap((p) => [`${p}.panel`, `${p}.title`]), ...BAR_BUTTONS.map((id) => `bar.btn.${id}`)])
 
   it('uses only registered ids in static data-el attributes', () => {
     const used = [...tsx.matchAll(/data-el="([a-z0-9.-]+)"/g)].map((m) => m[1])
@@ -93,6 +110,13 @@ describe('registry against the markup', () => {
     expect(frame).toMatch(/data-el=\{editable \? `\$\{id\}\.panel` : undefined\}/)
     expect(frame).toMatch(/data-el=\{editable \? `\$\{id\}\.title` : undefined\}/)
     expect(frame).toContain('panel-title')
+  })
+
+  it('generates the bar button ids in Bar', () => {
+    const bar = readFileSync(join(renderer, 'panels', 'Bar.tsx'), 'utf8')
+    expect(bar).toContain('data-el={`bar.btn.${b.id}`}')
+    expect(bar).toContain('data-el="bar.btn.edit"')
+    expect(bar).toContain('data-el="bar.btn.minimize"')
   })
 
   it('has every group selector class defined in the css or used in the markup', () => {

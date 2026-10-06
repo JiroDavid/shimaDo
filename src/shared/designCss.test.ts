@@ -65,7 +65,7 @@ describe('designCss', () => {
     expect(designCss({ 'group:check': { background: '#112233' } })).toBe(".check:where(:not([aria-checked='true'])) { background: #112233 !important }")
     expect(designCss({ 'group:switch': { background: '#112233' } })).toContain(".switch:where(:not([aria-checked='true']))")
     expect(designCss({ 'group:button': { radius: 4 } })).toBe('.btn:where(:not(.btn-active, .btn-danger)) { border-radius: 4px !important }')
-    expect(designCss({ 'group:bar-button': { radius: 4 } })).toContain(".bar-btn:where(:not([data-active='true']))")
+    expect(designCss({ 'group:bar-button': { radius: 4 } })).toBe('.bar-btn { border-radius: 4px !important }')
     expect(designCss({ 'group:task-title': { color: '#112233' } })).toContain(".task-title:where(:not([data-done='true']))")
   })
 })
