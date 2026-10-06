@@ -2,6 +2,8 @@ import { Menu, Tray, nativeImage, type MenuItemConstructorOptions } from 'electr
 import type { PanelId, SettingsPatch } from '../shared/types'
 import type { PanelManager } from './panels'
 import type { Store } from './store'
+import { accentChoices } from '../shared/theme'
+import { themeById } from '../shared/themes'
 
 const TRAY_PANELS: { id: PanelId; label: string }[] = [
   { id: 'checklist', label: 'Checklist' },
@@ -12,7 +14,6 @@ const TRAY_PANELS: { id: PanelId; label: string }[] = [
   { id: 'notepad', label: 'Notepad' }
 ]
 const OPACITIES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-const ACCENTS: string[] = ['orange', 'brick', 'sage', 'cream']
 
 interface Options {
   store: Store
@@ -48,11 +49,12 @@ export function createTray({ store, panels, iconPath, onSettings, onExit }: Opti
       },
       {
         label: 'Accent',
-        submenu: ACCENTS.map((a) => ({
-          label: a,
+        submenu: accentChoices(themeById(s.theme), s.accent).map((choice) => ({
+          label: choice.label,
           type: 'radio' as const,
-          checked: s.accent === a,
-          click: () => onSettings({ accent: a })
+          checked: choice.checked,
+          enabled: !choice.custom,
+          click: () => onSettings({ accent: choice.id })
         }))
       },
       { label: 'Launch at startup', type: 'checkbox', checked: s.launchAtStartup, click: (i) => onSettings({ launchAtStartup: i.checked }) },
