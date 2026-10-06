@@ -1,9 +1,11 @@
-import { app, dialog, Notification, screen } from 'electron'
+import { app, dialog, Notification, protocol, screen } from 'electron'
 import fs from 'node:fs'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
+import { ASSET_SCHEME } from '../shared/assets'
 import { toDateKey } from '../shared/dates'
 import { PANEL_IDS, type BackupResult, type SettingsPatch } from '../shared/types'
 import { chooseAvatar, readAvatarDataUrl, removeAvatar, writeAvatar } from './avatar'
+import { AssetStore, serveAsset } from './assets'
 import { avatarBytes, buildBackup, parseBackup } from './backup'
 import { registerIpc } from './ipc'
 import { addPomodoro, claimWelcome, setAvatarStamp } from './mutations'
@@ -14,6 +16,8 @@ import { Store, hideTransientPanels } from './store'
 import { EditSession } from './edit'
 import { createTray } from './tray'
 
+protocol.registerSchemesAsPrivileged([{ scheme: ASSET_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } }])
+
 app.setAppUserModelId('com.jirodavid.shimado')
 
 if (!app.requestSingleInstanceLock()) app.quit()
@@ -22,6 +26,7 @@ else boot()
 function boot(): void {
   const userData = app.getPath('userData')
   const store = new Store(join(userData, 'shimado-data.json'))
+  const assets = new AssetStore(join(userData, 'assets'), { data: () => store.data, update: (fn) => store.update(fn) })
   const resources = app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources')
   const windowIcon = join(resources, 'icon.ico')
   let tray: ReturnType<typeof createTray> | undefined
@@ -89,7 +94,7 @@ function boot(): void {
     })
     if (result.canceled || !result.filePath) return { ok: false, message: '' }
     try {
-      fs.writeFileSync(result.filePath, buildBackup(store.data, readAvatarDataUrl(userData)))
+      fs.writeFileSync(result.filePath, buildBackup(store.data, readAvatarDataUrl(userData), assets.readAll()))
       return { ok: true, message: 'Backup saved' }
     } catch (e) {
       return { ok: false, message: `Could not save: ${(e as Error).message}` }
@@ -122,6 +127,7 @@ function boot(): void {
     hideTransientPanels(parsed.data)
     store.data = parsed.data
     store.save()
+    assets.replaceAll(parsed.assetFiles)
     if (parsed.avatar) writeAvatar(userData, avatarBytes(parsed.avatar))
     else removeAvatar(userData)
     app.relaunch()
@@ -140,7 +146,31 @@ function boot(): void {
 
   app.whenReady().then(() => {
     store.load()
-    registerIpc(store, panels, timer, edit, { changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup })
+    assets.init()
+    protocol.handle(ASSET_SCHEME, (request) => {
+      const r = serveAsset(assets, request.url)
+      return new Response(r.body ? new Uint8Array(r.body) : null, { status: r.status, headers: r.headers })
+    })
+    registerIpc(store, panels, timer, edit, {
+      addAsset: (name, bytes) => {
+        const u8 = bytes instanceof Uint8Array ? bytes : bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : null
+        if (!u8) return { ok: false, error: 'Could not read that file' }
+        const result = assets.add(name, u8)
+        if (result.ok) panels.broadcast('data:changed', store.data)
+        return result
+      },
+      chooseAsset: async () => {
+        const picked = await dialog.showOpenDialog({
+          title: 'Choose an image',
+          properties: ['openFile'],
+          filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }]
+        })
+        if (picked.canceled || picked.filePaths.length === 0) return { ok: false, error: '' }
+        const result = assets.add(basename(picked.filePaths[0]), new Uint8Array(fs.readFileSync(picked.filePaths[0])))
+        if (result.ok) panels.broadcast('data:changed', store.data)
+        return result
+      },
+      changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup })
     tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit(), isEditing: () => edit.state.active, onEdit: (on) => edit.setActive(on) })
 
     for (const id of PANEL_IDS) {

@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
+import type { AssetResult } from '../shared/assets'
 import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import {
@@ -22,6 +23,8 @@ export interface AppActions {
   readAvatar(): string | null
   exportBackup(): Promise<BackupResult>
   importBackup(): Promise<BackupResult>
+  addAsset(name: unknown, bytes: unknown): AssetResult
+  chooseAsset(): Promise<AssetResult>
 }
 
 const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
@@ -134,6 +137,9 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     if (id === 'designer') edit.setActive(false)
     else panels.hide(id)
   })
+  const needEdit: AssetResult = { ok: false, error: 'Turn on Edit mode first' }
+  ipcMain.handle('asset:add', (_e, name: unknown, bytes: unknown) => (edit.state.active ? actions.addAsset(name, bytes) : needEdit))
+  ipcMain.handle('asset:choose', () => (edit.state.active ? actions.chooseAsset() : needEdit))
   ipcMain.handle('edit:get-state', () => edit.state)
   ipcMain.on('edit:set-active', (_e, on: unknown) => {
     if (typeof on === 'boolean') edit.setActive(on)

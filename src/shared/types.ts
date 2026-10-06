@@ -1,4 +1,4 @@
-import type { AssetInfo } from './assets'
+import type { AssetInfo, AssetResult } from './assets'
 import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
@@ -171,6 +171,9 @@ export interface ShimaApi {
   editRedo(): void
   editReset(key: string): void
   editResetAll(): void
+  assetAdd(name: string, bytes: Uint8Array): Promise<AssetResult>
+  assetChoose(): Promise<AssetResult>
+  assetDelete(id: string): void
   expandPanel(id: PanelId, width: number, height: number): void
   collapsePanel(id: PanelId): void
   hidePanel(id: PanelId): void

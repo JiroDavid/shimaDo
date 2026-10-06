@@ -49,4 +49,55 @@ describe('backup', () => {
     raw.data.design.overrides['bar.label'].text = '<script>'
     expect(parseBackup(JSON.stringify(raw)).data.design).toEqual({ ...defaultData().design, overrides: { 'bar.label': { color: '#ff0000' } } })
   })
+
+  const png = () => {
+    const a = new Uint8Array(40)
+    a.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    return a
+  }
+  const info = (id: string, ext: 'png' | 'gif' = 'png') => ({ id, ext, bytes: 40, name: 'x', addedAt: 1 })
+
+  it('round-trips images, stickers and backgrounds', () => {
+    const d = defaultData()
+    d.assets = { 'asset-aaaa-1': info('asset-aaaa-1') }
+    d.design = {
+      ...d.design,
+      stickers: [{ id: 'stk-aaaa-0001', panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 1, size: 40, layer: 'front' }],
+      backgrounds: { 'bar.surface': { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 } }
+    }
+    const parsed = parseBackup(buildBackup(d, null, { 'asset-aaaa-1': png() }))
+    expect(Object.keys(parsed.assetFiles)).toEqual(['asset-aaaa-1'])
+    expect(parsed.assetFiles['asset-aaaa-1'].length).toBe(40)
+    expect(parsed.data.design.stickers).toHaveLength(1)
+    expect(Object.keys(parsed.data.design.backgrounds)).toEqual(['bar.surface'])
+  })
+
+  it('drops images whose bytes do not match, are missing or have unsafe ids, and what uses them', () => {
+    const d = defaultData()
+    d.assets = { 'asset-aaaa-1': info('asset-aaaa-1', 'gif'), 'asset-bbbb-2': info('asset-bbbb-2'), 'asset-cccc-3': info('asset-cccc-3') }
+    d.design = {
+      ...d.design,
+      stickers: [
+        { id: 'stk-aaaa-0001', panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 1, size: 40, layer: 'front' },
+        { id: 'stk-bbbb-0002', panel: 'bar', kind: 'image', asset: 'asset-bbbb-2', x: 1, y: 1, size: 40, layer: 'front' },
+        { id: 'stk-cccc-0003', panel: 'bar', kind: 'image', asset: 'asset-cccc-3', x: 1, y: 1, size: 40, layer: 'front' }
+      ]
+    }
+    const text = buildBackup(d, null, { 'asset-aaaa-1': png(), 'asset-bbbb-2': png() })
+    const raw = JSON.parse(text)
+    raw.assetFiles['../escape-12345'] = Buffer.from(png()).toString('base64')
+    const parsed = parseBackup(JSON.stringify(raw))
+    expect(Object.keys(parsed.assetFiles)).toEqual(['asset-bbbb-2'])
+    expect(Object.keys(parsed.data.assets)).toEqual(['asset-bbbb-2'])
+    expect(parsed.data.design.stickers.map((s) => s.id)).toEqual(['stk-bbbb-0002'])
+  })
+
+  it('still imports a backup that has no images', () => {
+    const d = defaultData()
+    const raw = JSON.parse(buildBackup(d, null))
+    delete raw.assetFiles
+    const parsed = parseBackup(JSON.stringify(raw))
+    expect(parsed.assetFiles).toEqual({})
+    expect(parsed.data.assets).toEqual({})
+  })
 })

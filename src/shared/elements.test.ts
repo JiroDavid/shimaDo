@@ -205,3 +205,13 @@ describe('section and panel context', () => {
     expect(frame).toContain('PanelContext.Provider')
   })
 })
+
+describe('content security policy', () => {
+  it('allows the private asset scheme for images only', () => {
+    const html = readFileSync(join(renderer, 'index.html'), 'utf8')
+    const csp = /Content-Security-Policy" content="([^"]*)"/.exec(html)?.[1] ?? ''
+    expect(csp).toContain("default-src 'self'")
+    expect(csp).toMatch(/img-src[^;]*shimado-asset:/)
+    expect(csp.replace(/img-src[^;]*;?/, '')).not.toContain('shimado-asset:')
+  })
+})
