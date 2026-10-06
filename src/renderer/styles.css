@@ -507,3 +507,20 @@ html[data-edit] .titlebar [data-el] { -webkit-app-region: no-drag; }
 }
 html[data-edit] .sticker { pointer-events: auto; cursor: grab; }
 html[data-edit] .sticker[data-edit-selected] .sticker-handle { display: block; }
+
+html[data-drop] .panel, html[data-drop] .bar { outline: 3px dashed var(--accent); outline-offset: -6px; }
+.edit-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 99999;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--urgent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+}
+html[data-edit] [data-el]:not(.sticker):not(.panel):not(.bar) { cursor: move; }

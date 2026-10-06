@@ -231,3 +231,17 @@ describe('placed layers in the markup', () => {
     expect(offenders).toEqual([])
   })
 })
+
+describe('edit layer drag and drop', () => {
+  it('handles pointer drags, sticker handles, file drops and nudging', () => {
+    const layer = readFileSync(join(renderer, 'components', 'EditLayer.tsx'), 'utf8')
+    for (const needle of ['pointerdown', 'pointermove', 'pointerup', 'data-sticker-handle', "'drop'", "'dragover'", 'nudgeDelta(', 'editMove(', 'editStickerUpdate(', 'assetAdd(', 'editStickerAdd(']) {
+      expect(layer, needle).toContain(needle)
+    }
+  })
+
+  it('resolves stickers as selectable targets', () => {
+    const layer = readFileSync(join(renderer, 'components', 'EditLayer.tsx'), 'utf8')
+    expect(layer).toContain('.sticker')
+  })
+})
