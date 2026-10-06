@@ -142,4 +142,17 @@ describe('EditSession', () => {
     session.setActive(true)
     expect(session.state.canUndo).toBe(false)
   })
+
+  it('does not touch history when a patch changes nothing', () => {
+    const { session, tick } = setup()
+    session.setActive(true)
+    session.patch('bar.label', { color: '#111111' })
+    tick(1000)
+    session.undo()
+    expect(session.state.canRedo).toBe(true)
+    session.patch('bar.label', { text: 'a;b' })
+    session.patch('bar.label', { color: null })
+    expect(session.state.canRedo).toBe(true)
+    expect(session.state.canUndo).toBe(false)
+  })
 })

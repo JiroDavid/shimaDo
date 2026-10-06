@@ -81,9 +81,16 @@ export function applyPatch(current: StyleOverride, patch: unknown): StyleOverrid
   return next as StyleOverride
 }
 
+function sameOverride(a: StyleOverride, b: StyleOverride): boolean {
+  const ak = Object.keys(a) as (keyof StyleOverride)[]
+  return ak.length === Object.keys(b).length && ak.every((k) => a[k] === b[k])
+}
+
 export function setOverride(design: Design, key: string, patch: unknown): Design {
   if (!isKnownKey(key)) return design
-  const next = applyPatch(design.overrides[key] ?? {}, patch)
+  const existing = design.overrides[key] ?? {}
+  const next = applyPatch(existing, patch)
+  if (sameOverride(existing, next)) return design
   const overrides = { ...design.overrides }
   if (Object.keys(next).length === 0) delete overrides[key]
   else overrides[key] = next
@@ -95,6 +102,10 @@ export function clearOverride(design: Design, key: string): Design {
   const overrides = { ...design.overrides }
   delete overrides[key]
   return { overrides }
+}
+
+export function labelBoxValue(typed: string, stored: string | undefined, defaultText: string | undefined, focused: boolean): string {
+  return focused ? typed : (stored ?? defaultText ?? '')
 }
 
 export function resolveOverride(design: Design, id: string): StyleOverride {

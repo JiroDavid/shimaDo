@@ -6,6 +6,7 @@ export interface GroupDef {
   id: string
   name: string
   selector: string
+  rest?: string
   props: EditableProp[]
 }
 
@@ -30,16 +31,16 @@ export const GROUPS: GroupDef[] = [
   { id: 'panel-title', name: 'Panel titles', selector: '.panel-title', props: TEXT },
   { id: 'card', name: 'Cards', selector: '.card', props: ['color', ...SURFACE] },
   { id: 'card-label', name: 'Card headings', selector: '.card-label', props: TEXT },
-  { id: 'button', name: 'Buttons', selector: '.btn', props: ALL },
+  { id: 'button', name: 'Buttons', selector: '.btn', rest: ':where(:not(.btn-active, .btn-danger))', props: ALL },
   { id: 'button-primary', name: 'Primary buttons', selector: '.btn-primary', props: ALL },
   { id: 'field', name: 'Text fields', selector: '.field', props: ALL },
   { id: 'tag', name: 'Tags', selector: '.tag', props: ['color', 'border', 'radius', 'font'] },
   { id: 'time-pill', name: 'Time pills', selector: '.time-pill', props: ['color', 'background', 'radius', 'font'] },
   { id: 'task-row', name: 'Task rows', selector: '.task-row', props: SURFACE },
-  { id: 'task-title', name: 'Task titles', selector: '.task-title', props: TEXT },
-  { id: 'check', name: 'Tick boxes', selector: '.check', props: SURFACE },
-  { id: 'switch', name: 'Switches', selector: '.switch', props: ['background', 'border'] },
-  { id: 'bar-button', name: 'Bar buttons', selector: '.bar-btn', props: ['color', 'background', 'border', 'radius'] }
+  { id: 'task-title', name: 'Task titles', selector: '.task-title', rest: ":where(:not([data-done='true']))", props: TEXT },
+  { id: 'check', name: 'Tick boxes', selector: '.check', rest: ":where(:not([aria-checked='true']))", props: SURFACE },
+  { id: 'switch', name: 'Switches', selector: '.switch', rest: ":where(:not([aria-checked='true']))", props: ['background', 'border'] },
+  { id: 'bar-button', name: 'Bar buttons', selector: '.bar-btn', rest: ":where(:not([data-active='true']))", props: ['color', 'background', 'border', 'radius'] }
 ]
 
 export const EDITABLE_PANELS = ['checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'settings', 'profile', 'confirm'] as const
@@ -72,6 +73,8 @@ const PANEL_NAMES: Record<EditablePanel, string> = {
   profile: 'Profile',
   confirm: 'Exit prompt'
 }
+
+export const isSurfaceKey = (key: string): boolean => key === `${GROUP_PREFIX}panel` || key === 'bar.surface' || key.endsWith('.panel')
 
 export const isEditablePanel = (id: string): id is EditablePanel => (EDITABLE_PANELS as readonly string[]).includes(id)
 

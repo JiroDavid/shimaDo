@@ -81,7 +81,7 @@ function page(root, options) {
     listDisplays: () => Promise.resolve([]),
     getEditState: () => Promise.resolve(${JSON.stringify(edit)}),
     onEditState: () => () => {}
-  }, { get: (t, k) => (k in t ? t[k] : () => Promise.resolve()) })</script>`
+  }, { get: (t, k) => (k in t ? t[k] : (...a) => { (window.__calls ||= []).push([String(k), a]); return Promise.resolve() }) })</script>`
   const driver = options.steps
     ? `<script>const q = (t) => [...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === t || b.textContent.trim() === t); const w = (ms) => new Promise((r) => setTimeout(r, ms)); (async () => { ${options.steps} })()</script>`
     : ''

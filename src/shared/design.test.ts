@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  applyPatch, clearOverride, emptyDesign, paletteFor, parseSelection, resolveOverride, sanitizeDesign, sanitizeOverride, setOverride, type Design
+  applyPatch, clearOverride, emptyDesign, labelBoxValue, paletteFor, parseSelection, resolveOverride, sanitizeDesign, sanitizeOverride, setOverride, type Design
 } from './design'
 import { themeById } from './themes'
 
@@ -119,5 +119,44 @@ describe('paletteFor', () => {
 
   it('includes a custom accent', () => {
     expect(paletteFor(themeById('paper'), '#abcdef')).toContain('#abcdef')
+  })
+})
+
+describe('no-op patches', () => {
+  it('returns the same design when a patch changes nothing', () => {
+    const d = setOverride(emptyDesign(), 'bar.label', { color: '#ff0000', text: 'Hi' })
+    expect(setOverride(d, 'bar.label', { text: 'a;b' })).toBe(d)
+    expect(setOverride(d, 'bar.label', { color: '#ff0000' })).toBe(d)
+    expect(setOverride(d, 'bar.label', { radius: 5000 })).toBe(d)
+    expect(setOverride(d, 'bar.label', {})).toBe(d)
+  })
+
+  it('returns the same design when clearing a field that is not set', () => {
+    const empty = emptyDesign()
+    expect(setOverride(empty, 'bar.label', { color: null })).toBe(empty)
+    const d = setOverride(empty, 'bar.label', { color: '#ff0000' })
+    expect(setOverride(d, 'bar.label', { fontSize: null })).toBe(d)
+  })
+
+  it('still changes the design when a patch really changes something', () => {
+    const d = setOverride(emptyDesign(), 'bar.label', { color: '#ff0000' })
+    expect(setOverride(d, 'bar.label', { color: '#00ff00' })).not.toBe(d)
+    expect(setOverride(d, 'bar.label', { color: null }).overrides).toEqual({})
+  })
+})
+
+describe('labelBoxValue', () => {
+  it('keeps what the user typed while the box is focused, including spaces and blanks', () => {
+    expect(labelBoxValue('My ', 'My', 'Things to do today', true)).toBe('My ')
+    expect(labelBoxValue('', undefined, 'Things to do today', true)).toBe('')
+  })
+
+  it('shows the stored label when the box is not focused', () => {
+    expect(labelBoxValue('old', 'Mine', 'Things to do today', false)).toBe('Mine')
+  })
+
+  it('falls back to the default label, then to empty', () => {
+    expect(labelBoxValue('old', undefined, 'Things to do today', false)).toBe('Things to do today')
+    expect(labelBoxValue('old', undefined, undefined, false)).toBe('')
   })
 })

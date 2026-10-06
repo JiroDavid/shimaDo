@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ELEMENTS, GROUPS, GROUP_PREFIX, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
+import { ELEMENTS, GROUPS, GROUP_PREFIX, isSurfaceKey, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
 
 describe('element registry', () => {
   it('has unique element ids that are safe to put in a selector', () => {
@@ -18,6 +18,14 @@ describe('element registry', () => {
       expect(g.id).toMatch(ID_PATTERN)
       expect(g.selector).toMatch(/^\.[a-z][a-z0-9-]*$/)
     }
+  })
+
+  it('only allows safe zero-specificity resting-state selectors', () => {
+    for (const g of GROUPS) {
+      if (g.rest === undefined) continue
+      expect(g.rest, g.id).toMatch(/^:where\(:not\([a-z0-9.,:\[\]='\- ]+\)\)$/)
+    }
+    expect(GROUPS.filter((g) => g.rest !== undefined).map((g) => g.id).sort()).toEqual(['bar-button', 'button', 'check', 'switch', 'task-title'])
   })
 
   it('only references groups that exist', () => {
@@ -47,6 +55,11 @@ describe('element registry', () => {
   it('knows which panels are editable', () => {
     expect(isEditablePanel('checklist')).toBe(true)
     for (const id of ['bar', 'mini', 'designer', 'nope']) expect(isEditablePanel(id), id).toBe(false)
+  })
+
+  it('recognises window surface keys', () => {
+    for (const key of ['group:panel', 'bar.surface', 'checklist.panel', 'settings.panel']) expect(isSurfaceKey(key), key).toBe(true)
+    for (const key of ['group:card', 'bar.label', 'checklist.title', 'notepad.text', 'group:panel-title']) expect(isSurfaceKey(key), key).toBe(false)
   })
 
   it('orders button-primary after button so it wins', () => {

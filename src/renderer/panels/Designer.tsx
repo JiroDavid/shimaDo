@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
 import { GROUP_PREFIX, elementById, groupById, type EditableProp } from '../../shared/elements'
-import { paletteFor, resolveOverride, type StyleOverride } from '../../shared/design'
+import { labelBoxValue, paletteFor, resolveOverride, type StyleOverride } from '../../shared/design'
 import { colorToHex } from '../../shared/theme'
 import { themeById } from '../../shared/themes'
 import { useEditState } from '../hooks/useEditState'
@@ -30,6 +30,7 @@ export function Designer({ data }: { data: AppData }) {
   const [confirmAll, setConfirmAll] = useState(false)
   const [text, setText] = useState('')
   const textTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const textBox = useRef<HTMLInputElement>(null)
 
   const def = sel && !sel.id.startsWith(GROUP_PREFIX) ? elementById(sel.id) : undefined
   const groupOnly = sel?.id.startsWith(GROUP_PREFIX) ?? false
@@ -55,7 +56,11 @@ export function Designer({ data }: { data: AppData }) {
 
   useEffect(() => {
     setText(current.text ?? def?.defaultText ?? '')
-  }, [sel?.id, key, current.text])
+  }, [sel?.id, key])
+
+  useEffect(() => {
+    setText((typed) => labelBoxValue(typed, current.text, def?.defaultText, document.activeElement === textBox.current))
+  }, [current.text])
 
   const commitText = (value: string) => {
     setText(value)
@@ -153,7 +158,7 @@ export function Designer({ data }: { data: AppData }) {
                   </div>
                 )}
                 {has('text') && effectiveScope === 'element' && (
-                  <input className="field" aria-label="Label text" maxLength={60} value={text} onChange={(e) => commitText(e.target.value)} />
+                  <input ref={textBox} className="field" aria-label="Label text" maxLength={60} value={text} onChange={(e) => commitText(e.target.value)} />
                 )}
               </div>
             </Section>
