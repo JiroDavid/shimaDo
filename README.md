@@ -16,7 +16,7 @@
 
 ---
 
-ShimaDo is a personal desktop to-do app made of small floating panels that stay on top of everything, even Discord. Tick off tasks, schedule recurring ones, get reminders, and track your progress and nicotine-free days. All data stays on your machine.
+ShimaDo is a personal desktop to-do app made of small floating panels that stay on top of everything, even Discord. Tick off tasks, schedule recurring ones, get reminders, and track your progress and any daily habits. All data stays on your machine.
 
 ## Features
 
@@ -27,7 +27,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 - **Schedule** - week strip with a dropdown month calendar, daily and weekly recurring tasks ("every Monday 9pm"), and URGENT / MUST DO / IMPORTANT tags
 - **Reminders** - a Windows notification when a task comes due
 - **Progress** - consistency line graph and daily completion bar chart
-- **No-nicotine tracker** - weekly tickboxes, streak and weekly graph
+- **Habits** - track as many daily habits as you like (no nicotine, reading, water), each with its own name, icon, weekly tickboxes, streak and weekly graph
 - **Always on top** - drag, resize and hide panels like sticky notes
 - **Multi-monitor** - resize panels from any edge, move everything to another monitor, or reset the layout from Settings
 - **Tray control** - opacity, accent colour, always-on-top, launch at startup, Exit

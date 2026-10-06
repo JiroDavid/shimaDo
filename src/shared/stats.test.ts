@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { doneCountByDay, consistency, taskStreak, nicotineStreak, nicotineWeeks } from './stats'
+import { doneCountByDay, consistency, taskStreak, habitStreak, habitWeeks } from './stats'
 import type { Task, Completion } from './types'
 
 const daily = (id: string): Task => ({ id, title: id, kind: 'daily', createdOn: '2026-10-01', time: '09:00' })
@@ -37,20 +37,20 @@ describe('taskStreak', () => {
   })
 })
 
-describe('nicotine stats', () => {
+describe('habit stats', () => {
   it('streak counts back from today, tolerating an unticked today', () => {
-    expect(nicotineStreak({ '2026-10-03': true, '2026-10-04': true }, TODAY)).toBe(2)
-    expect(nicotineStreak({ '2026-10-03': true, '2026-10-04': true, '2026-10-05': true }, TODAY)).toBe(3)
+    expect(habitStreak({ '2026-10-03': true, '2026-10-04': true }, TODAY)).toBe(2)
+    expect(habitStreak({ '2026-10-03': true, '2026-10-04': true, '2026-10-05': true }, TODAY)).toBe(3)
   })
   it('streak stops at a gap', () => {
-    expect(nicotineStreak({ '2026-10-05': true, '2026-10-03': true }, TODAY)).toBe(1)
+    expect(habitStreak({ '2026-10-05': true, '2026-10-03': true }, TODAY)).toBe(1)
   })
   it('streak is 0 with no ticks', () => {
-    expect(nicotineStreak({}, TODAY)).toBe(0)
+    expect(habitStreak({}, TODAY)).toBe(0)
   })
   it('weekly counts are oldest first and include empty weeks', () => {
     const nic = { '2026-09-28': true, '2026-09-29': true, '2026-10-05': true } as const
-    expect(nicotineWeeks(nic, '2026-10-07', 3)).toEqual([
+    expect(habitWeeks(nic, '2026-10-07', 3)).toEqual([
       { weekStart: '2026-09-21', count: 0 },
       { weekStart: '2026-09-28', count: 2 },
       { weekStart: '2026-10-05', count: 1 }

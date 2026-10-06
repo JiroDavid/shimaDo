@@ -5,7 +5,8 @@ import { defaultData } from './store'
 describe('backup', () => {
   it('round-trips data and avatar', () => {
     const d = defaultData()
-    d.nicotine['2026-10-05'] = true
+    d.habits.push({ id: 'h1', name: 'Read', icon: 'book' })
+    d.habitLog.h1 = { '2026-10-05': true }
     d.pomodoroLog.push({ date: '2026-10-05', endedAt: 1, task: 'Essay' })
     const avatar = `data:image/png;base64,${Buffer.from('png').toString('base64')}`
     const parsed = parseBackup(buildBackup(d, avatar))

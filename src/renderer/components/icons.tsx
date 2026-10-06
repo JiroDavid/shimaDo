@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { HabitIconId } from '../../shared/habits'
 
 function Icon({ children }: { children: ReactNode }) {
   return (
@@ -35,12 +36,35 @@ export const ProgressIcon = () => (
     <path d="M4 20V4M4 20h16M8 15l4-4 3 3 5-6" />
   </Icon>
 )
-export const NicotineIcon = () => (
+export const HabitsIcon = () => (
   <Icon>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M6 6l12 12M7 13h5M14 13h3" />
+    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+    <path d="M14 17l2 2 4-4" />
   </Icon>
 )
+
+const HABIT_PATHS: Record<HabitIconId, ReactNode> = {
+  check: <path d="M5 12l4.5 4.5L19 7" />,
+  ban: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M6 6l12 12" />
+    </>
+  ),
+  heart: <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" />,
+  book: <path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4zM5 17a3 3 0 0 1 3-3h10" />,
+  drop: <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />,
+  moon: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />,
+  bolt: <path d="M13 3L5 13h6l-1 8 8-10h-6l1-8z" />,
+  leaf: <path d="M5 19c0-9 5-14 14-14 0 9-5 14-14 14zM5 19l7-7" />,
+  star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z" />,
+  coffee: <path d="M5 9h11v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V9zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3" />,
+  flame: <path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-9z" />
+}
+
+export const HabitIcon = ({ id }: { id: HabitIconId }) => <Icon>{HABIT_PATHS[id]}</Icon>
 export const FocusIcon = () => (
   <Icon>
     <circle cx="12" cy="13" r="8" />

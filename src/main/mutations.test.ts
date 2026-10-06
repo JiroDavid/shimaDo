@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { occurrencesOn } from '../shared/recurrence'
-import { addTask, updateTask, deleteTask, setDone, setNicotine, addPomodoro, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
+import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
 import { defaultData } from './store'
 
 describe('mutations', () => {
@@ -63,16 +63,48 @@ describe('mutations', () => {
     expect(d.pomodoroLog).toEqual([{ date: '2026-10-05', endedAt: 123, task: 'Essay' }])
   })
 
-  it('setNicotine toggles a day', () => {
+  it('setHabitDay toggles a day for an existing habit', () => {
     const d = defaultData()
-    setNicotine(d, '2026-10-05', true)
-    expect(d.nicotine).toEqual({ '2026-10-05': true })
-    setNicotine(d, '2026-10-05', false)
-    expect(d.nicotine).toEqual({})
+    addHabit(d, { name: 'Read', icon: 'book' }, 'h1')
+    setHabitDay(d, 'h1', '2026-10-05', true)
+    expect(d.habitLog).toEqual({ h1: { '2026-10-05': true } })
+    setHabitDay(d, 'h1', '2026-10-05', false)
+    expect(d.habitLog).toEqual({ h1: {} })
   })
-})
 
-describe('sanitizeSettingsPatch', () => {
+  it('setHabitDay ignores unknown habits and bad dates', () => {
+    const d = defaultData()
+    addHabit(d, { name: 'Read', icon: 'book' }, 'h1')
+    setHabitDay(d, 'nope', '2026-10-05', true)
+    setHabitDay(d, 'h1', 'not-a-date', true)
+    expect(d.habitLog).toEqual({})
+  })
+
+  it('addHabit trims and validates', () => {
+    const d = defaultData()
+    expect(addHabit(d, { name: '  Read  ', icon: 'book' }, 'h1')).toEqual({ id: 'h1', name: 'Read', icon: 'book' })
+    expect(() => addHabit(d, { name: '   ', icon: 'book' }, 'h2')).toThrow(/name/)
+    expect(() => addHabit(d, { name: 'x', icon: 'rocket' as never }, 'h2')).toThrow(/icon/)
+    expect(d.habits).toHaveLength(1)
+  })
+
+  it('addHabit stops at the habit limit', () => {
+    const d = defaultData()
+    for (let i = 0; i < 12; i++) addHabit(d, { name: `h${i}`, icon: 'check' }, `id${i}`)
+    expect(() => addHabit(d, { name: 'one more', icon: 'check' }, 'x')).toThrow(/up to 12/)
+  })
+
+  it('updateHabit renames and deleteHabit drops the log too', () => {
+    const d = defaultData()
+    addHabit(d, { name: 'Read', icon: 'book' }, 'h1')
+    setHabitDay(d, 'h1', '2026-10-05', true)
+    updateHabit(d, 'h1', { name: 'Study', icon: 'star' })
+    expect(d.habits[0]).toEqual({ id: 'h1', name: 'Study', icon: 'star' })
+    deleteHabit(d, 'h1')
+    expect(d.habits).toEqual([])
+    expect(d.habitLog).toEqual({})
+  })
+
   it('clamps the text scale to a readable range and defaults to 1', () => {
     expect(sanitizeSettingsPatch({ textScale: 5 })).toEqual({ textScale: 1.4 })
     expect(sanitizeSettingsPatch({ textScale: 0.1 })).toEqual({ textScale: 0.8 })

@@ -1,10 +1,10 @@
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
+import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import {
-  addTask, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
-  setNicotine, setProfile, setSplit, setWeighIn, updateTask
+  addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
+  setHabitDay, setProfile, setSplit, setWeighIn, updateHabit, updateTask
 } from './mutations'
 import type { PomodoroTimer } from './timer'
 import type { PanelManager } from './panels'
@@ -47,8 +47,20 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     store.update((d) => setDone(d, taskId, date, done, new Date().toISOString()))
     commit()
   })
-  ipcMain.handle('nicotine:set', (_e, date: string, on: boolean) => {
-    store.update((d) => setNicotine(d, date, on))
+  ipcMain.handle('habit:add', (_e, input: HabitInput) => {
+    store.update((d) => addHabit(d, input, randomUUID()))
+    commit()
+  })
+  ipcMain.handle('habit:update', (_e, id: string, input: HabitInput) => {
+    store.update((d) => updateHabit(d, id, input))
+    commit()
+  })
+  ipcMain.handle('habit:delete', (_e, id: string) => {
+    store.update((d) => deleteHabit(d, id))
+    commit()
+  })
+  ipcMain.handle('habit:set', (_e, id: string, date: string, on: boolean) => {
+    store.update((d) => setHabitDay(d, id, date, on))
     commit()
   })
 

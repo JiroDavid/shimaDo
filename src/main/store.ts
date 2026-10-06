@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { PANEL_IDS, type AppData, type Gym, type PanelId, type PanelState, type Profile, type Settings } from '../shared/types'
+import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings } from '../shared/types'
 import { emptyGym } from '../shared/gym'
+import { isHabitIcon, MAX_HABITS, MAX_HABIT_NAME } from '../shared/habits'
 import { emptyProfile } from '../shared/profile'
 
 export function defaultData(): AppData {
@@ -9,7 +10,8 @@ export function defaultData(): AppData {
     version: 1,
     tasks: [],
     completions: [],
-    nicotine: {},
+    habits: [],
+    habitLog: {},
     pomodoros: {},
     pomodoroLog: [],
     profile: emptyProfile(),
@@ -26,7 +28,7 @@ export function defaultData(): AppData {
         schedule: { width: 350, height: 470, visible: false },
         gym: { width: 350, height: 470, visible: false },
         progress: { width: 300, height: 380, visible: true },
-        nicotine: { width: 300, height: 350, visible: true },
+        habits: { width: 300, height: 350, visible: true },
         focus: { width: 280, height: 360, visible: false },
         settings: { width: 330, height: 450, visible: false },
         profile: { width: 315, height: 400, visible: false },
@@ -49,6 +51,28 @@ function pickGym(raw: unknown): Gym {
   }
 }
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+
+function pickHabits(r: Record<string, unknown>): Pick<AppData, 'habits' | 'habitLog'> {
+  if (!Array.isArray(r.habits)) {
+    if (!isRecord(r.nicotine)) return { habits: [], habitLog: {} }
+    return {
+      habits: [{ id: 'nicotine', name: 'No nicotine', icon: 'ban' }],
+      habitLog: { nicotine: r.nicotine as Record<string, true> }
+    }
+  }
+  const habits: Habit[] = []
+  for (const h of r.habits) {
+    if (!isRecord(h) || typeof h.id !== 'string' || typeof h.name !== 'string' || !h.name.trim()) continue
+    if (habits.some((x) => x.id === h.id)) continue
+    habits.push({ id: h.id, name: h.name.trim().slice(0, MAX_HABIT_NAME), icon: isHabitIcon(h.icon) ? h.icon : 'check' })
+  }
+  const log = isRecord(r.habitLog) ? r.habitLog : {}
+  const habitLog: AppData['habitLog'] = {}
+  for (const h of habits) if (isRecord(log[h.id])) habitLog[h.id] = log[h.id] as Record<string, true>
+  return { habits: habits.slice(0, MAX_HABITS), habitLog }
+}
+
 export function migrate(raw: unknown): AppData {
   if (typeof raw !== 'object' || raw === null) throw new Error('invalid data file')
   const r = raw as Record<string, unknown>
@@ -56,12 +80,13 @@ export function migrate(raw: unknown): AppData {
   const def = defaultData()
   const s = (typeof r.settings === 'object' && r.settings !== null ? r.settings : {}) as Partial<Settings>
   const panels = {} as Record<PanelId, PanelState>
-  for (const id of PANEL_IDS) panels[id] = { ...def.settings.panels[id], ...(s.panels?.[id] ?? {}) }
+  const saved = (s.panels ?? {}) as Partial<Record<string, PanelState>>
+  for (const id of PANEL_IDS) panels[id] = { ...def.settings.panels[id], ...((id === 'habits' ? saved.habits ?? saved.nicotine : saved[id]) ?? {}) }
   return {
     version: 1,
     tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']) : [],
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
-    nicotine: typeof r.nicotine === 'object' && r.nicotine !== null ? (r.nicotine as AppData['nicotine']) : {},
+    ...pickHabits(r),
     pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},
     pomodoroLog: Array.isArray(r.pomodoroLog) ? (r.pomodoroLog as AppData['pomodoroLog']) : [],
     profile: { ...emptyProfile(), ...(typeof r.profile === 'object' && r.profile !== null ? (r.profile as Partial<Profile>) : {}) },

@@ -250,7 +250,7 @@ export class PanelManager {
       })
       this.wins.get(id)?.setBounds(rect)
     }
-    for (const id of ['bar', 'checklist', 'progress', 'nicotine'] as PanelId[]) this.show(id)
+    for (const id of ['bar', 'checklist', 'progress', 'habits'] as PanelId[]) this.show(id)
   }
 
   private applyTop(id: PanelId, win: BrowserWindow): void {

@@ -10,9 +10,9 @@ describe('defaultBounds', () => {
     expect(defaultBounds('bar', area, panels)).toEqual({ x: 16, y: 16, width: 600, height: 50 })
     expect(defaultBounds('checklist', area, panels)).toMatchObject({ x: 16, y: 78 })
   })
-  it('stacks progress and nicotine down the right edge without overlap', () => {
+  it('stacks progress and habits down the right edge without overlap', () => {
     const p = defaultBounds('progress', area, panels)
-    const n = defaultBounds('nicotine', area, panels)
+    const n = defaultBounds('habits', area, panels)
     expect(p).toMatchObject({ x: 1604, y: 16 })
     expect(n.x).toBe(1604)
     expect(n.y).toBeGreaterThanOrEqual(p.y + p.height)
@@ -67,6 +67,6 @@ describe('effectiveSize', () => {
   })
   it('lets the data panels shrink well below their default size', () => {
     expect(MIN_SIZES.progress.width).toBeLessThanOrEqual(220)
-    expect(MIN_SIZES.nicotine.height).toBeLessThanOrEqual(200)
+    expect(MIN_SIZES.habits.height).toBeLessThanOrEqual(200)
   })
 })

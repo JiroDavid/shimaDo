@@ -18,7 +18,7 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   schedule: { width: 240, height: 260 },
   gym: { width: 240, height: 260 },
   progress: { width: 200, height: 180 },
-  nicotine: { width: 200, height: 180 },
+  habits: { width: 200, height: 180 },
   focus: { width: 220, height: 240 },
   settings: { width: 260, height: 300 },
   profile: { width: 240, height: 300 },
@@ -67,7 +67,7 @@ export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels'
       return { x: left + panels.checklist.width + GAP + panels.schedule.width + GAP, y: belowBar, width, height }
     case 'progress':
       return { x: right - width, y: top, width, height }
-    case 'nicotine':
+    case 'habits':
       return { x: right - width, y: top + panels.progress.height + GAP, width, height }
     case 'focus':
       return { x: right - panels.progress.width - GAP - width, y: top, width, height }

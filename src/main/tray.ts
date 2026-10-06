@@ -7,7 +7,7 @@ const TRAY_PANELS: { id: PanelId; label: string }[] = [
   { id: 'checklist', label: 'Checklist' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'progress', label: 'Progress' },
-  { id: 'nicotine', label: 'Nicotine' },
+  { id: 'habits', label: 'Habits' },
   { id: 'focus', label: 'Focus' }
 ]
 const OPACITIES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]

@@ -1,6 +1,7 @@
-import type { Accent, AppData, GymDay, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
+import type { Accent, AppData, GymDay, Habit, HabitInput, ProfileInput, SettingsPatch, Task, TaskInput } from '../shared/types'
 import { isValidDateKey } from '../shared/dates'
 import { normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateWeighIn } from '../shared/gym'
+import { MAX_HABITS, validateHabitInput } from '../shared/habits'
 import { validateProfile } from '../shared/profile'
 import { validateTaskInput } from '../shared/validate'
 
@@ -52,9 +53,33 @@ export function setDone(d: AppData, taskId: string, date: string, done: boolean,
   if (!done) d.completions = d.completions.filter((c) => !(c.taskId === taskId && c.occurrenceDate === date))
 }
 
-export function setNicotine(d: AppData, date: string, on: boolean): void {
-  if (on) d.nicotine[date] = true
-  else delete d.nicotine[date]
+export function addHabit(d: AppData, input: HabitInput, id: string): Habit {
+  const error = validateHabitInput(input)
+  if (error) throw new Error(error)
+  if (d.habits.length >= MAX_HABITS) throw new Error(`You can track up to ${MAX_HABITS} habits`)
+  const habit: Habit = { id, name: input.name.trim(), icon: input.icon }
+  d.habits.push(habit)
+  return habit
+}
+
+export function updateHabit(d: AppData, id: string, input: HabitInput): void {
+  const error = validateHabitInput(input)
+  if (error) throw new Error(error)
+  const habit = d.habits.find((h) => h.id === id)
+  if (!habit) return
+  habit.name = input.name.trim()
+  habit.icon = input.icon
+}
+
+export function deleteHabit(d: AppData, id: string): void {
+  d.habits = d.habits.filter((h) => h.id !== id)
+  delete d.habitLog[id]
+}
+
+export function setHabitDay(d: AppData, id: string, date: string, on: boolean): void {
+  if (!isValidDateKey(date) || !d.habits.some((h) => h.id === id)) return
+  if (on) (d.habitLog[id] ??= {})[date] = true
+  else if (d.habitLog[id]) delete d.habitLog[id][date]
 }
 
 export function addPomodoro(d: AppData, date: string, task = '', endedAt = Date.now()): void {

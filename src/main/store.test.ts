@@ -18,10 +18,10 @@ describe('Store', () => {
     const file = path.join(tmpDir(), 'data.json')
     const a = new Store(file)
     a.load()
-    a.update((d) => { d.nicotine['2026-10-05'] = true })
+    a.update((d) => { d.habits.push({ id: 'h1', name: 'Read', icon: 'book' }); d.habitLog.h1 = { '2026-10-05': true } })
     const b = new Store(file)
     b.load()
-    expect(b.data.nicotine).toEqual({ '2026-10-05': true })
+    expect(b.data.habitLog).toEqual({ h1: { '2026-10-05': true } })
   })
 
   it('leaves no temp file behind after saving', () => {
@@ -63,7 +63,7 @@ describe('Store', () => {
   it('fills missing settings from defaults', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
-    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, settings: { opacity: 0.5 } }))
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], habits: [], habitLog: {}, settings: { opacity: 0.5 } }))
     const s = new Store(file)
     s.load()
     expect(s.data.settings.opacity).toBe(0.5)
@@ -74,7 +74,7 @@ describe('Store', () => {
   it('fills a missing or partial profile with empty values', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
-    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, profile: { firstName: 'Jiro' } }))
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], habits: [], habitLog: {}, profile: { firstName: 'Jiro' } }))
     const s = new Store(file)
     s.load()
     expect(s.data.profile).toEqual({ ...defaultData().profile, firstName: 'Jiro' })
@@ -84,7 +84,7 @@ describe('Store', () => {
   it('fills a missing or partial gym with empty values', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
-    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, gym: { weighIns: { '2026-10-05': 72 } } }))
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], habits: [], habitLog: {}, gym: { weighIns: { '2026-10-05': 72 } } }))
     const s = new Store(file)
     s.load()
     expect(s.data.gym).toEqual({ ...defaultData().gym, weighIns: { '2026-10-05': 72 } })
@@ -115,7 +115,7 @@ describe('Store', () => {
   it('gives old data files a text scale of 1', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
-    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, settings: { opacity: 0.5 } }))
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], habits: [], habitLog: {}, settings: { opacity: 0.5 } }))
     const s = new Store(file)
     s.load()
     expect(s.data.settings.textScale).toBe(1)
@@ -125,10 +125,39 @@ describe('Store', () => {
   it('drops the legacy gym sets field when loading old data', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
-    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], nicotine: {}, gym: { weighIns: { '2026-10-05': 72 }, sets: [{ id: 'x', date: '2026-10-05', exercise: 'Bench', weightKg: 80, reps: 5 }] } }))
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], habits: [], habitLog: {}, gym: { weighIns: { '2026-10-05': 72 }, sets: [{ id: 'x', date: '2026-10-05', exercise: 'Bench', weightKg: 80, reps: 5 }] } }))
     const s = new Store(file)
     s.load()
     expect(Object.keys(s.data.gym).sort()).toEqual(['done', 'overrides', 'splits', 'weighIns'])
     expect(s.data.gym.weighIns).toEqual({ '2026-10-05': 72 })
+  })
+
+  it('turns the legacy nicotine log into a habit and keeps its panel position', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, tasks: [], completions: [], nicotine: { '2026-10-05': true },
+      settings: { panels: { nicotine: { width: 410, height: 333, visible: false } } }
+    }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.habits).toEqual([{ id: 'nicotine', name: 'No nicotine', icon: 'ban' }])
+    expect(s.data.habitLog).toEqual({ nicotine: { '2026-10-05': true } })
+    expect(s.data.settings.panels.habits).toMatchObject({ width: 410, height: 333, visible: false })
+    expect('nicotine' in s.data).toBe(false)
+  })
+
+  it('cleans up malformed habits when loading', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, tasks: [], completions: [],
+      habits: [{ id: 'a', name: ' Read ', icon: 'nope' }, { id: 'a', name: 'dupe', icon: 'book' }, { id: 'b', name: '' }, 5],
+      habitLog: { a: { '2026-10-05': true }, b: { '2026-10-05': true }, ghost: {} }
+    }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.habits).toEqual([{ id: 'a', name: 'Read', icon: 'check' }])
+    expect(s.data.habitLog).toEqual({ a: { '2026-10-05': true } })
   })
 })

@@ -8,7 +8,7 @@ import { Confirm } from './panels/Confirm'
 import { Focus } from './panels/Focus'
 import { Gym } from './panels/Gym'
 import { Mini } from './panels/Mini'
-import { Nicotine } from './panels/Nicotine'
+import { Habits } from './panels/Habits'
 import { Profile } from './panels/Profile'
 import { Progress } from './panels/Progress'
 import { Schedule } from './panels/Schedule'
@@ -20,7 +20,7 @@ const TITLES: Record<PanelId, string> = {
   schedule: 'schedule',
   gym: 'gym',
   progress: 'progress',
-  nicotine: 'no-nicotine',
+  habits: 'habits',
   focus: 'focus',
   settings: 'settings',
   profile: 'profile',
@@ -28,7 +28,7 @@ const TITLES: Record<PanelId, string> = {
   mini: 'shimado'
 }
 
-const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', nicotine: 'both', focus: 'both', settings: 'both', profile: 'both', confirm: 'both' }
+const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both', focus: 'both', settings: 'both', profile: 'both', confirm: 'both' }
 
 function currentPanel(): PanelId {
   const id = location.hash.replace(/^#\/?/, '')
@@ -55,7 +55,7 @@ export function App() {
       {id === 'schedule' && <Schedule data={data} />}
       {id === 'gym' && <Gym data={data} />}
       {id === 'progress' && <Progress data={data} />}
-      {id === 'nicotine' && <Nicotine data={data} />}
+      {id === 'habits' && <Habits data={data} />}
       {id === 'focus' && <Focus data={data} />}
       {id === 'settings' && <Settings data={data} />}
       {id === 'profile' && <Profile data={data} />}

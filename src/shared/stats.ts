@@ -34,20 +34,20 @@ export function taskStreak(data: Schedule, todayKey: string): number {
   return streak
 }
 
-export function nicotineStreak(nic: Record<string, true>, todayKey: string): number {
+export function habitStreak(log: Record<string, true>, todayKey: string): number {
   let streak = 0
   for (let i = 0; i < MAX_LOOKBACK; i++) {
-    if (nic[addDays(todayKey, -i)]) streak++
+    if (log[addDays(todayKey, -i)]) streak++
     else if (i > 0) break
   }
   return streak
 }
 
-export function nicotineWeeks(nic: Record<string, true>, todayKey: string, weeks: number) {
+export function habitWeeks(log: Record<string, true>, todayKey: string, weeks: number) {
   const current = weekStart(todayKey)
   return Array.from({ length: weeks }, (_, i) => {
     const start = addDays(current, -7 * (weeks - 1 - i))
-    return { weekStart: start, count: weekDays(start).filter((k) => nic[k]).length }
+    return { weekStart: start, count: weekDays(start).filter((k) => log[k]).length }
   })
 }
 

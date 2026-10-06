@@ -1,11 +1,12 @@
+import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
 
 export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'nicotine' | 'focus' | 'settings' | 'profile' | 'confirm' | 'mini'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'nicotine', 'focus', 'settings', 'profile', 'confirm', 'mini']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'settings' | 'profile' | 'confirm' | 'mini'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'settings', 'profile', 'confirm', 'mini']
 export type TimerAction = 'start' | 'pause' | 'reset' | 'skip'
 export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
@@ -99,6 +100,14 @@ export interface PomodoroSession {
   task: string
 }
 
+export interface Habit {
+  id: string
+  name: string
+  icon: HabitIconId
+}
+
+export type HabitInput = Omit<Habit, 'id'>
+
 export interface BackupResult {
   ok: boolean
   message: string
@@ -108,7 +117,8 @@ export interface AppData {
   version: 1
   tasks: Task[]
   completions: Completion[]
-  nicotine: Record<string, true>
+  habits: Habit[]
+  habitLog: Record<string, Record<string, true>>
   pomodoros: Record<string, number>
   pomodoroLog: PomodoroSession[]
   profile: Profile
@@ -133,7 +143,10 @@ export interface ShimaApi {
   updateTask(id: string, input: TaskInput): Promise<void>
   deleteTask(id: string): Promise<void>
   setDone(taskId: string, date: string, done: boolean): Promise<void>
-  setNicotine(date: string, on: boolean): Promise<void>
+  addHabit(input: HabitInput): Promise<void>
+  updateHabit(id: string, input: HabitInput): Promise<void>
+  deleteHabit(id: string): Promise<void>
+  setHabitDay(id: string, date: string, on: boolean): Promise<void>
   hidePanel(id: PanelId): void
   togglePanel(id: PanelId): void
   setSettings(patch: SettingsPatch): Promise<void>
