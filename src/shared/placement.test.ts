@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  MAX_STICKERS_PER_PANEL, addSticker, deleteSticker, duplicateSticker, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, setBackground, setMove,
+  MAX_STICKERS_PER_PANEL, stickerStart, addSticker, deleteSticker, duplicateSticker, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, setBackground, setMove,
   updateSticker, type Sticker
 } from './placement'
 import type { AssetInfo } from './assets'
@@ -140,5 +140,14 @@ describe('setBackground', () => {
     expect(setBackground(set, 'bar.surface', { ...bg, asset: 'missing-asset-1' }, assets)).toBe(set)
     expect(setBackground(set, 'checklist.panel', bg, assets)).toBe(set)
     expect(setBackground(set, 'bar.surface', null, assets)).toBe(set)
+  })
+})
+
+describe('stickerStart', () => {
+  it('staggers new stickers so they do not stack exactly', () => {
+    expect(stickerStart(0)).toEqual({ x: 40, y: 90 })
+    expect(stickerStart(1)).toEqual({ x: 64, y: 114 })
+    const seen = new Set(Array.from({ length: 12 }, (_, i) => JSON.stringify(stickerStart(i))))
+    expect(seen.size).toBe(10)
   })
 })

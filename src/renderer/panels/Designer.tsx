@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
-import { GROUP_PREFIX, elementById, groupById, type EditableProp } from '../../shared/elements'
+import { GROUP_PREFIX, elementById, groupById, isEditablePanel, isMovableKey, isSurfaceKey, type EditableProp } from '../../shared/elements'
+import type { StickerPanel } from '../../shared/placement'
 import { labelBoxValue, paletteFor, resolveOverride, type StyleOverride } from '../../shared/design'
 import { colorToHex } from '../../shared/theme'
 import { themeById } from '../../shared/themes'
 import { useEditState } from '../hooks/useEditState'
 import { ColorControl } from '../components/design/ColorControl'
 import { SliderControl } from '../components/design/SliderControl'
+import { AddSection } from '../components/design/AddSection'
+import { BackgroundSection } from '../components/design/BackgroundSection'
+import { StickerControls } from '../components/design/StickerControls'
 import { Section } from '../components/Section'
 
 const PANEL_BUTTONS: { id: PanelId; label: string }[] = [
@@ -32,11 +36,12 @@ export function Designer({ data }: { data: AppData }) {
   const textTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const textBox = useRef<HTMLInputElement>(null)
 
-  const def = sel && !sel.id.startsWith(GROUP_PREFIX) ? elementById(sel.id) : undefined
+  const isSticker = sel?.id.startsWith('sticker:') ?? false
+  const def = sel && !isSticker && !sel.id.startsWith(GROUP_PREFIX) ? elementById(sel.id) : undefined
   const groupOnly = sel?.id.startsWith(GROUP_PREFIX) ?? false
   const group = groupOnly ? groupById(sel!.id.slice(GROUP_PREFIX.length)) : def?.group ? groupById(def.group) : undefined
   const effectiveScope: Scope = groupOnly ? 'group' : scope
-  const key = !sel ? null : effectiveScope === 'group' && group ? GROUP_PREFIX + group.id : (def?.id ?? sel.id)
+  const key = !sel || isSticker ? null : effectiveScope === 'group' && group ? GROUP_PREFIX + group.id : (def?.id ?? sel.id)
   const props: EditableProp[] = effectiveScope === 'group' ? (group?.props ?? []) : (def?.props ?? group?.props ?? [])
   const has = (p: EditableProp) => props.includes(p)
 
@@ -68,6 +73,17 @@ export function Designer({ data }: { data: AppData }) {
     textTimer.current = setTimeout(() => patch({ text: value.trim() === '' ? null : value }), 250)
   }
 
+  const sticker = isSticker ? data.design.stickers.find((s) => `sticker:${s.id}` === sel!.id) : undefined
+  const [lastWindow, setLastWindow] = useState<StickerPanel>('checklist')
+  useEffect(() => {
+    const p = sel?.panel
+    if (p && (p === 'bar' || isEditablePanel(p))) setLastWindow(p as StickerPanel)
+  }, [sel?.panel])
+  const windowName = lastWindow === 'bar' ? 'the bar' : (PANEL_BUTTONS.find((b) => b.id === lastWindow)?.label ?? lastWindow)
+  const surfaceKey = key && isSurfaceKey(key) ? key : null
+  const backgroundTarget = surfaceKey ?? (lastWindow === 'bar' ? 'bar.surface' : `${lastWindow}.panel`)
+  const setBackgroundFrom = (asset: string) => window.shima.editBackground(backgroundTarget, { asset, fit: 'cover', opacity: 1 })
+
   const resetAll = () => {
     if (!confirmAll) return setConfirmAll(true)
     window.shima.editResetAll()
@@ -90,9 +106,15 @@ export function Designer({ data }: { data: AppData }) {
         </div>
       </Section>
 
-      {!sel || !key ? (
+      <AddSection data={data} target={lastWindow} targetName={windowName} canBackground onBackground={setBackgroundFrom} />
+      {(isSticker || data.design.stickers.some((s) => s.panel === lastWindow)) && (
+        <StickerControls sticker={sticker} onThisWindow={data.design.stickers.filter((s) => s.panel === lastWindow)} windowName={windowName} />
+      )}
+      {surfaceKey && <BackgroundSection surfaceKey={surfaceKey} bg={data.design.backgrounds[surfaceKey]} assets={data.assets} />}
+
+      {!sel ? (
         <p className="py-6 text-center text-lg font-bold text-muted">Click anything in a panel</p>
-      ) : (
+      ) : isSticker || !key ? null : (
         <>
           <Section label={def?.name ?? group?.name ?? 'Element'} count={sel.panel}>
             {def?.group && group && (
@@ -175,6 +197,9 @@ export function Designer({ data }: { data: AppData }) {
         </button>
         <button className="btn" disabled={!key} onClick={() => key && window.shima.editReset(key)}>
           Reset element
+        </button>
+        <button className="btn" disabled={!key || !isMovableKey(key) || !data.design.moves[key]} onClick={() => key && window.shima.editResetPosition(key)}>
+          Reset position
         </button>
         <button className={`btn ${confirmAll ? 'btn-danger' : ''}`} onClick={resetAll}>
           {confirmAll ? 'Really reset?' : 'Reset everything'}

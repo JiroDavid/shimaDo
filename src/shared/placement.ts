@@ -182,3 +182,8 @@ export function setBackground(backgrounds: Record<string, Background>, key: stri
   if (!next || (existing && existing.asset === next.asset && existing.fit === next.fit && existing.opacity === next.opacity)) return backgrounds
   return { ...backgrounds, [key]: next }
 }
+
+export function stickerStart(count: number): { x: number; y: number } {
+  const step = (count % 10) * 24
+  return { x: 40 + step, y: 90 + step }
+}

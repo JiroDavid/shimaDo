@@ -245,3 +245,27 @@ describe('edit layer drag and drop', () => {
     expect(layer).toContain('.sticker')
   })
 })
+
+describe('designer media controls', () => {
+  const read = (...p: string[]) => readFileSync(join(renderer, ...p), 'utf8')
+
+  it('mounts the add section, background section and sticker controls in the designer', () => {
+    const d = read('panels', 'Designer.tsx')
+    for (const needle of ['<AddSection', '<BackgroundSection', '<StickerControls', 'Reset position', 'editResetPosition(']) expect(d, needle).toContain(needle)
+  })
+
+  it('offers upload by drop, file picker and paste', () => {
+    const add = read('components', 'design', 'AddSection.tsx')
+    for (const needle of ['onDrop=', 'assetChoose()', "'paste'", 'assetAdd(', 'isEmoji(']) expect(add, needle).toContain(needle)
+  })
+
+  it('confirms before deleting an image', () => {
+    const gallery = read('components', 'design', 'ImageGallery.tsx')
+    expect(gallery).toContain('assetDelete(')
+    expect(gallery).toMatch(/confirm/i)
+  })
+
+  it('keeps the designer free of editable markup', () => {
+    for (const f of ['AddSection', 'EmojiGrid', 'ImageGallery', 'BackgroundSection', 'StickerControls']) expect(read('components', 'design', `${f}.tsx`)).not.toContain('data-el')
+  })
+})
