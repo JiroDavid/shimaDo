@@ -8,6 +8,8 @@ const selection = { id: 'bar.label', panel: 'bar', computed }
 
 function setup() {
   const data = defaultData()
+  let ids = 0
+  const removed: string[] = []
   const calls: string[] = []
   const messages: [string, unknown][] = []
   let clock = 0
@@ -17,9 +19,15 @@ function setup() {
     show: (id: PanelId) => calls.push(`show:${id}`),
     hide: (id: PanelId) => calls.push(`hide:${id}`),
     broadcast: (channel, payload) => messages.push([channel, payload]),
-    changed: () => calls.push('changed')
+    changed: () => calls.push('changed'),
+    removeAsset: (id) => {
+      removed.push(id)
+      delete data.assets[id]
+    },
+    newId: () => `stk-test-${String(++ids).padStart(4, '0')}`
   }
-  return { data, calls, messages, session: new EditSession(host, () => clock), tick: (ms: number) => { clock += ms } }
+  data.assets['asset-aaaa-1'] = { id: 'asset-aaaa-1', ext: 'png', bytes: 5, name: 'a', addedAt: 1 }
+  return { data, calls, messages, removed, session: new EditSession(host, () => clock), tick: (ms: number) => { clock += ms } }
 }
 
 describe('EditSession', () => {
@@ -154,5 +162,129 @@ describe('EditSession', () => {
     session.patch('bar.label', { color: null })
     expect(session.state.canRedo).toBe(true)
     expect(session.state.canUndo).toBe(false)
+  })
+
+  describe('placement', () => {
+    const draft = { panel: 'checklist', kind: 'emoji', emoji: '🔥', x: 10, y: 20, size: 64, layer: 'front' }
+    const zero = { color: '', background: '', borderColor: '', radius: 0, borderWidth: 0, fontSize: 0, bold: false }
+
+    it('moves a movable element, coalesces drags and can undo', () => {
+      const { session, data, tick } = setup()
+      session.setActive(true)
+      session.move('bar.label', 10, 5)
+      tick(100)
+      session.move('bar.label', 40, 15)
+      expect(data.design.moves).toEqual({ 'bar.label': { x: 40, y: 15 } })
+      session.undo()
+      expect(data.design.moves).toEqual({})
+    })
+
+    it('ignores moves while inactive and for surfaces, unknown keys and bad values', () => {
+      const { session, data } = setup()
+      session.move('bar.label', 10, 5)
+      expect(data.design.moves).toEqual({})
+      session.setActive(true)
+      for (const key of ['checklist.panel', 'bar.surface', 'group:button', 'nope', 5]) session.move(key, 10, 5)
+      session.move('bar.label', 'a', 5)
+      expect(data.design.moves).toEqual({})
+    })
+
+    it('resets one position', () => {
+      const { session, data } = setup()
+      session.setActive(true)
+      session.move('bar.label', 10, 5)
+      session.resetPosition('bar.label')
+      expect(data.design.moves).toEqual({})
+    })
+
+    it('adds a sticker, selects it and rejects bad ones', () => {
+      const { session, data } = setup()
+      session.setActive(true)
+      session.addSticker(draft)
+      expect(data.design.stickers).toHaveLength(1)
+      expect(data.design.stickers[0]).toMatchObject({ id: 'stk-test-0001', emoji: '🔥' })
+      expect(session.state.selected?.id).toBe('sticker:stk-test-0001')
+      session.addSticker({ ...draft, emoji: 'nope' })
+      session.addSticker({ ...draft, kind: 'image', emoji: undefined, asset: 'missing-asset-1' })
+      expect(data.design.stickers).toHaveLength(1)
+    })
+
+    it('adds an image sticker for an existing asset', () => {
+      const { session, data } = setup()
+      session.setActive(true)
+      session.addSticker({ panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 2, size: 48, layer: 'behind' })
+      expect(data.design.stickers[0]).toMatchObject({ kind: 'image', asset: 'asset-aaaa-1', panel: 'bar' })
+    })
+
+    it('updates, duplicates and deletes a sticker', () => {
+      const { session, data, tick } = setup()
+      session.setActive(true)
+      session.addSticker(draft)
+      tick(1000)
+      session.updateSticker('stk-test-0001', { x: 100, size: 80 })
+      expect(data.design.stickers[0]).toMatchObject({ x: 100, size: 80 })
+      session.duplicateSticker('stk-test-0001')
+      expect(data.design.stickers).toHaveLength(2)
+      session.deleteSticker('stk-test-0001')
+      expect(data.design.stickers.map((s) => s.id)).toEqual(['stk-test-0002'])
+      expect(session.state.selected?.id).not.toBe('sticker:stk-test-0001')
+    })
+
+    it('selects a sticker only while it exists', () => {
+      const { session } = setup()
+      session.setActive(true)
+      session.addSticker(draft)
+      session.select({ id: 'sticker:stk-test-0001', panel: 'checklist', computed: zero })
+      expect(session.state.selected?.id).toBe('sticker:stk-test-0001')
+      session.select({ id: 'sticker:missing-sticker-9', panel: 'checklist', computed: zero })
+      expect(session.state.selected?.id).toBe('sticker:stk-test-0001')
+    })
+
+    it('sets and clears a background only on window surfaces', () => {
+      const { session, data } = setup()
+      session.setActive(true)
+      session.setBackground('checklist.panel', { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 })
+      session.setBackground('bar.label', { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 })
+      expect(Object.keys(data.design.backgrounds)).toEqual(['checklist.panel'])
+      session.setBackground('checklist.panel', null)
+      expect(data.design.backgrounds).toEqual({})
+    })
+
+    it('deleting an image removes what uses it, resets undo and asks the host to remove the file', () => {
+      const { session, data, removed } = setup()
+      session.setActive(true)
+      session.addSticker({ panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 2, size: 48, layer: 'front' })
+      session.setBackground('bar.surface', { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 })
+      session.deleteAsset('asset-aaaa-1')
+      expect(removed).toEqual(['asset-aaaa-1'])
+      expect(data.design.stickers).toEqual([])
+      expect(data.design.backgrounds).toEqual({})
+      expect(session.state.canUndo).toBe(false)
+      expect(session.state.selected).toBeNull()
+    })
+
+    it('ignores deleting an asset that does not exist or while inactive', () => {
+      const { session, removed } = setup()
+      session.deleteAsset('asset-aaaa-1')
+      session.setActive(true)
+      session.deleteAsset('missing-asset-1')
+      expect(removed).toEqual([])
+    })
+
+    it('reset element clears its move and reset everything clears all placement', () => {
+      const { session, data, tick } = setup()
+      session.setActive(true)
+      session.move('bar.label', 10, 5)
+      session.patch('bar.label', { color: '#ff0000' })
+      session.addSticker(draft)
+      session.setBackground('checklist.panel', { asset: 'asset-aaaa-1', fit: 'cover', opacity: 1 })
+      tick(1000)
+      session.reset('bar.label')
+      expect(data.design.moves).toEqual({})
+      expect(data.design.overrides).toEqual({})
+      tick(1000)
+      session.resetAll()
+      expect(data.design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+    })
   })
 })

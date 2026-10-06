@@ -150,4 +150,12 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.on('edit:redo', () => edit.redo())
   ipcMain.on('edit:reset', (_e, key: unknown) => edit.reset(key))
   ipcMain.on('edit:reset-all', () => edit.resetAll())
+  ipcMain.on('edit:move', (_e, key: unknown, x: unknown, y: unknown) => edit.move(key, x, y))
+  ipcMain.on('edit:reset-position', (_e, key: unknown) => edit.resetPosition(key))
+  ipcMain.on('edit:sticker-add', (_e, draft: unknown) => edit.addSticker(draft))
+  ipcMain.on('edit:sticker-update', (_e, id: unknown, patch: unknown) => edit.updateSticker(id, patch))
+  ipcMain.on('edit:sticker-delete', (_e, id: unknown) => edit.deleteSticker(id))
+  ipcMain.on('edit:sticker-duplicate', (_e, id: unknown) => edit.duplicateSticker(id))
+  ipcMain.on('edit:background', (_e, key: unknown, bg: unknown) => edit.setBackground(key, bg))
+  ipcMain.on('asset:delete', (_e, id: unknown) => edit.deleteAsset(id))
 }

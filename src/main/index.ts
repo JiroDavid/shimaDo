@@ -1,5 +1,6 @@
 import { app, dialog, Notification, protocol, screen } from 'electron'
 import fs from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import { basename, join } from 'node:path'
 import { ASSET_SCHEME } from '../shared/assets'
 import { toDateKey } from '../shared/dates'
@@ -46,7 +47,9 @@ function boot(): void {
     show: (id) => panels.show(id),
     hide: (id) => panels.hide(id),
     broadcast: (channel, payload) => panels.broadcast(channel, payload),
-    changed: () => tray?.refresh()
+    changed: () => tray?.refresh(),
+    removeAsset: (id) => assets.remove(id),
+    newId: () => randomUUID()
   })
 
   const timer = new PomodoroTimer({

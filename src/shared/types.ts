@@ -1,4 +1,5 @@
 import type { AssetInfo, AssetResult } from './assets'
+import type { Background, StickerDraft } from './placement'
 import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
@@ -171,6 +172,13 @@ export interface ShimaApi {
   editRedo(): void
   editReset(key: string): void
   editResetAll(): void
+  editMove(key: string, x: number, y: number): void
+  editResetPosition(key: string): void
+  editStickerAdd(draft: StickerDraft): void
+  editStickerUpdate(id: string, patch: Record<string, unknown>): void
+  editStickerDelete(id: string): void
+  editStickerDuplicate(id: string): void
+  editBackground(key: string, bg: Background | null): void
   assetAdd(name: string, bytes: Uint8Array): Promise<AssetResult>
   assetChoose(): Promise<AssetResult>
   assetDelete(id: string): void
