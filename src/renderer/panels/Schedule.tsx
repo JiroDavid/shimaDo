@@ -241,6 +241,7 @@ export function Schedule({ data }: { data: AppData }) {
         <h2 className="heading text-[1.4rem]">{formatDay(day)}</h2>
         <button
           className="btn btn-primary"
+          data-el="schedule.add-task"
           onClick={() => {
             setSlotTime(undefined)
             setEditing('new')

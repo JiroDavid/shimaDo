@@ -63,7 +63,7 @@ function QuickAdd({ today }: { today: string }) {
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && add()}
             />
-            <button className="btn btn-primary shrink-0" onClick={add}>
+            <button className="btn btn-primary shrink-0" data-el="checklist.add" onClick={add}>
               Add
             </button>
           </div>

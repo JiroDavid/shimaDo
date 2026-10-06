@@ -69,7 +69,7 @@ export function Focus({ data }: { data: AppData }) {
             <div className="h-full bg-accent" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
           <div className="flex justify-center gap-2">
-            <button className="btn btn-primary" onClick={() => (commitTask(), act(timer.running ? 'pause' : 'start'))}>
+            <button className="btn btn-primary" data-el="focus.start" onClick={() => (commitTask(), act(timer.running ? 'pause' : 'start'))}>
               {timer.running ? 'Pause' : 'Start'}
             </button>
             <button className="btn" onClick={() => act('reset')}>Reset</button>

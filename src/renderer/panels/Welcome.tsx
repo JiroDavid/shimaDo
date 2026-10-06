@@ -26,7 +26,7 @@ export function Welcome({ data }: { data: AppData }) {
     <div className="space-y-3 pb-3 pt-2">
       {STEPS[index].render(data.settings)}
       <div className="flex justify-end pt-1">
-        <button className="btn btn-primary" onClick={() => (last ? window.shima.hidePanel('welcome') : setIndex(index + 1))}>
+        <button className="btn btn-primary" data-el="welcome.next" onClick={() => (last ? window.shima.hidePanel('welcome') : setIndex(index + 1))}>
           {last ? 'Start' : 'Next'}
         </button>
       </div>

@@ -3,6 +3,7 @@ import type { PanelId } from '../../shared/types'
 import { isEditablePanel } from '../../shared/elements'
 import { EditableText } from './EditableText'
 import { Fit } from './Fit'
+import { PanelContext } from './PanelContext'
 import { ResizeHandles } from './ResizeHandles'
 
 export function PanelFrame({ id, title, fit = 'width', naturalWidth, children }: { id: PanelId; title: string; fit?: 'width' | 'both'; naturalWidth?: number; children: ReactNode }) {
@@ -36,7 +37,9 @@ export function PanelFrame({ id, title, fit = 'width', naturalWidth, children }:
         </span>
         <span className="w-4" />
       </div>
-      <Fit mode={fit} naturalWidth={naturalWidth}>{children}</Fit>
+      <PanelContext.Provider value={id}>
+        <Fit mode={fit} naturalWidth={naturalWidth}>{children}</Fit>
+      </PanelContext.Provider>
       <ResizeHandles id={id} />
     </div>
   )

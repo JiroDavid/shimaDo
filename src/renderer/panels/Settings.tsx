@@ -112,10 +112,10 @@ export function Settings({ data }: { data: AppData }) {
       <Section label="Backup">
         <p className="mb-3 text-muted">Save everything (tasks, history, gym, profile, settings) to a file, or load one to replace what is here.</p>
         <div className="flex gap-2">
-          <button className="btn" onClick={() => runBackup(window.shima.exportBackup)}>
+          <button className="btn" data-el="settings.export" onClick={() => runBackup(window.shima.exportBackup)}>
             Export
           </button>
-          <button className="btn" onClick={() => runBackup(window.shima.importBackup)}>
+          <button className="btn" data-el="settings.import" onClick={() => runBackup(window.shima.importBackup)}>
             Import
           </button>
         </div>
@@ -124,7 +124,7 @@ export function Settings({ data }: { data: AppData }) {
 
       <Section label="Layout">
         <p className="mb-3 text-muted">Panels went missing or ended up in a strange spot? Put everything back on screen.</p>
-        <button className="btn mb-1" onClick={() => window.shima.resetLayout()}>
+        <button className="btn mb-1" data-el="settings.reset-layout" onClick={() => window.shima.resetLayout()}>
           Reset layout
         </button>
       </Section>

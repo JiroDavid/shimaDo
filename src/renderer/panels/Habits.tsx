@@ -165,7 +165,7 @@ export function Habits({ data }: { data: AppData }) {
       </Section>
 
       <div className="flex justify-end">
-        <button className="btn" onClick={() => open('edit', habit)}>Edit habit</button>
+        <button className="btn" data-el="habits.edit" onClick={() => open('edit', habit)}>Edit habit</button>
       </div>
     </div>
   )

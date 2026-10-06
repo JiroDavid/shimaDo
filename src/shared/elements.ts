@@ -91,6 +91,45 @@ const BAR_BUTTON_NAMES: Record<string, string> = {
 
 export const isSurfaceKey = (key: string): boolean => key === `${GROUP_PREFIX}panel` || key === 'bar.surface' || key.endsWith('.panel')
 
+export const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+export const CARD_LABELS: Partial<Record<EditablePanel, string[]>> = {
+  checklist: ['Overdue', 'To do', 'Done'],
+  profile: ['About you'],
+  gym: ['Consistency', 'Weight'],
+  progress: ['Consistency', 'Tasks done'],
+  focus: ['Today by task', 'Pomodoros per day'],
+  settings: ['Theme', 'Look', 'Behaviour', 'Monitors', 'Backup', 'Layout'],
+  habits: ['Tick off each day', 'Days per week']
+}
+
+const cardElements: ElementDef[] = (Object.entries(CARD_LABELS) as [EditablePanel, string[]][]).flatMap(([p, labels]) =>
+  labels.map((label) => ({
+    id: `${p}.card.${slug(label)}`,
+    name: `${PANEL_NAMES[p]} card: ${label}`,
+    panel: p,
+    group: 'card',
+    props: ['color', ...SURFACE] as EditableProp[]
+  }))
+)
+
+export const CARD_IDS: string[] = cardElements.map((e) => e.id)
+
+const BUTTONS: [string, string, EditablePanel, string][] = [
+  ['checklist.add', 'Checklist add button', 'checklist', 'button-primary'],
+  ['schedule.add-task', 'Schedule add task button', 'schedule', 'button-primary'],
+  ['gym.split', 'Gym split button', 'gym', 'button-primary'],
+  ['focus.start', 'Focus start button', 'focus', 'button-primary'],
+  ['habits.edit', 'Habits edit button', 'habits', 'button'],
+  ['profile.save', 'Profile save button', 'profile', 'button-primary'],
+  ['welcome.next', 'Welcome next button', 'welcome', 'button-primary'],
+  ['settings.export', 'Settings export button', 'settings', 'button'],
+  ['settings.import', 'Settings import button', 'settings', 'button'],
+  ['settings.reset-layout', 'Settings reset layout button', 'settings', 'button']
+]
+
+const buttonElements: ElementDef[] = BUTTONS.map(([id, name, panel, group]) => ({ id, name, panel, group, props: ALL }))
+
 export const isEditablePanel = (id: string): id is EditablePanel => (EDITABLE_PANELS as readonly string[]).includes(id)
 
 const panelElements: ElementDef[] = EDITABLE_PANELS.flatMap((p) => [
@@ -100,6 +139,8 @@ const panelElements: ElementDef[] = EDITABLE_PANELS.flatMap((p) => [
 
 export const ELEMENTS: ElementDef[] = [
   ...panelElements,
+  ...cardElements,
+  ...buttonElements,
   { id: 'bar.surface', name: 'Bar', panel: 'bar', props: SURFACE },
   { id: 'bar.avatar', name: 'Bar profile picture', panel: 'bar', props: ['background', 'border', 'radius'] },
   { id: 'bar.label', name: 'Bar label', panel: 'bar', props: ['color', 'font', 'text'], defaultText: 'To-do' },

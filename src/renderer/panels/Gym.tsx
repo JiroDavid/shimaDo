@@ -30,7 +30,7 @@ export function Gym({ data }: { data: AppData }) {
           <div className="card mt-6 space-y-3 text-center">
             <p className="heading text-[1.8rem]">Set up your split</p>
             <p className="text-muted">Tell ShimaDo what you train each weekday, like Chest + Tri or Back + Bi, and list your exercises.</p>
-            <button className="btn btn-primary" onClick={() => setTab('split')}>
+            <button className="btn btn-primary" data-el="gym.split" onClick={() => setTab('split')}>
               Set up now
             </button>
           </div>

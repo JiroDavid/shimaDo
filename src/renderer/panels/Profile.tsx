@@ -85,7 +85,7 @@ export function Profile({ data }: { data: AppData }) {
       {message && <p className="font-bold text-urgent">{message}</p>}
       <div className="flex items-center justify-end gap-3 pt-2">
         {saved && <span className="font-extrabold text-sage">Saved</span>}
-        <button className="btn btn-primary" onClick={save}>
+        <button className="btn btn-primary" data-el="profile.save" onClick={save}>
           Save
         </button>
       </div>

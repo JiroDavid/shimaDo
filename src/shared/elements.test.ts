@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BAR_BUTTONS, ELEMENTS, GROUPS, GROUP_PREFIX, isMovableKey, isSurfaceKey, labelFor, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
+import { BAR_BUTTONS, CARD_IDS, CARD_LABELS, ELEMENTS, GROUPS, GROUP_PREFIX, isMovableKey, isSurfaceKey, labelFor, slug, ID_PATTERN, EDITABLE_PANELS, PANEL_TITLES, elementById, groupById, isEditablePanel, isKnownKey } from './elements'
 
 describe('element registry', () => {
   it('has unique element ids that are safe to put in a selector', () => {
@@ -93,7 +93,11 @@ const tsx = files.filter((f) => f.endsWith('.tsx')).map((f) => readFileSync(f, '
 const css = readFileSync(join(renderer, 'styles.css'), 'utf8')
 
 describe('registry against the markup', () => {
-  const generated = new Set([...EDITABLE_PANELS.flatMap((p) => [`${p}.panel`, `${p}.title`]), ...BAR_BUTTONS.map((id) => `bar.btn.${id}`)])
+  const generated = new Set([
+    ...EDITABLE_PANELS.flatMap((p) => [`${p}.panel`, `${p}.title`]),
+    ...BAR_BUTTONS.map((id) => `bar.btn.${id}`),
+    ...CARD_IDS
+  ])
 
   it('uses only registered ids in static data-el attributes', () => {
     const used = [...tsx.matchAll(/data-el="([a-z0-9.-]+)"/g)].map((m) => m[1])
@@ -162,5 +166,42 @@ describe('movable elements', () => {
     expect(isMovableKey('bar.btn.checklist')).toBe(true)
     expect(isMovableKey('checklist.heading')).toBe(true)
     for (const key of ['checklist.panel', 'bar.surface', 'group:button', 'nope', '__proto__', 'constructor', '']) expect(isMovableKey(key), key).toBe(false)
+  })
+})
+
+describe('card and button elements', () => {
+  it('slugs labels', () => {
+    expect(slug('To do')).toBe('to-do')
+    expect(slug('Tick off each day')).toBe('tick-off-each-day')
+    expect(slug(' About you! ')).toBe('about-you')
+  })
+
+  it('registers a card element for every listed label', () => {
+    for (const [panel, labels] of Object.entries(CARD_LABELS)) {
+      for (const label of labels ?? []) {
+        const def = elementById(`${panel}.card.${slug(label)}`)
+        expect(def, `${panel} ${label}`).toBeDefined()
+        expect(def?.group).toBe('card')
+      }
+    }
+    expect(CARD_IDS).toContain('checklist.card.overdue')
+    expect(CARD_IDS).toContain('settings.card.backup')
+  })
+
+  it('registers the main buttons as movable elements', () => {
+    for (const id of ['checklist.add', 'schedule.add-task', 'gym.split', 'focus.start', 'habits.edit', 'profile.save', 'welcome.next', 'settings.export', 'settings.import', 'settings.reset-layout']) {
+      expect(elementById(id), id).toBeDefined()
+      expect(isMovableKey(id), id).toBe(true)
+    }
+  })
+})
+
+describe('section and panel context', () => {
+  it('builds card ids from the panel and label', () => {
+    const section = readFileSync(join(renderer, 'components', 'Section.tsx'), 'utf8')
+    expect(section).toContain('PanelContext')
+    expect(section).toContain('slug(label)')
+    const frame = readFileSync(join(renderer, 'components', 'PanelFrame.tsx'), 'utf8')
+    expect(frame).toContain('PanelContext.Provider')
   })
 })
