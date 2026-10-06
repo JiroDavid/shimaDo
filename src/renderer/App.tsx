@@ -33,7 +33,7 @@ const TITLES: Record<PanelId, string> = {
   mini: 'shimado'
 }
 
-const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both', focus: 'both', settings: 'both', profile: 'both', confirm: 'both', welcome: 'both' }
+const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both', focus: 'both', profile: 'both', confirm: 'both', welcome: 'both' }
 
 const NOTEPAD_NATURAL_WIDTH = 200
 
