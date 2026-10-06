@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { AppData, Task, TaskTag } from '../../shared/types'
-import { fromDateKey } from '../../shared/dates'
+import { formatDay, fromDateKey } from '../../shared/dates'
 import { occurrencesOn } from '../../shared/recurrence'
 import { layoutDay, type Block } from '../../shared/weekLayout'
 import { TAG_COLOR } from '../components/TaskRow'
@@ -20,18 +20,18 @@ interface Props {
   data: AppData
   days: string[]
   today: string
-  selected: string
-  onPickDay: (date: string) => void
+  onOpenDay?: (date: string) => void
+  onHoverDay?: (date: string | null) => void
   onEdit: (task: Task) => void
   onCreate: (date: string, time: string) => void
 }
 
-function BlockView({ b, onEdit }: { b: Block; onEdit: (task: Task) => void }) {
+function BlockView({ b, cascade, onEdit }: { b: Block; cascade: boolean; onEdit: (task: Task) => void }) {
   const { task } = b.occ
   const color = colorOf(task.tag)
   const height = ((b.end - b.start) / 60) * HOUR_PX - 2
-  const width = b.lanes === 1 ? 100 : Math.max(100 / b.lanes, MIN_LANE_WIDTH)
-  const left = b.lanes === 1 ? 0 : (b.lane * (100 - width)) / (b.lanes - 1)
+  const width = b.lanes === 1 ? 100 : cascade ? Math.max(100 / b.lanes, MIN_LANE_WIDTH) : 100 / b.lanes
+  const left = b.lanes === 1 ? 0 : cascade ? (b.lane * (100 - width)) / (b.lanes - 1) : b.lane * width
   return (
     <button
       onClick={(e) => (e.stopPropagation(), onEdit(task))}
@@ -60,7 +60,7 @@ function BlockView({ b, onEdit }: { b: Block; onEdit: (task: Task) => void }) {
   )
 }
 
-export function ScheduleWeek({ data, days, today, selected, onPickDay, onEdit, onCreate }: Props) {
+export function ScheduleWeek({ data, days, today, onOpenDay, onHoverDay, onEdit, onCreate }: Props) {
   const now = useNow(30_000)
   const scroller = useRef<HTMLDivElement>(null)
   const nowDate = new Date(now)
@@ -84,25 +84,44 @@ export function ScheduleWeek({ data, days, today, selected, onPickDay, onEdit, o
 
   return (
     <div className="card !mt-3 !p-2">
-      <div className="flex">
-        <div className="w-11 shrink-0" />
-        {columns.map((c) => {
-          const isToday = c.key === today
-          const isSelected = c.key === selected
-          return (
-            <button
-              key={c.key}
-              onClick={() => onPickDay(c.key)}
-              className={`flex flex-1 flex-col items-center rounded-xl border-2 py-1 transition ${
-                isSelected ? 'border-accent bg-accent text-[#1a1410]' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-white/10'
-              }`}
-            >
-              <span className={`text-[0.68rem] font-extrabold ${isSelected ? '' : 'text-muted'}`}>{LETTERS[fromDateKey(c.key).getDay()]}</span>
-              <span className="text-[1.05rem] font-extrabold leading-tight">{c.key.slice(8).replace(/^0/, '')}</span>
-            </button>
-          )
-        })}
-      </div>
+      {days.length > 1 && (
+        <div className="flex">
+          <div className="w-11 shrink-0" />
+          {columns.map((c) => {
+            const isToday = c.key === today
+            const label = (
+              <>
+                <span className="text-[0.68rem] font-extrabold text-muted">{LETTERS[fromDateKey(c.key).getDay()]}</span>
+                <span className="text-[1.05rem] font-extrabold leading-tight">{c.key.slice(8).replace(/^0/, '')}</span>
+              </>
+            )
+            if (!onOpenDay) {
+              return (
+                <div key={c.key} className={`flex flex-1 flex-col items-center rounded-xl border-2 py-1 ${isToday ? 'border-accent text-accent' : 'border-transparent'}`}>
+                  {label}
+                </div>
+              )
+            }
+            return (
+              <button
+                key={c.key}
+                onClick={() => onOpenDay(c.key)}
+                onMouseEnter={() => onHoverDay?.(c.key)}
+                onMouseLeave={() => onHoverDay?.(null)}
+                onFocus={() => onHoverDay?.(c.key)}
+                onBlur={() => onHoverDay?.(null)}
+                title={`Open ${formatDay(c.key)}`}
+                aria-label={`Open ${formatDay(c.key)}`}
+                className={`flex flex-1 cursor-pointer flex-col items-center rounded-xl border-2 py-1 transition hover:border-accent hover:bg-accent/20 focus-visible:border-accent ${
+                  isToday ? 'border-accent/60 text-accent' : 'border-transparent'
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {hasUntimed && (
         <div className="mt-1 flex border-b border-[var(--line)] pb-1">
@@ -148,7 +167,7 @@ export function ScheduleWeek({ data, days, today, selected, onPickDay, onEdit, o
               }}
             >
               {c.blocks.map((b) => (
-                <BlockView key={`${b.occ.task.id}-${b.start}`} b={b} onEdit={onEdit} />
+                <BlockView key={`${b.occ.task.id}-${b.start}`} b={b} cascade={days.length > 1} onEdit={onEdit} />
               ))}
               {c.key === today && (
                 <div className="pointer-events-none absolute left-0 right-0 z-10 h-0.5 bg-accent" style={{ top: (nowMin / 60) * HOUR_PX }}>

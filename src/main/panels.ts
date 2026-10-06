@@ -45,6 +45,11 @@ export class PanelManager {
       return
     }
     if (CENTERED.includes(id)) win.setBounds(this.bounds(id, this.store.data.settings.panels[id]))
+    else {
+      const current = win.getBounds()
+      const fitted = fitOnScreen(current, this.areas())
+      if (!sameRect(fitted, current)) win.setBounds(fitted)
+    }
     win.show()
     win.moveTop()
   }
@@ -118,6 +123,10 @@ export class PanelManager {
     )
     this.expanded.set(id, { before, to: { width: next.width, height: next.height } })
     win.setBounds(next)
+  }
+
+  collapseAll(): void {
+    for (const id of [...this.expanded.keys()]) this.collapse(id)
   }
 
   collapse(id: PanelId): void {
@@ -338,6 +347,12 @@ export class PanelManager {
       if (this.quitting) return
       e.preventDefault()
       this.hide(id)
+    })
+    win.webContents.on('render-process-gone', () => {
+      if (!win.isDestroyed()) win.reload()
+    })
+    win.on('unresponsive', () => {
+      if (!win.isDestroyed()) win.reload()
     })
     win.on('system-context-menu', (e) => e.preventDefault())
     win.on('session-end', () => {

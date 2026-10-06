@@ -61,19 +61,22 @@ export function Schedule({ data }: { data: AppData }) {
   const [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(false)
-  const [week, setWeek] = useState(false)
+  const [view, setView] = useState<'list' | 'week' | 'day'>('list')
+  const [hoverDay, setHoverDay] = useState<string | null>(null)
   const [slotTime, setSlotTime] = useState<string | undefined>()
   const [month, setMonth] = useState<string | null>(null)
   const [editing, setEditing] = useState<Task | 'new' | null>(null)
 
   useEffect(() => {
-    if (week) window.shima.expandPanel('schedule', WEEK_PANEL.width, WEEK_PANEL.height)
+    if (view === 'week') window.shima.expandPanel('schedule', WEEK_PANEL.width, WEEK_PANEL.height)
     else window.shima.collapsePanel('schedule')
-  }, [week])
+  }, [view])
 
   const day = selected ?? today
   const days = weekDays(addDays(today, offset * 7))
-  const shownMonth = expanded ? (month ?? day.slice(0, 7)) : days[3].slice(0, 7)
+  const week = view === 'week'
+  const dayView = view === 'day'
+  const shownMonth = view === 'list' && expanded ? (month ?? day.slice(0, 7)) : dayView ? day.slice(0, 7) : days[3].slice(0, 7)
   const occurrences = occurrencesOn(data, day)
   const [year, monthIndex] = shownMonth.split('-').map(Number)
 
@@ -101,7 +104,7 @@ export function Schedule({ data }: { data: AppData }) {
   return (
     <div className="space-y-4 pt-1">
       <div className="flex items-center justify-between gap-2">
-        <button className="flex items-center gap-2 text-left" onClick={() => !week && setExpanded((e) => !e)} aria-expanded={expanded} disabled={week}>
+        <button className="flex items-center gap-2 text-left" onClick={() => view === 'list' && setExpanded((e) => !e)} aria-expanded={expanded} disabled={view !== 'list'}>
           <span className="heading text-[1.75rem]">
             {MONTHS[monthIndex - 1]} {year}
           </span>
@@ -114,16 +117,24 @@ export function Schedule({ data }: { data: AppData }) {
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={`text-accent transition-transform duration-300 ${expanded ? 'rotate-180' : ''} ${week ? 'hidden' : ''}`}
+            className={`text-accent transition-transform duration-300 ${expanded ? 'rotate-180' : ''} ${view !== 'list' ? 'hidden' : ''}`}
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
         <div className="flex gap-2">
-          <button className={`btn ${week ? 'btn-active' : ''}`} onClick={() => setWeek((w) => !w)} aria-pressed={week}>
+          <button className={`btn ${week ? 'btn-active' : ''}`} onClick={() => setView(week ? 'list' : 'week')} aria-pressed={week}>
             Week
           </button>
-          <button className="btn" onClick={() => pick(today)}>
+          <button
+            className={`btn ${dayView && day === today ? 'btn-active' : ''}`}
+            onClick={() => {
+              if (dayView && day === today) return setView('list')
+              pick(today)
+              setView('day')
+            }}
+            aria-pressed={dayView && day === today}
+          >
             Today
           </button>
         </div>
@@ -135,8 +146,8 @@ export function Schedule({ data }: { data: AppData }) {
             <button className="btn !px-3" onClick={() => setOffset(offset - 1)} aria-label="previous week">
               ‹
             </button>
-            <span className="font-extrabold">
-              {formatDay(days[0])} - {formatDay(days[6])}
+            <span className={`font-extrabold transition ${hoverDay ? 'text-accent' : ''}`}>
+              {hoverDay ? `Open ${formatDay(hoverDay)}` : `${formatDay(days[0])} - ${formatDay(days[6])}`}
             </span>
             <button className="btn !px-3" onClick={() => setOffset(offset + 1)} aria-label="next week">
               ›
@@ -146,11 +157,37 @@ export function Schedule({ data }: { data: AppData }) {
             data={data}
             days={days}
             today={today}
-            selected={day}
-            onPickDay={pick}
+            onOpenDay={(date) => {
+              pick(date)
+              setHoverDay(null)
+              setView('day')
+            }}
+            onHoverDay={setHoverDay}
             onEdit={(task) => setEditing(task)}
             onCreate={(date, time) => {
               pick(date)
+              setSlotTime(time)
+              setEditing('new')
+            }}
+          />
+        </>
+      ) : dayView ? (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <button className="btn !px-3" onClick={() => pick(addDays(day, -1))} aria-label="previous day">
+              ‹
+            </button>
+            <span className="font-extrabold">{formatDay(day)}</span>
+            <button className="btn !px-3" onClick={() => pick(addDays(day, 1))} aria-label="next day">
+              ›
+            </button>
+          </div>
+          <ScheduleWeek
+            data={data}
+            days={[day]}
+            today={today}
+            onEdit={(task) => setEditing(task)}
+            onCreate={(date, time) => {
               setSlotTime(time)
               setEditing('new')
             }}

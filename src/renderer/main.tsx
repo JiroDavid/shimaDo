@@ -6,6 +6,11 @@ import '@fontsource/m-plus-rounded-1c/800.css'
 import '@fontsource/barlow-condensed/700.css'
 import '@fontsource/barlow-condensed/800.css'
 import './styles.css'
-import { App } from './App'
+import { App, currentPanel } from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
-createRoot(document.getElementById('root')!).render(<App />)
+createRoot(document.getElementById('root')!).render(
+  <ErrorBoundary panel={currentPanel()}>
+    <App />
+  </ErrorBoundary>
+)

@@ -34,7 +34,7 @@ const FIT: Partial<Record<PanelId, 'both'>> = { progress: 'both', habits: 'both'
 
 const NOTEPAD_NATURAL_WIDTH = 200
 
-function currentPanel(): PanelId {
+export function currentPanel(): PanelId {
   const id = location.hash.replace(/^#\/?/, '')
   return id in TITLES ? (id as PanelId) : 'checklist'
 }

@@ -26,7 +26,15 @@ const plusHour = (t: string) => {
 
 export function TaskForm({ initial, defaultDate, defaultTime, onSubmit, onCancel }: Props) {
   const root = useRef<HTMLDivElement>(null)
-  useEffect(() => root.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), [])
+  useEffect(() => {
+    const el = root.current
+    const body = el?.closest('.win-body')
+    if (!el || !body) return
+    const top = el.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop
+    const bottom = top + el.offsetHeight
+    if (top < body.scrollTop) body.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' })
+    else if (bottom > body.scrollTop + body.clientHeight) body.scrollTo({ top: Math.max(0, bottom - body.clientHeight + 8), behavior: 'smooth' })
+  }, [])
   const [title, setTitle] = useState(initial?.title ?? '')
   const [kind, setKind] = useState<TaskKind>(initial?.kind ?? 'once')
   const [date, setDate] = useState(initial?.date ?? defaultDate)
