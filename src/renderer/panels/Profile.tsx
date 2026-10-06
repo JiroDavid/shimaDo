@@ -76,7 +76,7 @@ export function Profile({ data }: { data: AppData }) {
           <Field label="Height (cm)">
             <input className="field" type="number" value={form.heightCm ?? ''} onChange={(e) => set('heightCm', toNumber(e.target.value))} />
           </Field>
-          <div className="flex items-center justify-between rounded-2xl border-2 border-dark-border px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-2xl border-2 border-line px-3 py-2.5">
             <span className="panel-label">Current weight</span>
             <span className="font-extrabold text-accent">{weight === null ? '--' : `${weight} kg`}</span>
           </div>

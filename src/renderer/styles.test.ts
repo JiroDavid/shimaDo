@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8')
 
@@ -13,5 +15,41 @@ describe('styles.css', () => {
   it.each(REQUIRED)('defines a rule body for %s', (selector) => {
     const escaped = selector.replace(/[.]/g, '\\.')
     expect(css).toMatch(new RegExp(`(^|\\n)${escaped}\\s*\\{[^}]*:[^}]*\\}`))
+  })
+})
+
+const renderer = fileURLToPath(new URL('.', import.meta.url))
+const walk = (dir: string): string[] =>
+  readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]))
+
+describe('colour audit', () => {
+  it('styles.css has no hardcoded colour literals except white on danger buttons', () => {
+    const found = css.match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g) ?? []
+    const stray = found.filter((f) => f !== '#fff' && !f.includes('var('))
+    expect(stray).toEqual([])
+  })
+
+  it('components have no hardcoded colour literals', () => {
+    const offenders = walk(renderer)
+      .filter((f) => f.endsWith('.tsx'))
+      .filter((f) => /#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\(\s*\d/.test(readFileSync(f, 'utf8')))
+    expect(offenders).toEqual([])
+  })
+
+  it('tailwind colours are all driven by variables', () => {
+    const config = readFileSync(fileURLToPath(new URL('../../tailwind.config.cjs', import.meta.url)), 'utf8')
+    expect(config).not.toMatch(/#[0-9a-fA-F]{3,8}\b/)
+  })
+
+  it('main.tsx applies the default theme before React mounts', () => {
+    const main = readFileSync(join(renderer, 'main.tsx'), 'utf8')
+    expect(main.indexOf('applyTheme(')).toBeGreaterThan(-1)
+    expect(main.indexOf('applyTheme(')).toBeLessThan(main.indexOf('createRoot('))
+  })
+
+  it('App applies the saved theme in a layout effect', () => {
+    const app = readFileSync(join(renderer, 'App.tsx'), 'utf8')
+    expect(app).toMatch(/useLayoutEffect\(\(\) => \{\s*if \(data\) applyTheme\(data\.settings\)/)
+    expect(app).not.toMatch(/dataset\.accent/)
   })
 })

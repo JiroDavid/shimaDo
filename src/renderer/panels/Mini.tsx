@@ -25,7 +25,7 @@ export function Mini() {
       onPointerCancel={(e) => finish(e, false)}
     >
       <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
-        <circle cx="24" cy="24" r="21" fill="none" stroke="#F3E9D6" strokeWidth="3" />
+        <circle cx="24" cy="24" r="21" fill="none" stroke="var(--text)" strokeWidth="3" />
         <circle cx="24" cy="24" r="13" fill="var(--accent)" />
       </svg>
     </button>

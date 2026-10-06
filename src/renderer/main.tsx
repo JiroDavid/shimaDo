@@ -8,6 +8,9 @@ import '@fontsource/barlow-condensed/800.css'
 import './styles.css'
 import { App, currentPanel } from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { applyTheme } from './lib/applyTheme'
+
+applyTheme({ theme: 'classic', accent: 'orange', opacity: 0.9 })
 
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary panel={currentPanel()}>

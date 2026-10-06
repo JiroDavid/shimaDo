@@ -11,7 +11,7 @@ const HOUR_PX = 48
 const GRID_PX = 24 * HOUR_PX
 const VIEW_PX = 420
 const MIN_LANE_WIDTH = 62
-const PANEL_BG = '#1d1b17'
+const PANEL_BG = 'var(--panel-solid)'
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
 
 const colorOf = (tag?: TaskTag) => (tag ? TAG_COLOR[tag] : 'var(--accent)')

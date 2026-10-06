@@ -42,7 +42,7 @@ function DayCell({ date, today, selected, occs, dim, onPick, tall, month }: Cell
       style={tint ? { background: `color-mix(in srgb, ${tint} ${allDone ? 14 : 32}%, transparent)` } : undefined}
       aria-label={formatDay(date)}
       className={`flex flex-1 flex-col items-center justify-center rounded-2xl border-2 transition active:scale-95 ${tall ? 'py-2' : 'py-1.5'} ${
-        isSelected ? 'border-accent bg-accent text-[#1a1410]' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-white/10'
+        isSelected ? 'border-accent bg-accent text-on-accent' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-overlay'
       } ${dim && !isSelected ? 'opacity-35' : ''}`}
     >
       {tall && <span className={`text-[0.72rem] font-extrabold ${isSelected ? '' : 'text-muted'}`}>{LETTERS[fromDateKey(date).getDay()]}</span>}
@@ -50,7 +50,7 @@ function DayCell({ date, today, selected, occs, dim, onPick, tall, month }: Cell
       {month ? (
         <span className="text-[0.65rem] font-extrabold leading-none opacity-80">{occs.length === 0 ? '\u00a0' : allDone ? '✓' : left}</span>
       ) : (
-        <span className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? '#1a1410' : dot, opacity: dot === 'transparent' ? 0 : 1 }} />
+        <span className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? 'var(--on-accent)' : dot, opacity: dot === 'transparent' ? 0 : 1 }} />
       )}
     </button>
   )

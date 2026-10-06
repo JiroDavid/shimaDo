@@ -13,10 +13,10 @@ export function LineChart({ values, dots, min = 0, max = 100 }: Props) {
   return (
     <svg viewBox="0 0 200 76" className="w-full" role="img" aria-label="line chart">
       {[0, 35, 70].map((y) => (
-        <line key={y} x1="0" x2="200" y1={y} y2={y} stroke="rgb(243 233 214 / 0.14)" />
+        <line key={y} x1="0" x2="200" y1={y} y2={y} stroke="var(--line)" />
       ))}
       {points.map((p, i) => (
-        <circle key={`dot${i}`} cx={p[0]} cy={p[1]} r="1.5" fill="#A9A08F" />
+        <circle key={`dot${i}`} cx={p[0]} cy={p[1]} r="1.5" fill="var(--muted)" />
       ))}
       {segments.map((seg, i) =>
         seg.length === 1 ? (

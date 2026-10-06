@@ -47,7 +47,7 @@ export function Focus({ data }: { data: AppData }) {
       <Section label={PHASE_LABELS[timer.phase]} count={`${Math.min(timer.cycle + (isFocus ? 1 : 0), SETS_BEFORE_LONG)}/${SETS_BEFORE_LONG}`}>
         <div className="pb-1 text-center">
           <input
-            className="mb-2 w-full rounded-2xl border-2 border-dark-border bg-transparent px-3 py-2 text-center font-bold outline-none focus:border-accent"
+            className="mb-2 w-full rounded-2xl border-2 border-line bg-transparent px-3 py-2 text-center font-bold outline-none focus:border-accent"
             placeholder="What are you working on?"
             aria-label="Task for this pomodoro"
             list="recent-tasks"
@@ -63,7 +63,7 @@ export function Focus({ data }: { data: AppData }) {
             ))}
           </datalist>
           <div className={`heading text-[3rem] ${isFocus ? 'text-accent' : ''}`}>{formatClock(left)}</div>
-          <div className="mx-auto my-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="mx-auto my-2 h-1.5 w-full overflow-hidden rounded-full bg-overlay">
             <div className="h-full bg-accent" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
           <div className="flex justify-center gap-2">

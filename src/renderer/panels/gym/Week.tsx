@@ -44,7 +44,7 @@ export function Week({ data }: { data: AppData }) {
                 onClick={() => setSelected(k)}
                 aria-label={formatDay(k)}
                 className={`flex flex-1 flex-col items-center rounded-2xl border-2 py-2 transition active:scale-95 ${
-                  isSelected ? 'border-accent bg-accent text-[#1a1410]' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-white/10'
+                  isSelected ? 'border-accent bg-accent text-on-accent' : isToday ? 'border-accent text-accent' : 'border-transparent hover:bg-overlay'
                 }`}
               >
                 <span className={`text-[0.72rem] font-extrabold ${isSelected ? '' : 'text-muted'}`}>{LETTERS[fromDateKey(k).getDay()]}</span>
@@ -71,13 +71,13 @@ export function Week({ data }: { data: AppData }) {
 
         {plan && plan.exercises.length === 0 && <p className="text-muted">No exercises listed. Add them in My split.</p>}
         {plan?.exercises.map((exercise, i) => (
-          <div key={`${exercise}-${i}`} className="flex items-center gap-3 border-t border-dark-border py-2.5">
+          <div key={`${exercise}-${i}`} className="flex items-center gap-3 border-t border-line py-2.5">
             <span className="heading w-6 text-[1.3rem] text-accent">{i + 1}</span>
             <span className="text-[1.05rem] font-bold">{exercise}</span>
           </div>
         ))}
 
-        <div className="flex items-start gap-2 border-t border-dark-border pt-3">
+        <div className="flex items-start gap-2 border-t border-line pt-3">
           <Dropdown
             placeholder="Did something else today?"
             options={[{ value: 'rest', label: 'Rest day' }, ...swaps.map((s) => ({ value: String(s.index), label: `I did ${s.label}` }))]}

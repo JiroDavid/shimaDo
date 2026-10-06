@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import type { PanelId } from '../shared/types'
 import { PanelFrame } from './components/PanelFrame'
+import { applyTheme } from './lib/applyTheme'
 import { useData } from './hooks/useData'
 import { Bar } from './panels/Bar'
 import { Checklist } from './panels/Checklist'
@@ -43,10 +44,8 @@ export function App() {
   const data = useData()
   const id = currentPanel()
 
-  useEffect(() => {
-    if (!data) return
-    document.documentElement.dataset.accent = data.settings.accent
-    document.documentElement.style.setProperty('--panel-alpha', String(data.settings.opacity))
+  useLayoutEffect(() => {
+    if (data) applyTheme(data.settings)
   }, [data])
 
   if (!data) return null

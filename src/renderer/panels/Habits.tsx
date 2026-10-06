@@ -148,7 +148,7 @@ export function Habits({ data }: { data: AppData }) {
               <div
                 key={k}
                 className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 py-2.5 transition ${
-                  isToday ? 'border-accent bg-white/5' : 'border-transparent'
+                  isToday ? 'border-accent bg-overlay-soft' : 'border-transparent'
                 }`}
               >
                 <span className={`text-[0.8rem] font-extrabold ${isToday ? 'text-accent' : 'text-muted'}`}>{LETTERS[fromDateKey(k).getDay()]}</span>

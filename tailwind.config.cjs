@@ -3,22 +3,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        cream: '#F3E9D6',
-        brick: '#E5484D',
-        sage: '#6E9A74',
-        dark: '#14120f',
-        'dark-panel': '#1b1915',
-        'dark-border': 'rgb(243 233 214 / 0.14)',
-        muted: '#A9A08F',
-        dim: 'rgb(243 233 214 / 0.28)',
-        urgent: '#E5484D',
-        must: '#F2541B',
-        important: '#F5C542',
-        accent: 'var(--accent)'
+        accent: 'rgb(var(--accent-rgb) / <alpha-value>)',
+        muted: 'rgb(var(--muted-rgb) / <alpha-value>)',
+        urgent: 'rgb(var(--urgent-rgb) / <alpha-value>)',
+        must: 'rgb(var(--must-rgb) / <alpha-value>)',
+        important: 'rgb(var(--important-rgb) / <alpha-value>)',
+        sage: 'rgb(var(--sage-rgb) / <alpha-value>)',
+        line: 'var(--line)',
+        'on-accent': 'var(--on-accent)',
+        'overlay-soft': 'var(--overlay-soft)',
+        overlay: 'var(--overlay)',
+        'overlay-strong': 'var(--overlay-strong)'
       },
       fontFamily: {
-        sans: ["'M PLUS Rounded 1c'", 'system-ui', 'sans-serif'],
-        heading: ["'Barlow Condensed'", "'M PLUS Rounded 1c'", 'sans-serif']
+        sans: ['var(--font-body)'],
+        heading: ['var(--font-heading)']
       }
     }
   },
