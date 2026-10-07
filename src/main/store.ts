@@ -10,6 +10,10 @@ import { normaliseAccentInput } from '../shared/theme'
 import { DEFAULT_THEME_ID, themeById } from '../shared/themes'
 import { isHabitIcon, MAX_HABITS, MAX_HABIT_NAME } from '../shared/habits'
 import { emptyProfile } from '../shared/profile'
+import { clampZoom } from '../shared/zoom'
+
+export const LAYOUT_VERSION = 3
+const RESIZED_BY_SCALING: PanelId[] = ['checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile']
 
 export function defaultData(): AppData {
   return {
@@ -33,19 +37,21 @@ export function defaultData(): AppData {
       onboarded: false,
       launchAtStartup: true,
       textScale: 1,
+      layoutVersion: LAYOUT_VERSION,
       panels: {
         bar: { width: 600, height: 50, visible: true },
         checklist: { width: 300, height: 440, visible: true },
         schedule: { width: 350, height: 470, visible: false },
         gym: { width: 350, height: 470, visible: false },
-        progress: { width: 300, height: 380, visible: true },
-        habits: { width: 300, height: 350, visible: true },
-        focus: { width: 280, height: 360, visible: false },
+        progress: { width: 300, height: 480, visible: true },
+        habits: { width: 300, height: 530, visible: true },
+        focus: { width: 280, height: 475, visible: false },
         notepad: { width: 300, height: 340, visible: false },
         welcome: { width: 520, height: 600, visible: false },
         designer: { width: 320, height: 640, visible: false },
+        layers: { width: 300, height: 760, visible: false },
         settings: { width: 330, height: 450, visible: false },
-        profile: { width: 315, height: 400, visible: false },
+        profile: { width: 315, height: 610, visible: false },
         confirm: { width: 320, height: 190, visible: false },
         mini: { width: 64, height: 64, visible: false }
       }
@@ -104,6 +110,18 @@ export function migrate(raw: unknown): AppData {
   const panels = {} as Record<PanelId, PanelState>
   const saved = (s.panels ?? {}) as Partial<Record<string, PanelState>>
   for (const id of PANEL_IDS) panels[id] = { ...def.settings.panels[id], ...((id === 'habits' ? saved.habits ?? saved.nicotine : saved[id]) ?? {}) }
+  if (s.layoutVersion !== LAYOUT_VERSION) {
+    for (const id of RESIZED_BY_SCALING) {
+      panels[id].width = def.settings.panels[id].width
+      panels[id].height = def.settings.panels[id].height
+    }
+  }
+  for (const id of PANEL_IDS) {
+    if (panels[id].zoom === undefined) continue
+    const z = clampZoom(panels[id].zoom)
+    if (z === 1) delete panels[id].zoom
+    else panels[id].zoom = z
+  }
   return {
     version: 1,
     tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']).map(cleanTask) : [],
@@ -120,6 +138,7 @@ export function migrate(raw: unknown): AppData {
       ...def.settings,
       ...s,
       panels,
+      layoutVersion: LAYOUT_VERSION,
       theme: theme.id,
       accent: normaliseAccentInput(s.accent) ?? theme.defaultAccent,
       onboarded: typeof s.onboarded === 'boolean' ? s.onboarded : true
@@ -134,6 +153,7 @@ export function hideTransientPanels(d: AppData): void {
   p.confirm.visible = false
   p.welcome.visible = false
   p.designer.visible = false
+  p.layers.visible = false
   p.mini.visible = false
 }
 

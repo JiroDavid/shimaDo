@@ -220,11 +220,27 @@ const FONT_STACKS: Record<ThemeFont, string> = {
   'IBM Plex Mono': "'IBM Plex Mono', ui-monospace, monospace"
 }
 
+export const SOLID_TOKENS = ['line', 'lineStrong', 'dim', 'overlaySoft', 'overlay', 'overlayStrong', 'card', 'field', 'fieldFocus'] as const satisfies readonly DerivedToken[]
+
+export function flattenOver(color: string, base: string): string {
+  const c = parseColor(color)
+  const b = parseColor(base)
+  if (!c || !b || c.a >= 1) return color
+  const mix = (top: number, under: number) => top * c.a + under * (1 - c.a)
+  return toHex({ r: mix(c.r, b.r), g: mix(c.g, b.g), b: mix(c.b, b.b), a: 1 })
+}
+
+export function solidColors(theme: Theme): Record<DerivedToken, string> {
+  const d = resolveColors(theme)
+  for (const token of SOLID_TOKENS) d[token] = flattenOver(d[token], theme.colors.panel)
+  return d
+}
+
 export function themeVars(theme: Theme, accent: string, opacity: number): Record<string, string> {
   const panel = parseColor(theme.colors.panel)!
   const accentValue = resolveAccent(theme, accent)
   const rgb = (c: string) => triplet(parseColor(c)!)
-  const d = resolveColors(theme)
+  const d = solidColors(theme)
   const { colors, shape, fonts } = theme
   return {
     '--panel-rgb': triplet(panel),

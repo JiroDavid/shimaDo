@@ -62,7 +62,7 @@ export function Notepad({ data }: { data: AppData }) {
       />
       <div className="flex items-center justify-between px-1 text-[0.8rem] font-bold text-muted">
         <span>{text.length.toLocaleString()} characters</span>
-        <span className={saved ? '' : 'text-accent'}>{saved ? 'Saved' : 'Saving...'}</span>
+        <span className={saved ? '' : 'text-accent'} data-el="notepad.status">{saved ? 'Saved' : 'Saving...'}</span>
       </div>
     </div>
   )

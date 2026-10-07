@@ -7,12 +7,13 @@ export function snapshotElement(el: Element): ComputedSnapshot {
   if (sheet) sheet.disabled = true
   try {
     const cs = getComputedStyle(el)
+    const face = el.classList.contains('card') ? getComputedStyle(el, '::before') : cs
     return {
       color: cs.color,
-      background: cs.backgroundColor,
-      borderColor: cs.borderTopColor,
+      background: face.backgroundColor,
+      borderColor: face.borderTopColor,
       radius: px(cs.borderTopLeftRadius),
-      borderWidth: px(cs.borderTopWidth),
+      borderWidth: px(face.borderTopWidth),
       fontSize: px(cs.fontSize),
       bold: Number(cs.fontWeight) >= 700
     }

@@ -249,9 +249,12 @@ describe('edit layer drag and drop', () => {
 describe('designer media controls', () => {
   const read = (...p: string[]) => readFileSync(join(renderer, ...p), 'utf8')
 
-  it('mounts the add section, background section and sticker controls in the designer', () => {
+  it('keeps only settings for the selection in the designer, and add and layers in their own window', () => {
     const d = read('panels', 'Designer.tsx')
-    for (const needle of ['<AddSection', '<BackgroundSection', '<StickerControls', 'Reset position', 'editResetPosition(']) expect(d, needle).toContain(needle)
+    for (const needle of ['<BackgroundSection', '<StickerControls', 'Reset position', 'editResetPosition(']) expect(d, needle).toContain(needle)
+    for (const needle of ['<AddSection', '<LayerList']) expect(d, needle).not.toContain(needle)
+    const l = read('panels', 'Layers.tsx')
+    for (const needle of ['<AddSection', '<LayerList']) expect(l, needle).toContain(needle)
   })
 
   it('offers upload by drop, file picker and paste', () => {
@@ -273,18 +276,16 @@ describe('designer media controls', () => {
 describe('edit layer zoom handling', () => {
   it('measures the placed layer scale for sticker drags and drops', () => {
     const layer = readFileSync(join(renderer, 'components', 'EditLayer.tsx'), 'utf8')
-    expect(layer).toContain('dropPosition(')
-    expect(layer).toContain("closest('.placed-front, .placed-back')")
+    expect(layer).toContain("closest('.placed-front, .placed-back, .placed-under')")
   })
 })
 
 describe('recovery and reachability', () => {
   const read = (...p: string[]) => readFileSync(join(renderer, ...p), 'utf8')
 
-  it('offers Bring back for a sticker and a list of moved items with resets', () => {
+  it('offers Bring back for a sticker and resets for moved elements', () => {
     expect(read('components', 'design', 'StickerControls.tsx')).toContain('Bring back')
-    const d = read('panels', 'Designer.tsx')
-    for (const needle of ['Moved items', 'movedOn(', 'Reset all positions']) expect(d, needle).toContain(needle)
+    expect(read('panels', 'Designer.tsx')).toContain('Reset position')
   })
 
   it('marks a sticker selected from the designer in its own window', () => {

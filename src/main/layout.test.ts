@@ -29,7 +29,7 @@ describe('defaultBounds', () => {
   })
   it('centers settings, profile and the exit confirmation', () => {
     expect(defaultBounds('settings', area, panels)).toEqual({ x: 795, y: 295, width: 330, height: 450 })
-    expect(defaultBounds('profile', area, panels)).toEqual({ x: 803, y: 320, width: 315, height: 400 })
+    expect(defaultBounds('profile', area, panels)).toEqual({ x: 803, y: 215, width: 315, height: 610 })
     expect(defaultBounds('confirm', area, panels)).toEqual({ x: 800, y: 425, width: 320, height: 190 })
   })
   it('centers the welcome panel', () => {
@@ -37,9 +37,12 @@ describe('defaultBounds', () => {
     expect(w.x + w.width / 2).toBeCloseTo(area.x + area.width / 2, 0)
     expect(w.y + w.height / 2).toBeCloseTo(area.y + area.height / 2, 0)
   })
-  it('puts the designer on the right edge at the top', () => {
+  it('puts the layers window on the right edge at the top, with the designer beside it', () => {
+    const l = defaultBounds('layers', area, panels)
+    expect(l.x + l.width).toBe(area.x + area.width - 16)
+    expect(l.y).toBe(16)
     const d = defaultBounds('designer', area, panels)
-    expect(d.x + d.width).toBe(area.x + area.width - 16)
+    expect(d.x + d.width + 12).toBe(l.x)
     expect(d.y).toBe(16)
   })
   it('puts the minimised icon where the bar starts', () => {

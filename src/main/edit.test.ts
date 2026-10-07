@@ -24,7 +24,9 @@ function setup() {
       removed.push(id)
       delete data.assets[id]
     },
-    newId: () => `stk-test-${String(++ids).padStart(4, '0')}`
+    newId: () => `stk-test-${String(++ids).padStart(4, '0')}`,
+    spawnPoint: (size, index) => ({ x: 800 - size / 2 + index * 28, y: 450 - size / 2 + index * 28 }),
+    moveStickerToSpace: (id) => calls.push(`space:${id}`)
   }
   data.assets['asset-aaaa-1'] = { id: 'asset-aaaa-1', ext: 'png', bytes: 5, name: 'a', addedAt: 1 }
   return { data, calls, messages, removed, session: new EditSession(host, () => clock), tick: (ms: number) => { clock += ms } }
@@ -33,7 +35,7 @@ function setup() {
 describe('EditSession', () => {
   it('starts inactive and toggles the designer window with the mode', () => {
     const { session, calls, messages } = setup()
-    expect(session.state).toEqual({ active: false, selected: null, canUndo: false, canRedo: false })
+    expect(session.state).toEqual({ active: false, selected: [], canUndo: false, canRedo: false, dom: {}, cropping: null, spaceClicks: 0 })
     session.setActive(true)
     expect(session.state.active).toBe(true)
     expect(calls).toContain('show:designer')
@@ -46,24 +48,24 @@ describe('EditSession', () => {
   it('clears the selection when edit mode ends', () => {
     const { session } = setup()
     session.setActive(true)
-    session.select(selection)
-    expect(session.state.selected?.id).toBe('bar.label')
+    session.select([selection])
+    expect(session.state.selected[0]?.id).toBe('bar.label')
     session.setActive(false)
-    expect(session.state.selected).toBeNull()
+    expect(session.state.selected).toEqual([])
   })
 
   it('ignores selection while inactive and rejects invalid selections', () => {
     const { session } = setup()
-    session.select(selection)
-    expect(session.state.selected).toBeNull()
+    session.select([selection])
+    expect(session.state.selected).toEqual([])
     session.setActive(true)
-    session.select({ id: 'nope', panel: 'bar', computed })
-    expect(session.state.selected).toBeNull()
-    session.select(selection)
-    session.select({ id: 'nope', panel: 'bar', computed })
-    expect(session.state.selected?.id).toBe('bar.label')
-    session.select(null)
-    expect(session.state.selected).toBeNull()
+    session.select([{ id: 'nope', panel: 'bar', computed }])
+    expect(session.state.selected).toEqual([])
+    session.select([selection])
+    session.select([{ id: 'nope', panel: 'bar', computed }])
+    expect(session.state.selected[0]?.id).toBe('bar.label')
+    session.select([])
+    expect(session.state.selected).toEqual([])
   })
 
   it('ignores patches while inactive and for unknown keys', () => {
@@ -203,7 +205,7 @@ describe('EditSession', () => {
       session.addSticker(draft)
       expect(data.design.stickers).toHaveLength(1)
       expect(data.design.stickers[0]).toMatchObject({ id: 'stk-test-0001', emoji: '🔥' })
-      expect(session.state.selected?.id).toBe('sticker:stk-test-0001')
+      expect(session.state.selected[0]?.id).toBe('sticker:stk-test-0001')
       session.addSticker({ ...draft, emoji: 'nope' })
       session.addSticker({ ...draft, kind: 'image', emoji: undefined, asset: 'missing-asset-1' })
       expect(data.design.stickers).toHaveLength(1)
@@ -227,17 +229,17 @@ describe('EditSession', () => {
       expect(data.design.stickers).toHaveLength(2)
       session.deleteSticker('stk-test-0001')
       expect(data.design.stickers.map((s) => s.id)).toEqual(['stk-test-0002'])
-      expect(session.state.selected?.id).not.toBe('sticker:stk-test-0001')
+      expect(session.state.selected[0]?.id).not.toBe('sticker:stk-test-0001')
     })
 
     it('selects a sticker only while it exists', () => {
       const { session } = setup()
       session.setActive(true)
       session.addSticker(draft)
-      session.select({ id: 'sticker:stk-test-0001', panel: 'checklist', computed: zero })
-      expect(session.state.selected?.id).toBe('sticker:stk-test-0001')
-      session.select({ id: 'sticker:missing-sticker-9', panel: 'checklist', computed: zero })
-      expect(session.state.selected?.id).toBe('sticker:stk-test-0001')
+      session.select([{ id: 'sticker:stk-test-0001', panel: 'checklist', computed: zero }])
+      expect(session.state.selected[0]?.id).toBe('sticker:stk-test-0001')
+      session.select([{ id: 'sticker:missing-sticker-9', panel: 'checklist', computed: zero }])
+      expect(session.state.selected[0]?.id).toBe('sticker:stk-test-0001')
     })
 
     it('sets and clears a background only on window surfaces', () => {
@@ -286,7 +288,7 @@ describe('EditSession', () => {
       expect(data.design.stickers).toEqual([])
       expect(data.design.backgrounds).toEqual({})
       expect(session.state.canUndo).toBe(false)
-      expect(session.state.selected).toBeNull()
+      expect(session.state.selected).toEqual([])
     })
 
     it('ignores deleting an asset that does not exist or while inactive', () => {
@@ -310,7 +312,357 @@ describe('EditSession', () => {
       expect(data.design.overrides).toEqual({})
       tick(1000)
       session.resetAll()
-      expect(data.design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+      expect(data.design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {}, order: {}, recentColors: [], presets: [] })
     })
   })
 })
+
+describe('EditSession desktop images', () => {
+  const free = { panel: 'free', kind: 'image', asset: 'asset-aaaa-1', x: 0, y: 0, size: 200, layer: 'front', spawn: true }
+
+  it('places a new desktop image at the screen spawn point, fanning out the next ones', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    session.addSticker(free)
+    expect(data.design.stickers[0]).toMatchObject({ panel: 'free', x: 700, y: 350, size: 200 })
+    expect(data.design.stickers[1]).toMatchObject({ x: 728, y: 378 })
+  })
+
+  it('keeps explicit coordinates for an image dropped on empty space', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.addSticker({ ...free, spawn: undefined, x: -1200, y: 300 })
+    expect(data.design.stickers[0]).toMatchObject({ panel: 'free', x: -1200, y: 300 })
+  })
+
+  it('clicking empty space deselects everything, leaves crop mode and counts the click', () => {
+    const { session } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    session.setCropping('stk-test-0001')
+    expect(session.state.selected).toHaveLength(1)
+    session.spaceClick()
+    expect(session.state.selected).toEqual([])
+    expect(session.state.cropping).toBeNull()
+    expect(session.state.spaceClicks).toBe(1)
+    session.spaceClick()
+    expect(session.state.spaceClicks).toBe(2)
+  })
+
+  it('selects desktop images from the layers list, adding with ctrl and toggling off', () => {
+    const { session } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    session.addSticker(free)
+    session.selectFree(['sticker:stk-test-0001'], false)
+    expect(session.state.selected.map((s) => s.id)).toEqual(['sticker:stk-test-0001'])
+    session.selectFree(['sticker:stk-test-0002'], true)
+    expect(session.state.selected.map((s) => s.id)).toEqual(['sticker:stk-test-0001', 'sticker:stk-test-0002'])
+    session.selectFree(['sticker:stk-test-0001'], true)
+    expect(session.state.selected.map((s) => s.id)).toEqual(['sticker:stk-test-0002'])
+    session.selectFree(['sticker:nope'], false)
+    expect(session.state.selected).toEqual([])
+  })
+
+  it('lets desktop images be edited, moved and deleted without edit mode, without touching undo history', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    session.setActive(false)
+    tick(1000)
+    session.updateSticker('stk-test-0001', { size: 300, rotation: 30 })
+    session.moveFloat('stk-test-0001', 10, 20)
+    expect(data.design.stickers[0]).toMatchObject({ size: 300, rotation: 30, x: 10, y: 20 })
+    expect(session.state.canUndo).toBe(false)
+    const menu = session.contextMenu('free', ['sticker:stk-test-0001'])
+    expect(menu.map((e) => e.label)).toContain('Flip horizontal')
+    session.deleteSticker('stk-test-0001')
+    expect(data.design.stickers).toEqual([])
+  })
+
+  it('still refuses to edit window images or place anything outside edit mode', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.addSticker({ ...free, panel: 'checklist', size: 80, spawn: undefined, x: 1, y: 2 })
+    session.setActive(false)
+    session.updateSticker('stk-test-0001', { size: 200 })
+    expect(data.design.stickers[0].size).toBe(80)
+    session.addSticker(free)
+    expect(data.design.stickers).toHaveLength(1)
+    expect(session.contextMenu('checklist', ['sticker:stk-test-0001'])).toEqual([])
+  })
+
+  it('moves a desktop image as one undo step', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    tick(1000)
+    session.moveFloat('stk-test-0001', -1500, 900)
+    expect(data.design.stickers[0]).toMatchObject({ x: -1500, y: 900 })
+    session.undo()
+    expect(data.design.stickers[0]).toMatchObject({ x: 700, y: 350 })
+  })
+
+  it('docks a desktop image into a window and sends it back out again', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    tick(1000)
+    expect(session.moveStickerTo('stk-test-0001', 'checklist', 40, 90, 80)).toBe(true)
+    expect(data.design.stickers[0]).toMatchObject({ panel: 'checklist', x: 40, y: 90, size: 80, layer: 'front' })
+    tick(1000)
+    expect(session.moveStickerTo('stk-test-0001', 'free', 900, 500, 160)).toBe(true)
+    expect(data.design.stickers[0]).toMatchObject({ panel: 'free', x: 900, y: 500, size: 160 })
+    expect(session.moveStickerTo('stk-test-0001', 'nowhere', 0, 0, 80)).toBe(false)
+    expect(session.moveStickerTo('missing', 'checklist', 0, 0, 80)).toBe(false)
+  })
+
+  it('steps a desktop image forward and back from the menu, one place at a time', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.addSticker(free)
+    session.addSticker(free)
+    const run = (label: string) => session.contextMenu('free', ['sticker:stk-test-0001']).find((e) => e.label === label)!.run!()
+    run('Bring forward')
+    expect(data.design.stickers.map((s) => s.id)).toEqual(['stk-test-0002', 'stk-test-0001'])
+    run('Send backward')
+    expect(data.design.stickers.map((s) => s.id)).toEqual(['stk-test-0001', 'stk-test-0002'])
+  })
+
+  it('offers move to empty space only for window images', () => {
+    const { session, calls } = setup()
+    session.setActive(true)
+    session.addSticker({ ...free, panel: 'checklist', size: 80 })
+    const inWindow = session.contextMenu('checklist', ['sticker:stk-test-0001'])
+    inWindow.find((e) => e.label === 'Move to empty space')!.run!()
+    expect(calls).toContain('space:stk-test-0001')
+    session.addSticker(free)
+    const onDesktop = session.contextMenu('free', ['sticker:stk-test-0002'])
+    expect(onDesktop.map((e) => e.label)).not.toContain('Move to empty space')
+    expect(onDesktop.map((e) => e.label)).not.toContain('Bring to front')
+  })
+})
+
+describe('EditSession context menu', () => {
+  const draft = { panel: 'checklist', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 2, size: 80, layer: 'front' }
+  const labels = (list: { label?: string }[]) => list.map((e) => e.label ?? '-')
+
+  it('layers an element from the menu one step at a time, to the front and to the back', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.reportDom('checklist', ['checklist.title', 'checklist.heading', 'checklist.date'])
+    const run = (label: string) => session.contextMenu('checklist', ['checklist.heading']).find((e) => e.label === label)!.run!()
+    run('Bring forward')
+    expect(data.design.order.checklist.slice(0, 3)).toEqual(['checklist.title', 'checklist.date', 'checklist.heading'])
+    run('Send backward')
+    expect(data.design.order.checklist.slice(0, 3)).toEqual(['checklist.title', 'checklist.heading', 'checklist.date'])
+    run('Bring to front')
+    expect(data.design.order.checklist[data.design.order.checklist.length - 1]).toBe('checklist.heading')
+    run('Send to back')
+    expect(data.design.order.checklist[0]).toBe('checklist.heading')
+  })
+
+  it('gives style groups such as task rows a menu too, so right-click never does nothing', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    expect(labels(session.contextMenu('checklist', ['group:task-row']))).toEqual(['Reset style'])
+    const menu = session.contextMenu('checklist', ['group:task-title'])
+    expect(labels(menu)).toEqual(['Reset style', '-', 'Hide'])
+    menu.find((e) => e.label === 'Hide')!.run!()
+    expect(data.design.overrides['group:task-title'].hidden).toBe(true)
+    session.contextMenu('checklist', ['group:task-title']).find((e) => e.label === 'Show')!.run!()
+    expect(data.design.overrides['group:task-title'].hidden).toBe(false)
+  })
+
+  it('offers image actions for a selected image, with crop only for one image', () => {
+    const { session } = setup()
+    session.setActive(true)
+    session.addSticker(draft)
+    const menu = session.contextMenu('checklist', ['sticker:stk-test-0001'])
+    expect(labels(menu)).toEqual(expect.arrayContaining(['Flip horizontal', 'Flip vertical', 'Rotate 90° right', 'Crop', 'Opacity', 'Corners', 'Reset image', 'Bring to front', 'Delete']))
+    session.addSticker(draft)
+    expect(labels(session.contextMenu('checklist', ['sticker:stk-test-0001', 'sticker:stk-test-0002']))).not.toContain('Crop')
+  })
+
+  it('runs the actions against the real design', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.addSticker(draft)
+    tick(1000)
+    const run = (label: string) => session.contextMenu('checklist', ['sticker:stk-test-0001']).find((e) => e.label === label)!.run!()
+    run('Flip horizontal')
+    expect(data.design.stickers[0].flipX).toBe(true)
+    tick(1000)
+    run('Rotate 90° right')
+    expect(data.design.stickers[0].rotation).toBe(90)
+    run('Crop')
+    expect(session.state.cropping).toBe('stk-test-0001')
+    const opacity = session.contextMenu('checklist', ['sticker:stk-test-0001']).find((e) => e.label === 'Opacity')!
+    opacity.submenu!.find((e) => e.label === '50%')!.run!()
+    expect(data.design.stickers[0].opacity).toBe(0.5)
+    tick(1000)
+    run('Delete')
+    expect(data.design.stickers).toEqual([])
+  })
+
+  it('offers element actions for a selected element and nothing for unknown or inactive selections', () => {
+    const { session } = setup()
+    expect(session.contextMenu('checklist', ['checklist.card.overdue'])).toEqual([])
+    session.setActive(true)
+    const menu = session.contextMenu('checklist', ['checklist.card.overdue'])
+    expect(labels(menu)).toEqual(['Bring to front', 'Bring forward', 'Send backward', 'Send to back', '-', 'Reset style', 'Reset position', 'Auto size', '-', 'Hide'])
+    expect(session.contextMenu('checklist', ['nope'])).toEqual([])
+    expect(session.contextMenu('checklist', 'x')).toEqual([])
+  })
+})
+
+describe('EditSession images, cropping and element sizes', () => {
+  const draft = { panel: 'checklist', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 2, size: 80, layer: 'front' }
+
+  it('enters and leaves crop mode for an image, selecting it', () => {
+    const { session } = setup()
+    session.setActive(true)
+    session.addSticker(draft)
+    session.select([])
+    session.setCropping('stk-test-0001')
+    expect(session.state.cropping).toBe('stk-test-0001')
+    expect(session.state.selected.map((s) => s.id)).toEqual(['sticker:stk-test-0001'])
+    session.setCropping(null)
+    expect(session.state.cropping).toBeNull()
+  })
+
+  it('refuses to crop emoji or unknown stickers and leaves crop mode when the selection moves on', () => {
+    const { session } = setup()
+    session.setActive(true)
+    session.addSticker({ ...draft, kind: 'emoji', emoji: '🔥', asset: undefined })
+    session.setCropping('stk-test-0001')
+    expect(session.state.cropping).toBeNull()
+    session.addSticker(draft)
+    session.setCropping('stk-test-0002')
+    session.select([{ id: 'checklist.title', panel: 'checklist', computed }])
+    expect(session.state.cropping).toBeNull()
+  })
+
+  it('stores an element size and position in one undo step', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.resizeElement('checklist.card.overdue', 200, 120, -10, 4)
+    expect(data.design.overrides['checklist.card.overdue']).toMatchObject({ width: 200, height: 120 })
+    expect(data.design.moves['checklist.card.overdue']).toEqual({ x: -10, y: 4 })
+    session.undo()
+    expect(data.design.overrides).toEqual({})
+    expect(data.design.moves).toEqual({})
+  })
+
+  it('ignores sizes for windows and unknown keys', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.resizeElement('checklist.panel', 200, 120, 0, 0)
+    session.resizeElement('nope', 200, 120, 0, 0)
+    expect(data.design.overrides).toEqual({})
+  })
+
+  it('remembers recent colours and keeps them and saved styles across undo and reset', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.patch('checklist.panel', { background: '#112233' })
+    tick(1000)
+    session.addRecentColor('#ABCDEF')
+    session.savePreset('checklist', 'Night')
+    expect(data.design.recentColors).toEqual(['#abcdef'])
+    expect(data.design.presets).toHaveLength(1)
+    session.undo()
+    expect(data.design.overrides).toEqual({})
+    expect(data.design.recentColors).toEqual(['#abcdef'])
+    expect(data.design.presets).toHaveLength(1)
+    session.resetAll()
+    session.patch('checklist.panel', { background: '#000000' })
+    session.resetAll()
+    expect(data.design.recentColors).toEqual(['#abcdef'])
+    expect(data.design.presets).toHaveLength(1)
+  })
+
+  it('applies a saved style to another window as one undo step', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.patch('checklist.panel', { background: '#112233', accent: '#ff0000' })
+    session.savePreset('checklist', 'Night')
+    tick(1000)
+    const id = data.design.presets[0].id
+    session.applyPreset(id, 'focus')
+    expect(data.design.overrides['focus.panel']).toEqual({ background: '#112233', accent: '#ff0000' })
+    session.undo()
+    expect(data.design.overrides['focus.panel']).toBeUndefined()
+    session.deletePreset(id)
+    expect(data.design.presets).toEqual([])
+  })
+})
+
+describe('EditSession selection and batching', () => {
+  const a = { id: 'bar.label', panel: 'bar', computed }
+  const b = { id: 'bar.exit', panel: 'bar', computed }
+  const other = { id: 'checklist.title', panel: 'checklist', computed }
+
+  it('holds several selected elements from one window and ignores ones from another', () => {
+    const { session } = setup()
+    session.setActive(true)
+    session.select([a, b, other, a])
+    expect(session.state.selected.map((s) => s.id)).toEqual(['bar.label', 'bar.exit'])
+  })
+
+  it('shows and hides the layers window with the designer', () => {
+    const { session, calls } = setup()
+    session.setActive(true)
+    expect(calls).toContain('show:layers')
+    session.setActive(false)
+    expect(calls).toContain('hide:layers')
+  })
+
+  it('applies one patch to every key as a single undo step', () => {
+    const { session, data } = setup()
+    session.setActive(true)
+    session.patchMany(['bar.label', 'bar.exit'], { color: '#112233' })
+    expect(data.design.overrides['bar.label'].color).toBe('#112233')
+    expect(data.design.overrides['bar.exit'].color).toBe('#112233')
+    session.undo()
+    expect(data.design.overrides).toEqual({})
+  })
+
+  it('updates several stickers at once and undoes them together', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    const draft = { panel: 'checklist', kind: 'emoji', emoji: '🔥', x: 1, y: 2, size: 40, layer: 'front' }
+    session.addSticker(draft)
+    tick(1000)
+    session.addSticker(draft)
+    tick(1000)
+    session.updateStickers(['stk-test-0001', 'stk-test-0002'], { size: 90 })
+    expect(data.design.stickers.map((s) => s.size)).toEqual([90, 90])
+    session.undo()
+    expect(data.design.stickers.map((s) => s.size)).toEqual([40, 40])
+  })
+
+  it('remembers the on-screen element order a window reports, and clears it when edit ends', () => {
+    const { session, messages } = setup()
+    session.setActive(true)
+    session.reportDom('checklist', ['checklist.title', 'checklist.card.overdue'])
+    expect(session.state.dom.checklist).toEqual(['checklist.title', 'checklist.card.overdue'])
+    const before = messages.length
+    session.reportDom('checklist', ['checklist.title', 'checklist.card.overdue'])
+    expect(messages.length).toBe(before)
+    session.setActive(false)
+    expect(session.state.dom).toEqual({})
+  })
+
+  it('arranges an element in front of a sticker using the reported order', () => {
+    const { session, data, tick } = setup()
+    session.setActive(true)
+    session.addSticker({ panel: 'checklist', kind: 'emoji', emoji: '🔥', x: 1, y: 2, size: 40, layer: 'front' })
+    tick(1000)
+    session.reportDom('checklist', ['checklist.card.done', 'checklist.card.overdue'])
+    session.arrange('checklist', 'checklist.card.done', 'front', 'sticker:stk-test-0001')
+    expect(data.design.order.checklist.slice(-2)).toEqual(['sticker:stk-test-0001', 'checklist.card.done'])
+  })
+})
+

@@ -1,12 +1,17 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 
+export const FIT_MIN = 0.01
+export const FIT_MAX = 40
+
 interface Props {
   mode: 'width' | 'both'
   naturalWidth?: number
+  zoom?: number
   children: ReactNode
 }
 
-export function Fit({ mode, naturalWidth = 340, children }: Props) {
+export function Fit({ mode, naturalWidth: baseWidth = 340, zoom = 1, children }: Props) {
+  const naturalWidth = baseWidth / zoom
   const outer = useRef<HTMLDivElement>(null)
   const inner = useRef<HTMLDivElement>(null)
 
@@ -28,10 +33,11 @@ export function Fit({ mode, naturalWidth = 340, children }: Props) {
       i.classList.remove('fit-measure')
       k = Math.min(k, h / Math.max(natural, 1))
     }
-    k = Math.min(Math.max(k, 0.35), 1)
+    k = Math.min(Math.max(k, FIT_MIN), FIT_MAX)
     i.style.zoom = String(k)
-    i.style.width = `${w / k}px`
+    i.style.width = `${naturalWidth}px`
     i.style.minHeight = `${h / k}px`
+    o.closest<HTMLElement>('.panel')?.style.setProperty('--fit', String(k))
   }
 
   useLayoutEffect(apply)

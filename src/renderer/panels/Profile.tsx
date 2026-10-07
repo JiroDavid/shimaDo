@@ -78,7 +78,7 @@ export function Profile({ data }: { data: AppData }) {
           </Field>
           <div className="flex items-center justify-between rounded-2xl border-2 border-line px-3 py-2.5">
             <span className="panel-label">Current weight</span>
-            <span className="font-extrabold text-accent">{weight === null ? '--' : `${weight} kg`}</span>
+            <span className="font-extrabold text-accent" data-el="profile.weight">{weight === null ? '--' : `${weight} kg`}</span>
           </div>
         </div>
       </Section>

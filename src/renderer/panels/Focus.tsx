@@ -3,6 +3,7 @@ import type { AppData } from '../../shared/types'
 import { MAX_TASK_LENGTH, PHASE_LABELS, PHASE_MS, SETS_BEFORE_LONG, formatClock, remaining } from '../../shared/pomodoro'
 import { daysBack, fromDateKey, weekDays } from '../../shared/dates'
 import { pomodoroStreak } from '../../shared/stats'
+import { EditableText } from '../components/EditableText'
 import { BarChart } from '../components/BarChart'
 import { Section } from '../components/Section'
 import { useNow, useTimer, useToday } from '../hooks/useData'
@@ -36,11 +37,13 @@ export function Focus({ data }: { data: AppData }) {
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 pt-2">
         <div>
           <div className="panel-label">Today</div>
-          <div className="heading text-[2.5rem] text-accent">{count(today)} 🍅</div>
+          <div className="heading text-[2.5rem] text-accent">
+            <span data-el="focus.today-count">{count(today)}</span> <span data-el="focus.tomato"><EditableText id="focus.tomato" fallback="🍅" /></span>
+          </div>
         </div>
         <div className="pb-1 text-right">
           <div className="panel-label">This week</div>
-          <div className="heading text-[1.6rem]">{weekTotal}</div>
+          <div className="heading text-[1.6rem]" data-el="focus.week">{weekTotal}</div>
         </div>
       </div>
 
@@ -65,8 +68,8 @@ export function Focus({ data }: { data: AppData }) {
           <div className={`heading text-[3rem] ${isFocus ? 'text-accent' : ''}`} data-el="focus.clock">
             {formatClock(left)}
           </div>
-          <div className="mx-auto my-2 h-1.5 w-full overflow-hidden rounded-full bg-overlay">
-            <div className="h-full bg-accent" style={{ width: `${Math.round(progress * 100)}%` }} />
+          <div className="mx-auto my-2 h-1.5 w-full overflow-hidden rounded-full bg-overlay" data-el="focus.bar-track">
+            <div className="h-full bg-accent" data-el="focus.bar" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
           <div className="flex justify-center gap-2">
             <button className="btn btn-primary" data-el="focus.start" onClick={() => (commitTask(), act(timer.running ? 'pause' : 'start'))}>
@@ -84,7 +87,7 @@ export function Focus({ data }: { data: AppData }) {
             {byTask.map(([name, n]) => (
               <div key={name} className="flex items-center justify-between gap-3">
                 <span className={`min-w-0 truncate font-bold ${name ? '' : 'text-muted'}`}>{name || 'No task'}</span>
-                <span className="shrink-0 font-extrabold text-accent">{'🍅'.repeat(Math.min(n, 8))}{n > 8 ? ` ${n}` : ''}</span>
+                <span className="shrink-0 font-extrabold text-accent" data-el="focus.task-count">{'🍅'.repeat(Math.min(n, 8))}{n > 8 ? ` ${n}` : ''}</span>
               </div>
             ))}
           </div>

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { AssetResult } from '../../../shared/assets'
 import { isEmoji } from '../../../shared/emoji'
-import { stickerStart, type StickerPanel } from '../../../shared/placement'
+import { assetUsage, type StickerPanel } from '../../../shared/placement'
 import type { AppData } from '../../../shared/types'
 import { fileBytes, isImageFile } from '../../lib/files'
 import { Section } from '../Section'
 import { EmojiGrid } from './EmojiGrid'
 import { ImageGallery } from './ImageGallery'
+
+const MAX_BATCH = 50
 
 interface Props {
   data: AppData
@@ -20,24 +22,24 @@ export function AddSection({ data, target, targetName, canBackground, onBackgrou
   const [error, setError] = useState('')
   const [over, setOver] = useState(false)
 
-  const count = data.design.stickers.filter((s) => s.panel === target).length
   const place = (draft: { kind: 'emoji'; emoji: string } | { kind: 'image'; asset: string }) => {
-    const { x, y } = stickerStart(count)
-    window.shima.editStickerAdd({ panel: target, x, y, size: 64, layer: 'front', ...draft })
+    window.shima.editStickerAdd({ panel: 'free', x: 0, y: 0, size: 160, layer: 'front', spawn: true, ...draft } as never)
+  }
+
+  const report = (results: AssetResult[]) => {
+    const failed = results.filter((r): r is Extract<AssetResult, { ok: false }> => !r.ok && r.error !== '')
+    setError(failed.length === 0 ? '' : failed.length === 1 ? failed[0].error : `${failed.length} images could not be added. ${failed[0].error}`)
   }
 
   const addFiles = async (files: File[]) => {
-    setError('')
-    for (const file of files.filter(isImageFile).slice(0, 5)) {
-      const r: AssetResult = await window.shima.assetAdd(file.name, await fileBytes(file))
-      if (!r.ok) setError(r.error)
-    }
+    const results: AssetResult[] = []
+    for (const file of files.filter(isImageFile).slice(0, MAX_BATCH)) results.push(await window.shima.assetAdd(file.name, await fileBytes(file)))
+    report(results)
   }
 
   const choose = async () => {
     setError('')
-    const r = await window.shima.assetChoose()
-    if (!r.ok && r.error) setError(r.error)
+    report(await window.shima.assetChoose())
   }
 
   useEffect(() => {
@@ -77,16 +79,16 @@ export function AddSection({ data, target, targetName, canBackground, onBackgrou
             void addFiles(Array.from(e.dataTransfer.files))
           }}
         >
-          Drop images or GIFs here
+          Drop as many images or GIFs as you like
           <div className="mt-2 flex justify-center gap-2">
             <button className="btn !min-h-[28px] !px-3 !text-[0.8rem]" onClick={choose}>
-              Choose file
+              Choose files
             </button>
           </div>
           <div className="mt-1 text-[0.72rem] font-semibold">or press Ctrl+V with this window focused</div>
         </div>
         {error && <p className="text-[0.82rem] font-bold text-urgent">{error}</p>}
-        <ImageGallery assets={data.assets} canBackground={canBackground} onPlace={(asset) => place({ kind: 'image', asset })} onBackground={onBackground} />
+        <ImageGallery assets={data.assets} usage={assetUsage(data.design.stickers, data.design.backgrounds)} canBackground={canBackground && target !== 'free'} targetName={targetName} onPlace={(asset) => place({ kind: 'image', asset })} onBackground={onBackground} />
       </div>
     </Section>
   )

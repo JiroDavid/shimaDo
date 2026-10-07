@@ -64,7 +64,7 @@ export function Week({ data }: { data: AppData }) {
         <div className="flex items-center justify-between gap-3">
           <h2 className="heading text-[1.9rem]" data-el="gym.heading">{plan ? plan.label : 'Rest day'}</h2>
           <div className="flex items-center gap-2.5">
-            <span className={`font-extrabold ${done ? 'text-accent' : 'text-muted'}`}>{done ? 'Done' : 'Not yet'}</span>
+            <span className={`font-extrabold ${done ? 'text-accent' : 'text-muted'}`} data-el="gym.status">{done ? 'Done' : 'Not yet'}</span>
             <Check checked={done} onChange={() => window.shima.setGymDone(day, !done)} label="mark day done" />
           </div>
         </div>
@@ -72,7 +72,7 @@ export function Week({ data }: { data: AppData }) {
         {plan && plan.exercises.length === 0 && <p className="text-muted">No exercises listed. Add them in My split.</p>}
         {plan?.exercises.map((exercise, i) => (
           <div key={`${exercise}-${i}`} className="flex items-center gap-3 border-t border-line py-2.5">
-            <span className="heading w-6 text-[1.3rem] text-accent">{i + 1}</span>
+            <span className="heading w-6 text-[1.3rem] text-accent" data-el="gym.exercise-number">{i + 1}</span>
             <span className="text-[1.05rem] font-bold">{exercise}</span>
           </div>
         ))}

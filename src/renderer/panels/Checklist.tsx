@@ -35,7 +35,7 @@ function QuickAdd({ today }: { today: string }) {
   }
 
   return (
-    <div className="quick-add">
+    <div className="quick-add" data-el="checklist.quick-add">
       <button className="btn w-full !justify-between" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span>+ Add a task for today</span>
         <svg
@@ -103,12 +103,12 @@ export function Checklist({ data }: { data: AppData }) {
         </h1>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="font-bold text-muted" data-el="checklist.date">{formatDay(today)}</span>
-          <span className="font-extrabold text-accent">
+          <span className="font-extrabold text-accent" data-el="checklist.count">
             {finished.length}/{todays.length} done
           </span>
         </div>
-        <div className="meter mt-2.5">
-          <span style={{ width: `${percent}%` }} />
+        <div className="meter mt-2.5" data-el="checklist.progress-track">
+          <span data-el="checklist.progress" style={{ width: `${percent}%` }} />
         </div>
       </div>
 

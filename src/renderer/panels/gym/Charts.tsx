@@ -69,7 +69,7 @@ export function Charts({ data }: { data: AppData }) {
       <Section label="Weight">
         <div className="mb-2 flex items-baseline justify-between gap-2">
           <span className="text-[0.85rem] text-muted">Last 60 days, line is the 7-day average</span>
-          <span className="heading text-[1.8rem] text-accent">{latest === null ? '--' : `${latest} kg`}</span>
+          <span className="heading text-[1.8rem] text-accent" data-el="gym.weight">{latest === null ? '--' : `${latest} kg`}</span>
         </div>
         <WeighIn />
         <div className="mt-3">

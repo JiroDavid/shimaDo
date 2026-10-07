@@ -94,10 +94,21 @@ input, textarea { user-select: text; }
   margin-top: 14px;
   padding: 12px 14px 8px;
   border-radius: var(--radius-card);
+  border: var(--border-width) solid transparent;
+  isolation: isolate;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--border-width));
+  z-index: -1;
+  border-radius: inherit;
   border: var(--border-width) solid var(--line-strong);
   background: var(--card);
   box-shadow: 2px 3px 0 var(--shadow);
+  pointer-events: none;
 }
+.panel.has-layers .card[data-el] { isolation: auto; }
 .card-label {
   display: flex;
   align-items: baseline;
@@ -482,15 +493,19 @@ html[data-edit] .titlebar [data-el] { -webkit-app-region: no-drag; }
 .swatch-sm:hover { transform: scale(1.12); }
 
 .panel, .bar { isolation: isolate; }
+.panel.has-under, .bar.has-under { isolation: auto; }
+.placed-under { zoom: var(--fit, 1); position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; border-radius: inherit; }
 .panel > .titlebar,
 .panel > .win-body,
-.bar > :not(.placed-back):not(.placed-front) { position: relative; z-index: 1; }
+.bar > :not(.placed-under):not(.placed-back):not(.placed-front) { position: relative; z-index: 1; }
 .placed-back,
-.placed-front { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.placed-front { zoom: var(--fit, 1); position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
 .placed-back { z-index: 0; }
-.placed-front { z-index: 2; }
+.placed-front { z-index: auto; }
 .placed-bg { position: absolute; inset: 0; background-position: center; }
-.sticker { position: absolute; display: flex; align-items: center; justify-content: center; user-select: none; }
+.sticker { position: absolute; user-select: none; }
+.sticker-clip { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.sticker-inner { position: absolute; display: flex; align-items: center; justify-content: center; }
 .sticker img { width: 100%; height: 100%; object-fit: contain; }
 .sticker-emoji { line-height: 1; }
 .sticker-handle {
@@ -528,10 +543,62 @@ html[data-edit] [data-el]:not(.sticker):not(.panel):not(.bar) { cursor: move; }
 .fit-measure [data-el] { translate: none !important; }
 
 
-.placed-mid { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; border-radius: inherit; }
-.panel.has-between > .titlebar,
-.panel.has-between > .win-body,
-.bar.has-between > :not(.placed-back):not(.placed-mid):not(.placed-front):not(button) { position: static; z-index: auto; }
-.panel.has-between :is(button, input, textarea, select, .btn, .field, .check, .switch):not(.absolute):not(.fixed):not(.resize-handle),
-.bar.has-between > button:not(.placed-back) { position: relative; z-index: 2; }
+/* Layered panels: each listed element and sticker gets its own z-index in the panel's stacking context */
+.panel.has-layers > .titlebar,
+.panel.has-layers > .win-body { position: relative; z-index: auto; }
+.bar.has-layers > :not(.placed-under):not(.placed-back):not(.placed-front) { position: relative; z-index: auto; }
 .edit-box { position: fixed; z-index: 99998; display: none; pointer-events: none; border: 2px solid var(--accent); border-radius: 4px; box-shadow: 0 0 0 1px var(--panel-solid); }
+
+.layer-row { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: 1.5px solid transparent; }
+.layer-item { background: var(--overlay); cursor: grab; }
+.layer-item:hover { border-color: var(--line-strong); }
+.layer-active { border-color: var(--accent); }
+.layer-dragging { opacity: 0.4; }
+.layer-marker { justify-content: center; color: var(--muted); border: 1.5px dashed var(--line); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.layer-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.layer-grip { color: var(--muted); letter-spacing: -2px; }
+.snap-guide { position: fixed; z-index: 99997; display: none; pointer-events: none; background: var(--accent); opacity: 0.85; }
+.panel.has-layers .quick-add { z-index: 500 !important; }
+
+.layer-thumb { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; border-radius: 5px; background: var(--overlay-strong); font-size: 14px; line-height: 1; overflow: hidden; }
+.layer-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.layer-thumb-el { border: 1.5px dashed var(--line-strong); background: transparent; }
+.edit-box[data-handles='off'] .edit-handle { display: none; }
+.edit-handle { position: absolute; width: 11px; height: 11px; margin: -6px 0 0 -6px; border-radius: 3px; background: var(--accent); border: 2px solid var(--panel-solid); pointer-events: auto; z-index: 1; }
+.edit-handle[data-h='nw'] { left: 0; top: 0; cursor: nwse-resize; }
+.edit-handle[data-h='n'] { left: 50%; top: 0; cursor: ns-resize; }
+.edit-handle[data-h='ne'] { left: 100%; top: 0; cursor: nesw-resize; }
+.edit-handle[data-h='e'] { left: 100%; top: 50%; cursor: ew-resize; }
+.edit-handle[data-h='se'] { left: 100%; top: 100%; cursor: nwse-resize; }
+.edit-handle[data-h='s'] { left: 50%; top: 100%; cursor: ns-resize; }
+.edit-handle[data-h='sw'] { left: 0; top: 100%; cursor: nesw-resize; }
+.edit-handle[data-h='w'] { left: 0; top: 50%; cursor: ew-resize; }
+
+.sticker-rotate { display: none; position: absolute; left: 50%; top: -30px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel-solid); cursor: grab; }
+.sticker-rotate::after { content: ''; position: absolute; left: 50%; top: 100%; width: 2px; height: 14px; margin-left: -1px; background: var(--accent); }
+html[data-edit] .sticker[data-edit-selected] .sticker-rotate { display: block; }
+.crop-shade { position: absolute; box-shadow: 0 0 0 9999px color-mix(in srgb, var(--panel-solid) 65%, transparent); pointer-events: none; }
+.crop-frame { position: absolute; border: 2px solid var(--text); outline: 1px solid var(--panel-solid); pointer-events: none; }
+.crop-h { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: var(--text); border: 2px solid var(--accent); border-radius: 3px; pointer-events: auto; }
+.crop-h[data-crop-h='nw'] { left: 0; top: 0; cursor: nwse-resize; }
+.crop-h[data-crop-h='n'] { left: 50%; top: 0; cursor: ns-resize; }
+.crop-h[data-crop-h='ne'] { left: 100%; top: 0; cursor: nesw-resize; }
+.crop-h[data-crop-h='e'] { left: 100%; top: 50%; cursor: ew-resize; }
+.crop-h[data-crop-h='se'] { left: 100%; top: 100%; cursor: nwse-resize; }
+.crop-h[data-crop-h='s'] { left: 50%; top: 100%; cursor: ns-resize; }
+.crop-h[data-crop-h='sw'] { left: 0; top: 100%; cursor: nesw-resize; }
+.crop-h[data-crop-h='w'] { left: 0; top: 50%; cursor: ew-resize; }
+
+html[data-edit] .placed-front .sticker { pointer-events: auto; }
+.float-root .float-handle { display: none; position: absolute; width: 16px; height: 16px; border-radius: 5px; background: var(--accent); border: 2px solid var(--panel-solid); z-index: 2; }
+.float-root .sticker:hover .float-handle, .float-root .sticker[data-held] .float-handle { display: block; }
+.float-root .sticker:hover { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.float-root .float-handle[data-float-h='nw'] { left: 3px; top: 3px; cursor: nwse-resize; }
+.float-root .float-handle[data-float-h='ne'] { right: 3px; top: 3px; cursor: nesw-resize; }
+.float-root .float-handle[data-float-h='sw'] { left: 3px; bottom: 3px; cursor: nesw-resize; }
+.float-root .float-handle[data-float-h='se'] { right: 3px; bottom: 3px; cursor: nwse-resize; }
+.float-root .float-rotate { left: 50%; top: 3px; margin-left: -8px; border-radius: 50%; cursor: grab; }
+.float-root .sticker { pointer-events: auto; cursor: grab; }
+.space-catcher { position: fixed; inset: 0; background: color-mix(in srgb, var(--panel-solid) 2%, transparent); }
+.float-root .sticker[data-edit-selected] { outline: 2px solid var(--accent); outline-offset: -2px; }
+.card-body { min-height: 0; scrollbar-width: thin; scrollbar-color: var(--overlay-strong) transparent; }

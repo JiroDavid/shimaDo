@@ -23,6 +23,7 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   notepad: { width: 220, height: 200 },
   welcome: { width: 420, height: 460 },
   designer: { width: 280, height: 360 },
+  layers: { width: 260, height: 360 },
   settings: { width: 260, height: 300 },
   profile: { width: 240, height: 300 },
   confirm: { width: 280, height: 160 },
@@ -33,7 +34,7 @@ const MARGIN = 16
 const GAP = 12
 
 export function shouldStayOnTop(id: PanelId, alwaysOnTop: boolean): boolean {
-  return id === 'designer' || alwaysOnTop
+  return id === 'designer' || id === 'layers' || alwaysOnTop
 }
 
 export function minSize(id: PanelId, scale = 1): Size {
@@ -80,8 +81,10 @@ export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels'
       return { x: right - panels.progress.width - GAP - width, y: top, width, height }
     case 'notepad':
       return { x: right - panels.progress.width - GAP - width, y: top + panels.focus.height + GAP, width, height }
-    case 'designer':
+    case 'layers':
       return { x: right - width, y: top, width, height }
+    case 'designer':
+      return { x: right - panels.layers.width - GAP - width, y: top, width, height }
     case 'welcome':
     case 'settings':
     case 'profile':

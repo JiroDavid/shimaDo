@@ -1,6 +1,6 @@
 import type { PanelId } from './types'
 
-export type EditableProp = 'color' | 'background' | 'border' | 'radius' | 'font' | 'text'
+export type EditableProp = 'color' | 'background' | 'border' | 'radius' | 'font' | 'text' | 'shadow' | 'accent' | 'hide' | 'size'
 
 export interface GroupDef {
   id: string
@@ -23,13 +23,15 @@ export const GROUP_PREFIX = 'group:'
 export const ID_PATTERN = /^[a-z0-9.-]+$/
 
 const SURFACE: EditableProp[] = ['background', 'border', 'radius']
-const TEXT: EditableProp[] = ['color', 'font']
-const ALL: EditableProp[] = ['color', 'background', 'border', 'radius', 'font']
+const TEXT: EditableProp[] = ['color', 'font', 'hide', 'size']
+const ALL: EditableProp[] = ['color', 'background', 'border', 'radius', 'font', 'hide', 'size']
+const WINDOW: EditableProp[] = [...SURFACE, 'shadow', 'accent']
+const CARD: EditableProp[] = ['color', ...SURFACE, 'shadow', 'accent', 'hide', 'size']
 
 export const GROUPS: GroupDef[] = [
-  { id: 'panel', name: 'Panel windows', selector: '.panel', props: SURFACE },
+  { id: 'panel', name: 'Panel windows', selector: '.panel', props: WINDOW },
   { id: 'panel-title', name: 'Panel titles', selector: '.panel-title', props: TEXT },
-  { id: 'card', name: 'Cards', selector: '.card', props: ['color', ...SURFACE] },
+  { id: 'card', name: 'Cards', selector: '.card', props: CARD },
   { id: 'card-label', name: 'Card headings', selector: '.card-label', props: TEXT },
   { id: 'button', name: 'Buttons', selector: '.btn', rest: ':where(:not(.btn-active, .btn-danger))', props: ALL },
   { id: 'button-primary', name: 'Primary buttons', selector: '.btn-primary', props: ALL },
@@ -109,7 +111,7 @@ const cardElements: ElementDef[] = (Object.entries(CARD_LABELS) as [EditablePane
     name: `${PANEL_NAMES[p]} card: ${label}`,
     panel: p,
     group: 'card',
-    props: ['color', ...SURFACE] as EditableProp[]
+    props: CARD
   }))
 )
 
@@ -133,7 +135,7 @@ const buttonElements: ElementDef[] = BUTTONS.map(([id, name, panel, group]) => (
 export const isEditablePanel = (id: string): id is EditablePanel => (EDITABLE_PANELS as readonly string[]).includes(id)
 
 const panelElements: ElementDef[] = EDITABLE_PANELS.flatMap((p) => [
-  { id: `${p}.panel`, name: `${PANEL_NAMES[p]} window`, panel: p, group: 'panel', props: SURFACE },
+  { id: `${p}.panel`, name: `${PANEL_NAMES[p]} window`, panel: p, group: 'panel', props: WINDOW },
   { id: `${p}.title`, name: `${PANEL_NAMES[p]} title`, panel: p, group: 'panel-title', props: [...TEXT, 'text'] as EditableProp[], defaultText: PANEL_TITLES[p] }
 ])
 
@@ -154,11 +156,30 @@ export const ELEMENTS: ElementDef[] = [
   { id: 'bar.exit', name: 'Bar exit button', panel: 'bar', group: 'bar-button', props: ['color', 'background', 'border', 'radius'] },
   { id: 'checklist.heading', name: 'Checklist heading', panel: 'checklist', props: ['color', 'font', 'text'], defaultText: 'Things to do today' },
   { id: 'checklist.date', name: 'Checklist date', panel: 'checklist', props: TEXT },
+  { id: 'schedule.calendar', name: 'Schedule calendar (month and days)', panel: 'schedule', props: ['hide', 'size'] },
+  { id: 'schedule.day', name: 'Schedule day list', panel: 'schedule', props: ['hide', 'size'] },
   { id: 'schedule.month', name: 'Schedule month title', panel: 'schedule', props: TEXT },
   { id: 'habits.streak', name: 'Habit streak number', panel: 'habits', props: TEXT },
   { id: 'focus.clock', name: 'Focus timer clock', panel: 'focus', props: TEXT },
   { id: 'notepad.text', name: 'Notepad text area', panel: 'notepad', props: ALL },
-  { id: 'gym.heading', name: 'Gym day heading', panel: 'gym', props: TEXT }
+  { id: 'gym.heading', name: 'Gym day heading', panel: 'gym', props: TEXT },
+  { id: 'checklist.quick-add', name: 'Checklist add task bar', panel: 'checklist', props: ['background', 'border', 'radius', 'shadow', 'hide', 'size'] },
+  { id: 'checklist.count', name: 'Checklist done counter', panel: 'checklist', props: TEXT },
+  { id: 'checklist.progress-track', name: 'Checklist progress track', panel: 'checklist', props: ['background', 'radius', 'hide'] },
+  { id: 'checklist.progress', name: 'Checklist progress fill', panel: 'checklist', props: ['background', 'hide'] },
+  { id: 'progress.streak', name: 'Task streak number', panel: 'progress', props: TEXT },
+  { id: 'focus.today-count', name: 'Focus today count', panel: 'focus', props: TEXT },
+  { id: 'focus.tomato', name: 'Focus tomato emoji', panel: 'focus', props: [...TEXT, 'text'], defaultText: '🍅' },
+  { id: 'focus.week', name: 'Focus week total', panel: 'focus', props: TEXT },
+  { id: 'focus.bar-track', name: 'Focus timer bar track', panel: 'focus', props: ['background', 'radius', 'hide'] },
+  { id: 'focus.bar', name: 'Focus timer bar fill', panel: 'focus', props: ['background', 'hide'] },
+  { id: 'focus.task-count', name: 'Focus per-task count', panel: 'focus', props: TEXT },
+  { id: 'gym.weight', name: 'Gym latest weight', panel: 'gym', props: TEXT },
+  { id: 'gym.status', name: 'Gym day status', panel: 'gym', props: TEXT },
+  { id: 'gym.exercise-number', name: 'Gym exercise numbers', panel: 'gym', props: TEXT },
+  { id: 'profile.weight', name: 'Profile weight', panel: 'profile', props: TEXT },
+  { id: 'settings.opacity-value', name: 'Settings opacity value', panel: 'settings', props: TEXT },
+  { id: 'notepad.status', name: 'Notepad save status', panel: 'notepad', props: TEXT }
 ]
 
 const byId = new Map(ELEMENTS.map((e) => [e.id, e]))

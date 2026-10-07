@@ -103,182 +103,187 @@ export function Schedule({ data }: { data: AppData }) {
 
   return (
     <div className="space-y-4 pt-1">
-      <div className="flex items-center justify-between gap-2">
-        <button className="flex items-center gap-2 text-left" onClick={() => view === 'list' && setExpanded((e) => !e)} aria-expanded={expanded} disabled={view !== 'list'}>
-          <span className="heading text-[1.75rem]" data-el="schedule.month">
-            {MONTHS[monthIndex - 1]} {year}
-          </span>
-          <svg
-            viewBox="0 0 24 24"
-            width="26"
-            height="26"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`text-accent transition-transform duration-300 ${expanded ? 'rotate-180' : ''} ${view !== 'list' ? 'hidden' : ''}`}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-        <div className="flex gap-2">
-          <button className={`btn ${week ? 'btn-active' : ''}`} onClick={() => setView(week ? 'list' : 'week')} aria-pressed={week}>
-            Week
+      <div className="space-y-4" data-el="schedule.calendar">
+        <div className="flex items-center justify-between gap-2">
+          <button className="flex items-center gap-2 text-left" onClick={() => view === 'list' && setExpanded((e) => !e)} aria-expanded={expanded} disabled={view !== 'list'}>
+            <span className="heading text-[1.75rem]" data-el="schedule.month">
+              {MONTHS[monthIndex - 1]} {year}
+            </span>
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`text-accent transition-transform duration-300 ${expanded ? 'rotate-180' : ''} ${view !== 'list' ? 'hidden' : ''}`}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </button>
-          <button
-            className={`btn ${dayView && day === today ? 'btn-active' : ''}`}
-            onClick={() => {
-              if (dayView && day === today) return setView('list')
-              pick(today)
-              setView('day')
-            }}
-            aria-pressed={dayView && day === today}
-          >
-            Today
-          </button>
+          <div className="flex gap-2">
+            <button className={`btn ${week ? 'btn-active' : ''}`} onClick={() => setView(week ? 'list' : 'week')} aria-pressed={week}>
+              Week
+            </button>
+            <button
+              className={`btn ${dayView && day === today ? 'btn-active' : ''}`}
+              onClick={() => {
+                if (dayView && day === today) return setView('list')
+                pick(today)
+                setView('day')
+              }}
+              aria-pressed={dayView && day === today}
+            >
+              Today
+            </button>
+          </div>
         </div>
-      </div>
 
-      {week ? (
-        <>
-          <div className="flex items-center justify-between gap-2">
+        {week ? (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <button className="btn !px-3" onClick={() => setOffset(offset - 1)} aria-label="previous week">
+                ‹
+              </button>
+              <span className={`font-extrabold transition ${hoverDay ? 'text-accent' : ''}`}>
+                {hoverDay ? `Open ${formatDay(hoverDay)}` : `${formatDay(days[0])} - ${formatDay(days[6])}`}
+              </span>
+              <button className="btn !px-3" onClick={() => setOffset(offset + 1)} aria-label="next week">
+                ›
+              </button>
+            </div>
+            <ScheduleWeek
+              data={data}
+              days={days}
+              today={today}
+              onOpenDay={(date) => {
+                pick(date)
+                setHoverDay(null)
+                setView('day')
+              }}
+              onHoverDay={setHoverDay}
+              onEdit={(task) => setEditing(task)}
+              onCreate={(date, time) => {
+                pick(date)
+                setSlotTime(time)
+                setEditing('new')
+              }}
+            />
+          </>
+        ) : dayView ? (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <button className="btn !px-3" onClick={() => pick(addDays(day, -1))} aria-label="previous day">
+                ‹
+              </button>
+              <span className="font-extrabold">{formatDay(day)}</span>
+              <button className="btn !px-3" onClick={() => pick(addDays(day, 1))} aria-label="next day">
+                ›
+              </button>
+            </div>
+            <ScheduleWeek
+              data={data}
+              days={[day]}
+              today={today}
+              onEdit={(task) => setEditing(task)}
+              onCreate={(date, time) => {
+                setSlotTime(time)
+                setEditing('new')
+              }}
+            />
+          </>
+        ) : expanded ? (
+          <div className="card !mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <button className="btn !px-3" onClick={() => setMonth(shiftMonth(shownMonth, -1))} aria-label="previous month">
+                ‹
+              </button>
+              <span className="font-extrabold">
+                {MONTHS[monthIndex - 1]} {year}
+              </span>
+              <button className="btn !px-3" onClick={() => setMonth(shiftMonth(shownMonth, 1))} aria-label="next month">
+                ›
+              </button>
+            </div>
+            <div className="flex">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => (
+                <span key={i} className="flex-1 text-center text-[0.75rem] font-extrabold text-muted">
+                  {l}
+                </span>
+              ))}
+            </div>
+            {monthGrid(shownMonth).map((row) => (
+              <div key={row[0]} className="flex gap-1">
+                {row.map((k) => (
+                  <DayCell key={k} date={k} today={today} selected={day} occs={occurrencesOn(data, k)} dim={!k.startsWith(shownMonth)} onPick={pick} month />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
             <button className="btn !px-3" onClick={() => setOffset(offset - 1)} aria-label="previous week">
               ‹
             </button>
-            <span className={`font-extrabold transition ${hoverDay ? 'text-accent' : ''}`}>
-              {hoverDay ? `Open ${formatDay(hoverDay)}` : `${formatDay(days[0])} - ${formatDay(days[6])}`}
-            </span>
+            <div className="flex flex-1 gap-1">
+              {days.map((k) => (
+                <DayCell key={k} date={k} today={today} selected={day} occs={occurrencesOn(data, k)} onPick={pick} tall />
+              ))}
+            </div>
             <button className="btn !px-3" onClick={() => setOffset(offset + 1)} aria-label="next week">
               ›
             </button>
           </div>
-          <ScheduleWeek
-            data={data}
-            days={days}
-            today={today}
-            onOpenDay={(date) => {
-              pick(date)
-              setHoverDay(null)
-              setView('day')
-            }}
-            onHoverDay={setHoverDay}
-            onEdit={(task) => setEditing(task)}
-            onCreate={(date, time) => {
-              pick(date)
-              setSlotTime(time)
+        )}
+
+      </div>
+
+      <div className="space-y-4" data-el="schedule.day">
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <h2 className="heading text-[1.4rem]">{formatDay(day)}</h2>
+          <button
+            className="btn btn-primary"
+            data-el="schedule.add-task"
+            onClick={() => {
+              setSlotTime(undefined)
               setEditing('new')
             }}
-          />
-        </>
-      ) : dayView ? (
-        <>
-          <div className="flex items-center justify-between gap-2">
-            <button className="btn !px-3" onClick={() => pick(addDays(day, -1))} aria-label="previous day">
-              ‹
-            </button>
-            <span className="font-extrabold">{formatDay(day)}</span>
-            <button className="btn !px-3" onClick={() => pick(addDays(day, 1))} aria-label="next day">
-              ›
-            </button>
-          </div>
-          <ScheduleWeek
-            data={data}
-            days={[day]}
-            today={today}
-            onEdit={(task) => setEditing(task)}
-            onCreate={(date, time) => {
-              setSlotTime(time)
-              setEditing('new')
+          >
+            + Task
+          </button>
+        </div>
+
+        {editing && (
+          <TaskForm
+            key={editing === 'new' ? `new-${day}-${slotTime ?? ''}` : editing.id}
+            initial={editing === 'new' ? undefined : editing}
+            defaultDate={day}
+            defaultTime={editing === 'new' ? slotTime : undefined}
+            onCancel={() => setEditing(null)}
+            onSubmit={(input) => {
+              if (editing === 'new') window.shima.addTask(input)
+              else window.shima.updateTask(editing.id, input)
+              setEditing(null)
             }}
           />
-        </>
-      ) : expanded ? (
-        <div className="card !mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <button className="btn !px-3" onClick={() => setMonth(shiftMonth(shownMonth, -1))} aria-label="previous month">
-              ‹
-            </button>
-            <span className="font-extrabold">
-              {MONTHS[monthIndex - 1]} {year}
-            </span>
-            <button className="btn !px-3" onClick={() => setMonth(shiftMonth(shownMonth, 1))} aria-label="next month">
-              ›
-            </button>
-          </div>
-          <div className="flex">
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => (
-              <span key={i} className="flex-1 text-center text-[0.75rem] font-extrabold text-muted">
-                {l}
-              </span>
-            ))}
-          </div>
-          {monthGrid(shownMonth).map((row) => (
-            <div key={row[0]} className="flex gap-1">
-              {row.map((k) => (
-                <DayCell key={k} date={k} today={today} selected={day} occs={occurrencesOn(data, k)} dim={!k.startsWith(shownMonth)} onPick={pick} month />
-              ))}
-            </div>
+        )}
+
+        <div className={week ? 'hidden' : ''}>
+          {occurrences.length === 0 && <p className="py-6 text-center text-lg font-bold text-muted">Nothing on this day</p>}
+          {occurrences.map((o) => (
+            <TaskRow key={o.task.id} occ={o} onToggle={() => window.shima.setDone(o.task.id, o.date, !o.done)} actions={actions(o)} />
           ))}
         </div>
-      ) : (
-        <div className="flex items-center gap-1.5">
-          <button className="btn !px-3" onClick={() => setOffset(offset - 1)} aria-label="previous week">
-            ‹
-          </button>
-          <div className="flex flex-1 gap-1">
-            {days.map((k) => (
-              <DayCell key={k} date={k} today={today} selected={day} occs={occurrencesOn(data, k)} onPick={pick} tall />
-            ))}
-          </div>
-          <button className="btn !px-3" onClick={() => setOffset(offset + 1)} aria-label="next week">
-            ›
-          </button>
+        <div className="flex flex-wrap gap-3 pb-1 text-[0.8rem] font-bold text-muted">
+          {TAG_ORDER.map((t) => (
+            <span key={t} className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: TAG_COLOR[t] }} />
+              {TAG_LABELS[t]}
+            </span>
+          ))}
         </div>
-      )}
-
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <h2 className="heading text-[1.4rem]">{formatDay(day)}</h2>
-        <button
-          className="btn btn-primary"
-          data-el="schedule.add-task"
-          onClick={() => {
-            setSlotTime(undefined)
-            setEditing('new')
-          }}
-        >
-          + Task
-        </button>
-      </div>
-
-      {editing && (
-        <TaskForm
-          key={editing === 'new' ? `new-${day}-${slotTime ?? ''}` : editing.id}
-          initial={editing === 'new' ? undefined : editing}
-          defaultDate={day}
-          defaultTime={editing === 'new' ? slotTime : undefined}
-          onCancel={() => setEditing(null)}
-          onSubmit={(input) => {
-            if (editing === 'new') window.shima.addTask(input)
-            else window.shima.updateTask(editing.id, input)
-            setEditing(null)
-          }}
-        />
-      )}
-
-      <div className={week ? 'hidden' : ''}>
-        {occurrences.length === 0 && <p className="py-6 text-center text-lg font-bold text-muted">Nothing on this day</p>}
-        {occurrences.map((o) => (
-          <TaskRow key={o.task.id} occ={o} onToggle={() => window.shima.setDone(o.task.id, o.date, !o.done)} actions={actions(o)} />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-3 pb-1 text-[0.8rem] font-bold text-muted">
-        {TAG_ORDER.map((t) => (
-          <span key={t} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: TAG_COLOR[t] }} />
-            {TAG_LABELS[t]}
-          </span>
-        ))}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { app, dialog, Notification, protocol, screen } from 'electron'
+import { app, dialog, Notification, protocol, screen, type BrowserWindow, type MessageBoxOptions, type OpenDialogOptions } from 'electron'
 import fs from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, join } from 'node:path'
@@ -15,7 +15,11 @@ import { PanelManager } from './panels'
 import { startScheduler } from './scheduler'
 import { Store, hideTransientPanels } from './store'
 import { EditSession } from './edit'
+import { FloatManager } from './floats'
+import { SpaceManager } from './space'
 import { createTray } from './tray'
+
+const MAX_BATCH = 50
 
 protocol.registerSchemesAsPrivileged([{ scheme: ASSET_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } }])
 
@@ -41,16 +45,42 @@ function boot(): void {
     }
   )
 
+  let floats!: FloatManager
+  let space!: SpaceManager
   const edit = new EditSession({
     data: () => store.data,
     update: (fn) => store.update(fn),
     show: (id) => panels.show(id),
     hide: (id) => panels.hide(id),
     broadcast: (channel, payload) => panels.broadcast(channel, payload),
-    changed: () => tray?.refresh(),
+    changed: () => {
+      tray?.refresh()
+      floats.sync()
+      space.sync()
+    },
     removeAsset: (id) => assets.remove(id),
-    newId: () => randomUUID()
+    newId: () => randomUUID(),
+    spawnPoint: (size, index) => floats.spawnPoint(size, index),
+    moveStickerToSpace: (id) => void floats.moveToSpace(id)
   })
+  floats = new FloatManager(store, panels, edit, {
+    icon: windowIcon,
+    preload: join(__dirname, '../preload/index.js'),
+    devUrl: process.env['ELECTRON_RENDERER_URL'],
+    file: join(__dirname, '../renderer/index.html')
+  })
+  space = new SpaceManager(store, panels, floats, edit, {
+    icon: windowIcon,
+    preload: join(__dirname, '../preload/index.js'),
+    devUrl: process.env['ELECTRON_RENDERER_URL'],
+    file: join(__dirname, '../renderer/index.html')
+  })
+  panels.onMoved = () => space.sync()
+  panels.onFocus = () => floats.raiseAll()
+  panels.onData = () => {
+    floats.sync()
+    space.sync()
+  }
 
   const timer = new PomodoroTimer({
     onChange: (s) => panels.broadcast('timer:changed', s),
@@ -79,8 +109,10 @@ function boot(): void {
     app.quit()
   }
 
-  const pickAvatar = async (): Promise<string | null> => {
-    const result = await chooseAvatar(userData)
+  const openDialog = (win: BrowserWindow | null, options: OpenDialogOptions) => (win ? dialog.showOpenDialog(win, options) : dialog.showOpenDialog(options))
+
+  const pickAvatar = async (win: BrowserWindow | null): Promise<string | null> => {
+    const result = await chooseAvatar(userData, win)
     if (result === 'invalid') return 'That file is not a readable image'
     if (result === 'picked') {
       store.update((d) => setAvatarStamp(d, Date.now()))
@@ -89,12 +121,13 @@ function boot(): void {
     return null
   }
 
-  const exportBackup = async (): Promise<BackupResult> => {
-    const result = await dialog.showSaveDialog({
+  const exportBackup = async (win: BrowserWindow | null): Promise<BackupResult> => {
+    const saveOptions = {
       title: 'Export ShimaDo backup',
       defaultPath: `shimado-backup-${toDateKey(new Date())}.json`,
       filters: [{ name: 'ShimaDo backup', extensions: ['json'] }]
-    })
+    }
+    const result = win ? await dialog.showSaveDialog(win, saveOptions) : await dialog.showSaveDialog(saveOptions)
     if (result.canceled || !result.filePath) return { ok: false, message: '' }
     try {
       fs.writeFileSync(result.filePath, buildBackup(store.data, readAvatarDataUrl(userData), assets.readAll()))
@@ -104,8 +137,8 @@ function boot(): void {
     }
   }
 
-  const importBackup = async (): Promise<BackupResult> => {
-    const picked = await dialog.showOpenDialog({
+  const importBackup = async (win: BrowserWindow | null): Promise<BackupResult> => {
+    const picked = await openDialog(win, {
       title: 'Import ShimaDo backup',
       properties: ['openFile'],
       filters: [{ name: 'ShimaDo backup', extensions: ['json'] }]
@@ -117,7 +150,7 @@ function boot(): void {
     } catch (e) {
       return { ok: false, message: (e as Error).message }
     }
-    const answer = await dialog.showMessageBox({
+    const messageOptions: MessageBoxOptions = {
       type: 'warning',
       title: 'Import backup',
       message: 'Replace everything with this backup?',
@@ -125,7 +158,8 @@ function boot(): void {
       buttons: ['Replace', 'Cancel'],
       defaultId: 1,
       cancelId: 1
-    })
+    }
+    const answer = win ? await dialog.showMessageBox(win, messageOptions) : await dialog.showMessageBox(messageOptions)
     if (answer.response !== 0) return { ok: false, message: '' }
     hideTransientPanels(parsed.data)
     store.data = parsed.data
@@ -145,6 +179,8 @@ function boot(): void {
     panels.flush()
     timer.dispose()
     panels.quitting = true
+    floats.dispose()
+    space.dispose()
   })
 
   app.whenReady().then(() => {
@@ -162,31 +198,42 @@ function boot(): void {
         if (result.ok) panels.broadcast('data:changed', store.data)
         return result
       },
-      chooseAsset: async () => {
-        const picked = await dialog.showOpenDialog({
-          title: 'Choose an image',
-          properties: ['openFile'],
+      chooseAsset: async (win) => {
+        const picked = await openDialog(win, {
+          title: 'Choose images',
+          properties: ['openFile', 'multiSelections'],
           filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }]
         })
-        if (picked.canceled || picked.filePaths.length === 0) return { ok: false, error: '' }
-        const result = assets.add(basename(picked.filePaths[0]), new Uint8Array(fs.readFileSync(picked.filePaths[0])))
-        if (result.ok) panels.broadcast('data:changed', store.data)
-        return result
+        if (picked.canceled || picked.filePaths.length === 0) return []
+        const results = picked.filePaths.slice(0, MAX_BATCH).map((file) => {
+          try {
+            return assets.add(basename(file), new Uint8Array(fs.readFileSync(file)))
+          } catch {
+            return { ok: false as const, error: `Could not read ${basename(file)}` }
+          }
+        })
+        if (results.some((r) => r.ok)) panels.broadcast('data:changed', store.data)
+        return results
       },
-      changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup })
+      changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup }, floats)
     tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit(), isEditing: () => edit.state.active, onEdit: (on) => edit.setActive(on) })
 
     for (const id of PANEL_IDS) {
       if (id === 'mini') continue
       if (id === 'bar' || id === 'checklist') panels.show(id)
-      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'welcome' && id !== 'designer' && store.data.settings.panels[id].visible) panels.show(id)
+      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'welcome' && id !== 'designer' && id !== 'layers' && store.data.settings.panels[id].visible) panels.show(id)
     }
 
     panels.fitAll()
+    floats.sync()
     if (store.update((d) => claimWelcome(d))) panels.show('welcome')
-    screen.on('display-added', () => panels.fitAll())
-    screen.on('display-removed', () => panels.fitAll())
-    screen.on('display-metrics-changed', () => panels.fitAll())
+    const displaysChanged = () => {
+      panels.fitAll()
+      space.sync()
+    }
+    screen.on('display-added', displaysChanged)
+    screen.on('display-removed', displaysChanged)
+    screen.on('display-metrics-changed', displaysChanged)
 
     if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: store.data.settings.launchAtStartup })
 

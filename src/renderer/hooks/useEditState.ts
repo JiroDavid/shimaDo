@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { EditState } from '../../shared/types'
 
-const INITIAL: EditState = { active: false, selected: null, canUndo: false, canRedo: false }
+const INITIAL: EditState = { active: false, selected: [], canUndo: false, canRedo: false, dom: {}, cropping: null, spaceClicks: 0 }
 
 export function useEditState(): EditState {
   const [state, setState] = useState<EditState>(INITIAL)

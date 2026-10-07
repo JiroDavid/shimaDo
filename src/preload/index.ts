@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TimerState } from '../shared/pomodoro'
-import type { AppData, EditState, ShimaApi } from '../shared/types'
+import type { AppData, EditState, HoverRequest, SelectRequest, ShimaApi } from '../shared/types'
 
 const api: ShimaApi = {
   getData: () => ipcRenderer.invoke('data:get'),
@@ -26,6 +26,7 @@ const api: ShimaApi = {
   deleteHabit: (id) => ipcRenderer.invoke('habit:delete', id),
   setNotes: (text) => ipcRenderer.invoke('notes:set', text),
   setHabitDay: (id, date, on) => ipcRenderer.invoke('habit:set', id, date, on),
+  zoomPanel: (id, action) => ipcRenderer.send('panel:zoom', id, action),
   hidePanel: (id) => ipcRenderer.send('panel:hide', id),
   togglePanel: (id) => ipcRenderer.send('panel:toggle', id),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
@@ -39,7 +40,41 @@ const api: ShimaApi = {
   },
   setEditActive: (on) => ipcRenderer.send('edit:set-active', on),
   editSelect: (selection) => ipcRenderer.send('edit:select', selection),
+  editSelectRequest: (r) => ipcRenderer.send('edit:select-request', r),
+  onSelectRequest: (cb) => {
+    const handler = (_e: unknown, r: SelectRequest) => cb(r)
+    ipcRenderer.on('edit:select-request', handler)
+    return () => ipcRenderer.removeListener('edit:select-request', handler)
+  },
+  editHover: (r) => ipcRenderer.send('edit:hover', r),
+  onHover: (cb) => {
+    const handler = (_e: unknown, r: HoverRequest) => cb(r)
+    ipcRenderer.on('edit:hover', handler)
+    return () => ipcRenderer.removeListener('edit:hover', handler)
+  },
+  editReportDom: (panel, ids) => ipcRenderer.send('edit:report-dom', panel, ids),
+  editResizeElement: (key, width, height, x, y) => ipcRenderer.send('edit:resize-element', key, width, height, x, y),
+  floatDragBegin: (id) => ipcRenderer.send('float:drag-begin', id),
+  onFloatPreview: (cb) => {
+    const handler = (_e: unknown, r: { id: string; patch: Record<string, unknown> | null }) => cb(r)
+    ipcRenderer.on('float:preview', handler)
+    return () => ipcRenderer.removeListener('float:preview', handler)
+  },
+  floatGestureBegin: (id, kind, handle, snap) => ipcRenderer.send('float:gesture-begin', id, kind, handle, snap),
+  floatGestureEnd: (id) => ipcRenderer.send('float:gesture-end', id),
+  floatDragEnd: (id) => ipcRenderer.send('float:drag-end', id),
+  editContextMenu: (panel, ids) => ipcRenderer.send('edit:context-menu', panel, ids),
+  editSetAnchors: (updates) => ipcRenderer.send('edit:set-anchors', updates),
+  editSpaceClick: () => ipcRenderer.send('edit:space-click'),
+  editCropMode: (id) => ipcRenderer.send('edit:crop-mode', id),
+  editRecentColor: (hex) => ipcRenderer.send('edit:recent-color', hex),
+  editPresetSave: (panel, name) => ipcRenderer.send('edit:preset-save', panel, name),
+  editPresetDelete: (id) => ipcRenderer.send('edit:preset-delete', id),
+  editPresetApply: (id, panel) => ipcRenderer.send('edit:preset-apply', id, panel),
   editPatch: (key, patch) => ipcRenderer.send('edit:patch', key, patch),
+  editPatchMany: (keys, patch) => ipcRenderer.send('edit:patch-many', keys, patch),
+  editResetMany: (keys) => ipcRenderer.send('edit:reset-many', keys),
+  editStickerUpdateMany: (ids, patch) => ipcRenderer.send('edit:sticker-update-many', ids, patch),
   editUndo: () => ipcRenderer.send('edit:undo'),
   editRedo: () => ipcRenderer.send('edit:redo'),
   editReset: (key) => ipcRenderer.send('edit:reset', key),
@@ -51,6 +86,8 @@ const api: ShimaApi = {
   editStickerDelete: (id) => ipcRenderer.send('edit:sticker-delete', id),
   editStickerDuplicate: (id) => ipcRenderer.send('edit:sticker-duplicate', id),
   editStickerOrder: (id, direction) => ipcRenderer.send('edit:sticker-order', id, direction),
+  editStickerPlace: (id, layer, aboveId) => ipcRenderer.send('edit:sticker-place', id, layer, aboveId),
+  editArrange: (panel, id, region, aboveId) => ipcRenderer.send('edit:arrange', panel, id, region, aboveId),
   editBackground: (key, bg) => ipcRenderer.send('edit:background', key, bg),
   assetAdd: (name, bytes) => ipcRenderer.invoke('asset:add', name, bytes),
   assetChoose: () => ipcRenderer.invoke('asset:choose'),

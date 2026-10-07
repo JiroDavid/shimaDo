@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   accentChoices, accentToCommit, colorToHex, contrastRatio, isLowContrast, normaliseAccentInput, onAccentFor, parseColor,
-  resolveAccent, resolveColors, themeVars, validateTheme, type Theme
+  flattenOver, resolveAccent, resolveColors, solidColors, SOLID_TOKENS, themeVars, validateTheme, type Theme
 } from './theme'
 
 const base = (): Theme => ({
@@ -108,6 +108,29 @@ describe('resolveColors', () => {
   it('lets a theme override a derived token', () => {
     const t = { ...base(), overrides: { shadow: 'rgb(1 2 3 / 0.5)' } }
     expect(resolveColors(t).shadow).toBe('rgb(1 2 3 / 0.5)')
+  })
+})
+
+describe('solid fills', () => {
+  it('flattens a translucent colour over the panel colour', () => {
+    expect(flattenOver('rgb(255 255 255 / 0.5)', '#000000')).toBe('#808080')
+    expect(flattenOver('rgb(0 0 0 / 0.25)', '#ffffff')).toBe('#bfbfbf')
+  })
+
+  it('leaves opaque colours alone', () => {
+    expect(flattenOver('#123456', '#ffffff')).toBe('#123456')
+  })
+
+  it('makes every fill and line token opaque, keeping shadow and sheen translucent', () => {
+    const c = solidColors(base())
+    for (const token of SOLID_TOKENS) expect(c[token], token).toMatch(/^#[0-9a-f]{6}$/)
+    expect(c.shadow).toContain('/')
+    expect(c.sheen).toContain('/')
+    expect(themeVars(base(), 'orange', 0.9)['--card']).toBe(c.card)
+  })
+
+  it('stays close to the original look: a 3% white card over the dark panel is a slightly lighter solid', () => {
+    expect(solidColors(base()).card).toBe('#1f1d19')
   })
 })
 

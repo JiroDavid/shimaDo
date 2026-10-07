@@ -1,15 +1,16 @@
 import type { AssetInfo, AssetResult } from './assets'
-import type { Background, StickerDraft } from './placement'
+import type { Anchor, Background, StickerDraft, StickerLayer } from './placement'
 import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
+import type { ZoomAction } from './zoom'
 
 export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'welcome' | 'designer' | 'settings' | 'profile' | 'confirm' | 'mini'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'designer', 'settings', 'profile', 'confirm', 'mini']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'welcome' | 'designer' | 'layers' | 'settings' | 'profile' | 'confirm' | 'mini'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'designer', 'layers', 'settings', 'profile', 'confirm', 'mini']
 export type TimerAction = 'start' | 'pause' | 'reset' | 'skip'
 export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
@@ -57,6 +58,7 @@ export interface PanelState {
   width: number
   height: number
   visible: boolean
+  zoom?: number
 }
 
 export interface Settings {
@@ -67,6 +69,7 @@ export interface Settings {
   onboarded: boolean
   launchAtStartup: boolean
   textScale: number
+  layoutVersion?: number
   panels: Record<PanelId, PanelState>
 }
 
@@ -115,9 +118,23 @@ export type HabitInput = Omit<Habit, 'id'>
 
 export interface EditState {
   active: boolean
-  selected: SelectedElement | null
+  selected: SelectedElement[]
   canUndo: boolean
   canRedo: boolean
+  dom: Record<string, string[]>
+  cropping: string | null
+  spaceClicks: number
+}
+
+export interface SelectRequest {
+  panel: string
+  ids: string[]
+  additive: boolean
+}
+
+export interface HoverRequest {
+  panel: string
+  id: string | null
 }
 
 export interface BackupResult {
@@ -166,8 +183,30 @@ export interface ShimaApi {
   getEditState(): Promise<EditState>
   onEditState(cb: (s: EditState) => void): () => void
   setEditActive(on: boolean): void
-  editSelect(selection: SelectedElement | null): void
+  editSelect(selection: SelectedElement[]): void
+  editSelectRequest(request: SelectRequest): void
+  onSelectRequest(cb: (r: SelectRequest) => void): () => void
+  editHover(request: HoverRequest): void
+  onHover(cb: (r: HoverRequest) => void): () => void
+  editReportDom(panel: string, ids: string[]): void
+  editResizeElement(key: string, width: number | null, height: number | null, x: number, y: number): void
+  floatDragBegin(id: string): void
+  onFloatPreview(cb: (r: { id: string; patch: Record<string, unknown> | null }) => void): () => void
+  floatGestureBegin(id: string, kind: 'resize' | 'rotate' | 'crop', handle: string, snap: boolean): void
+  floatGestureEnd(id: string): void
+  floatDragEnd(id: string): void
+  editContextMenu(panel: string, ids: string[]): void
+  editSetAnchors(updates: { id: string; anchor: Anchor | null }[]): void
+  editSpaceClick(): void
+  editCropMode(id: string | null): void
+  editRecentColor(hex: string): void
+  editPresetSave(panel: string, name: string): void
+  editPresetDelete(id: string): void
+  editPresetApply(id: string, panel: string): void
   editPatch(key: string, patch: Record<string, unknown>): void
+  editPatchMany(keys: string[], patch: Record<string, unknown>): void
+  editResetMany(keys: string[]): void
+  editStickerUpdateMany(ids: string[], patch: Record<string, unknown>): void
   editUndo(): void
   editRedo(): void
   editReset(key: string): void
@@ -179,12 +218,15 @@ export interface ShimaApi {
   editStickerDelete(id: string): void
   editStickerDuplicate(id: string): void
   editStickerOrder(id: string, direction: 'forward' | 'back'): void
+  editStickerPlace(id: string, layer: StickerLayer, aboveId: string | null): void
+  editArrange(panel: string, id: string, region: 'front' | 'behind' | 'under', aboveId: string | null): void
   editBackground(key: string, bg: Background | null): void
   assetAdd(name: string, bytes: Uint8Array): Promise<AssetResult>
-  assetChoose(): Promise<AssetResult>
+  assetChoose(): Promise<AssetResult[]>
   assetDelete(id: string): void
   expandPanel(id: PanelId, width: number, height: number): void
   collapsePanel(id: PanelId): void
+  zoomPanel(id: PanelId, action: ZoomAction): void
   hidePanel(id: PanelId): void
   togglePanel(id: PanelId): void
   setSettings(patch: SettingsPatch): Promise<void>

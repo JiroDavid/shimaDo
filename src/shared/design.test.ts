@@ -166,7 +166,7 @@ describe('design placement fields', () => {
   const sticker = { id: 'stk-aaaa-0001', panel: 'bar', kind: 'image', asset: 'asset-aaaa-1', x: 1, y: 2, size: 40, layer: 'front' }
 
   it('starts empty in every field', () => {
-    expect(emptyDesign()).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+    expect(emptyDesign()).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {}, order: {}, recentColors: [], presets: [] })
   })
 
   it('sanitises moves, stickers and backgrounds with the asset index', () => {

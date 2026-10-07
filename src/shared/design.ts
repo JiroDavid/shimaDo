@@ -1,5 +1,7 @@
 import type { AssetInfo } from './assets'
-import { sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, type Background, type Move, type Sticker } from './placement'
+import { sanitizeOrder } from './layers'
+import { sanitizePresets, sanitizeRecent, type WindowPreset } from './presets'
+import { FREE_PANEL, sanitizeBackgrounds, sanitizeMoves, sanitizeStickers, type Background, type Move, type Sticker } from './placement'
 import { PANEL_IDS, type PanelId } from './types'
 import { GROUP_PREFIX, elementById, isKnownKey } from './elements'
 import { colorToHex, parseColor, resolveAccent, type Theme } from './theme'
@@ -13,6 +15,11 @@ export interface StyleOverride {
   fontSize?: number
   bold?: boolean
   text?: string
+  shadow?: string
+  accent?: string
+  hidden?: boolean
+  width?: number
+  height?: number
 }
 
 export interface Design {
@@ -20,25 +27,28 @@ export interface Design {
   moves: Record<string, Move>
   stickers: Sticker[]
   backgrounds: Record<string, Background>
+  order: Record<string, string[]>
+  recentColors: string[]
+  presets: WindowPreset[]
 }
 
-export const emptyDesign = (): Design => ({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+export const emptyDesign = (): Design => ({ overrides: {}, moves: {}, stickers: [], backgrounds: {}, order: {}, recentColors: [], presets: [] })
 
 export const COLOR_INPUT_FALLBACK = '#000000'
 export const MAX_TEXT = 60
 const TEXT_OK = /^[^\u0000-\u001f<>{};]+$/
-const FIELDS = ['color', 'background', 'borderColor', 'radius', 'borderWidth', 'fontSize', 'bold', 'text'] as const
-const RANGES: Record<'radius' | 'borderWidth' | 'fontSize', [number, number]> = { radius: [0, 999], borderWidth: [0, 8], fontSize: [8, 96] }
+const FIELDS = ['color', 'background', 'borderColor', 'radius', 'borderWidth', 'fontSize', 'bold', 'text', 'shadow', 'accent', 'hidden', 'width', 'height'] as const
+const RANGES: Record<'radius' | 'borderWidth' | 'fontSize' | 'width' | 'height', [number, number]> = { radius: [0, 999], borderWidth: [0, 8], fontSize: [8, 96], width: [24, 2000], height: [24, 2000] }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 function checkField(field: string, value: unknown): string | number | boolean | undefined {
-  if (field === 'color' || field === 'background' || field === 'borderColor') return parseColor(value) ? (value as string).trim() : undefined
-  if (field === 'radius' || field === 'borderWidth' || field === 'fontSize') {
+  if (field === 'color' || field === 'background' || field === 'borderColor' || field === 'shadow' || field === 'accent') return parseColor(value) ? (value as string).trim() : undefined
+  if (field === 'radius' || field === 'borderWidth' || field === 'fontSize' || field === 'width' || field === 'height') {
     const [lo, hi] = RANGES[field]
     return typeof value === 'number' && Number.isFinite(value) && value >= lo && value <= hi ? Math.round(value) : undefined
   }
-  if (field === 'bold') return typeof value === 'boolean' ? value : undefined
+  if (field === 'bold' || field === 'hidden') return typeof value === 'boolean' ? value : undefined
   if (field === 'text') {
     if (typeof value !== 'string') return undefined
     const t = value.trim()
@@ -68,11 +78,15 @@ export function sanitizeDesign(raw: unknown, assets: Record<string, AssetInfo> =
       if (Object.keys(o).length > 0) overrides[key] = o
     }
   }
+  const stickers = sanitizeStickers(whole.stickers, assets)
   return {
     overrides,
     moves: sanitizeMoves(whole.moves),
-    stickers: sanitizeStickers(whole.stickers, assets),
-    backgrounds: sanitizeBackgrounds(whole.backgrounds, assets)
+    stickers,
+    backgrounds: sanitizeBackgrounds(whole.backgrounds, assets),
+    order: sanitizeOrder(whole.order, stickers),
+    recentColors: sanitizeRecent(whole.recentColors),
+    presets: sanitizePresets(whole.presets)
   }
 }
 
@@ -129,7 +143,7 @@ export function removeAssetUsers(design: Design, assetId: string): Design {
   const stickers = design.stickers.filter((s) => s.asset !== assetId)
   const entries = Object.entries(design.backgrounds).filter(([, bg]) => bg.asset !== assetId)
   if (stickers.length === design.stickers.length && entries.length === Object.keys(design.backgrounds).length) return design
-  return { ...design, stickers, backgrounds: Object.fromEntries(entries) }
+  return { ...design, stickers, backgrounds: Object.fromEntries(entries), order: sanitizeOrder(design.order, stickers) }
 }
 
 export function labelBoxValue(typed: string, stored: string | undefined, defaultText: string | undefined, focused: boolean): string {
@@ -154,7 +168,7 @@ export interface ComputedSnapshot {
 
 export interface SelectedElement {
   id: string
-  panel: PanelId
+  panel: PanelId | typeof FREE_PANEL
   computed: ComputedSnapshot
 }
 
@@ -165,12 +179,12 @@ export function parseSelection(raw: unknown, stickers: Sticker[] = []): Selected
   if (!isObj(raw) || typeof raw.id !== 'string') return null
   const known = isKnownKey(raw.id) || (raw.id.startsWith('sticker:') && stickers.some((s) => `sticker:${s.id}` === raw.id))
   if (!known) return null
-  if (typeof raw.panel !== 'string' || !(PANEL_IDS as string[]).includes(raw.panel)) return null
+  if (typeof raw.panel !== 'string' || !((PANEL_IDS as string[]).includes(raw.panel) || raw.panel === FREE_PANEL)) return null
   const c = raw.computed
   if (!isObj(c)) return null
   return {
     id: raw.id,
-    panel: raw.panel as PanelId,
+    panel: raw.panel as PanelId | typeof FREE_PANEL,
     computed: {
       color: cssColor(c.color),
       background: cssColor(c.background),
@@ -181,6 +195,20 @@ export function parseSelection(raw: unknown, stickers: Sticker[] = []): Selected
       bold: c.bold === true
     }
   }
+}
+
+export const MAX_SELECTION = 50
+
+export function parseSelections(raw: unknown, stickers: Sticker[] = []): SelectedElement[] {
+  const list = Array.isArray(raw) ? raw : raw === null || raw === undefined ? [] : [raw]
+  const out: SelectedElement[] = []
+  for (const item of list) {
+    const s = parseSelection(item, stickers)
+    if (!s || out.some((o) => o.id === s.id) || (out.length > 0 && out[0].panel !== s.panel)) continue
+    out.push(s)
+    if (out.length >= MAX_SELECTION) break
+  }
+  return out
 }
 
 export function paletteFor(theme: Theme, accent: string): string[] {

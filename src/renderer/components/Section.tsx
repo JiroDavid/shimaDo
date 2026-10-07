@@ -18,7 +18,7 @@ export function Section({ label, count, className = '', children }: Props) {
         <span>{label}</span>
         {count !== undefined && <span className="card-count">{count}</span>}
       </div>
-      {children}
+      <div className="card-body">{children}</div>
     </section>
   )
 }

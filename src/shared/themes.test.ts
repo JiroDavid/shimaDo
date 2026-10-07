@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ACCENT_SLOTS, contrastRatio, resolveColors, themeVars, validateTheme } from './theme'
+import { ACCENT_SLOTS, SOLID_TOKENS, contrastRatio, resolveColors, solidColors, themeVars, validateTheme } from './theme'
 import { DEFAULT_THEME_ID, THEMES, THEME_IDS, themeById } from './themes'
 
 describe('built-in themes', () => {
@@ -16,6 +16,11 @@ describe('built-in themes', () => {
     const vars = themeVars(theme, theme.defaultAccent, 0.9)
     for (const [name, value] of Object.entries(vars)) expect(value, name).toBeTruthy()
     expect(Object.keys(resolveColors(theme))).toHaveLength(12)
+  })
+
+  it.each(THEMES.map((t) => [t.id, t] as const))('%s has opaque fills and lines so images can sit behind panels', (_id, theme) => {
+    const solid = solidColors(theme)
+    for (const token of SOLID_TOKENS) expect(solid[token], token).toMatch(/^#[0-9a-f]{6}$/)
   })
 
   it.each(THEMES.map((t) => [t.id, t] as const))('%s meets the contrast floors', (_id, theme) => {

@@ -49,7 +49,7 @@ export function Settings({ data }: { data: AppData }) {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <span className="font-bold">Panel opacity</span>
-              <span className="font-extrabold text-accent">{Math.round(opacity * 100)}%</span>
+              <span className="font-extrabold text-accent" data-el="settings.opacity-value">{Math.round(opacity * 100)}%</span>
             </div>
             <input
               type="range"

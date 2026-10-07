@@ -12,7 +12,8 @@ interface Paths {
   file: string
 }
 
-const CENTERED: PanelId[] = ['settings', 'profile', 'confirm', 'welcome']
+const DOCKABLE: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile']
+const CENTERED: PanelId[] = ['settings', 'profile', 'confirm', 'welcome', 'designer', 'layers']
 const UI_SCALE = 0.91
 const RESIZE_POLL_MS = 8
 const RESIZE_SAFETY_MS = 15000
@@ -25,6 +26,9 @@ interface ResizeSession {
 
 export class PanelManager {
   quitting = false
+  onData: (() => void) | null = null
+  onMoved: (() => void) | null = null
+  onFocus: (() => void) | null = null
   minimized = false
   private wins = new Map<PanelId, BrowserWindow>()
   private saveTimers = new Map<PanelId, NodeJS.Timeout>()
@@ -183,6 +187,76 @@ export class PanelManager {
     for (const win of this.wins.values()) {
       if (!win.isDestroyed()) win.webContents.send(channel, payload)
     }
+    if (channel === 'data:changed') this.onData?.()
+  }
+
+  homeDisplay(): Electron.Display {
+    return this.barDisplay()
+  }
+
+  occupiedDisplays(): Electron.Display[] {
+    const seen = new Map<number, Electron.Display>()
+    for (const [id, win] of this.wins) {
+      if (win.isDestroyed() || !win.isVisible() || id === 'mini') continue
+      const d = screen.getDisplayMatching(win.getBounds())
+      seen.set(d.id, d)
+    }
+    if (seen.size === 0) seen.set(this.barDisplay().id, this.barDisplay())
+    return [...seen.values()]
+  }
+
+  raiseAll(): void {
+    for (const win of this.wins.values()) if (!win.isDestroyed() && win.isVisible()) win.moveTop()
+  }
+
+  getWindow(id: PanelId): BrowserWindow | undefined {
+    const win = this.wins.get(id)
+    return win && !win.isDestroyed() ? win : undefined
+  }
+
+  panelAt(point: { x: number; y: number }): PanelId | null {
+    let best: { id: PanelId; area: number } | null = null
+    for (const [id, win] of this.wins) {
+      if (win.isDestroyed() || !win.isVisible() || !DOCKABLE.includes(id)) continue
+      const b = win.getBounds()
+      if (point.x < b.x || point.x >= b.x + b.width || point.y < b.y || point.y >= b.y + b.height) continue
+      const area = b.width * b.height
+      if (!best || area < best.area) best = { id, area }
+    }
+    return best ? best.id : null
+  }
+
+  async designPoint(id: PanelId, screenPoint: { x: number; y: number }): Promise<{ x: number; y: number; dipPerUnit: number } | null> {
+    const win = this.getWindow(id)
+    if (!win) return null
+    const b = win.getBounds()
+    const zoom = win.webContents.getZoomFactor()
+    const info = await this.surfaceInfo(win)
+    if (!info) return null
+    const cx = (screenPoint.x - b.x) / zoom
+    const cy = (screenPoint.y - b.y) / zoom
+    return { x: (cx - info.left) / info.fit, y: (cy - info.top) / info.fit, dipPerUnit: zoom * info.fit }
+  }
+
+  async stickerScreenGeometry(id: PanelId, stickerId: string): Promise<{ centre: { x: number; y: number }; dipPerUnit: number } | null> {
+    const win = this.getWindow(id)
+    if (!win) return null
+    const b = win.getBounds()
+    const zoom = win.webContents.getZoomFactor()
+    const info = await this.surfaceInfo(win)
+    if (!info) return null
+    const rect = (await win.webContents.executeJavaScript(
+      `(() => { const n = document.querySelector('.sticker[data-sticker=' + JSON.stringify(${JSON.stringify(stickerId)}) + ']'); if (!n) return null; const r = n.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height } })()`
+    )) as { left: number; top: number; width: number; height: number } | null
+    if (!rect) return null
+    return { centre: { x: b.x + (rect.left + rect.width / 2) * zoom, y: b.y + (rect.top + rect.height / 2) * zoom }, dipPerUnit: zoom * info.fit }
+  }
+
+  private async surfaceInfo(win: BrowserWindow): Promise<{ left: number; top: number; fit: number } | null> {
+    const info = (await win.webContents.executeJavaScript(
+      `(() => { const s = document.querySelector('.panel, .bar'); if (!s) return null; const r = s.getBoundingClientRect(); const k = parseFloat(getComputedStyle(s).getPropertyValue('--fit')) || 1; return { left: r.left, top: r.top, fit: k } })()`
+    )) as { left: number; top: number; fit: number } | null
+    return info && info.fit > 0 ? info : null
   }
 
   fitAll(): void {
@@ -363,6 +437,7 @@ export class PanelManager {
     win.on('session-end', () => {
       this.quitting = true
     })
+    win.on('focus', () => this.onFocus?.())
     win.on('move', () => this.saveBounds(id))
     win.on('resize', () => this.saveBounds(id))
     win.on('closed', () => this.wins.delete(id))
@@ -372,7 +447,10 @@ export class PanelManager {
 
   private saveBounds(id: PanelId): void {
     clearTimeout(this.saveTimers.get(id))
-    this.saveTimers.set(id, setTimeout(() => this.saveBoundsNow(id), 300))
+    this.saveTimers.set(id, setTimeout(() => {
+      this.saveBoundsNow(id)
+      this.onMoved?.()
+    }, 300))
   }
 
   private saveBoundsNow(id: PanelId): void {

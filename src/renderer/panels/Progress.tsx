@@ -21,7 +21,7 @@ export function Progress({ data }: { data: AppData }) {
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 pt-2">
         <div>
           <div className="panel-label">Streak</div>
-          <div className="heading text-[2.5rem] text-accent">{taskStreak(data, today)} days</div>
+          <div className="heading text-[2.5rem] text-accent" data-el="progress.streak">{taskStreak(data, today)} days</div>
         </div>
         <div className="pb-1 text-right">
           <div className="panel-label">Done this week</div>

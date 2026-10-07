@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { BrowserWindow, Menu, ipcMain, type MenuItemConstructorOptions } from 'electron'
 import { randomUUID } from 'node:crypto'
 import type { AssetResult } from '../shared/assets'
 import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
@@ -7,7 +7,9 @@ import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setHabitDay, setNotes, setProfile, setSplit, setWeighIn, updateHabit, updateTask
 } from './mutations'
-import type { EditSession } from './edit'
+import { ZOOMABLE, isZoomAction, stepZoom } from '../shared/zoom'
+import type { EditSession, MenuEntry } from './edit'
+import type { FloatManager } from './floats'
 import type { PomodoroTimer } from './timer'
 import type { PanelManager } from './panels'
 import type { Store } from './store'
@@ -19,17 +21,17 @@ const isPanelId = (v: unknown): v is PanelId => PANEL_IDS.includes(v as PanelId)
 export interface AppActions {
   changeSettings(patch: SettingsPatch): void
   confirmExit(): void
-  pickAvatar(): Promise<string | null>
+  pickAvatar(win: BrowserWindow | null): Promise<string | null>
   readAvatar(): string | null
-  exportBackup(): Promise<BackupResult>
-  importBackup(): Promise<BackupResult>
+  exportBackup(win: BrowserWindow | null): Promise<BackupResult>
+  importBackup(win: BrowserWindow | null): Promise<BackupResult>
   addAsset(name: unknown, bytes: unknown): AssetResult
-  chooseAsset(): Promise<AssetResult>
+  chooseAsset(win: BrowserWindow | null): Promise<AssetResult[]>
 }
 
 const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
 
-export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroTimer, edit: EditSession, actions: AppActions): void {
+export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroTimer, edit: EditSession, actions: AppActions, floats: FloatManager): void {
   const today = () => toDateKey(new Date())
   const commit = () => panels.broadcast('data:changed', store.data)
 
@@ -80,8 +82,8 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.on('timer:task', (_e, task: unknown) => {
     if (typeof task === 'string') timer.setTask(task)
   })
-  ipcMain.handle('backup:export', () => actions.exportBackup())
-  ipcMain.handle('backup:import', () => actions.importBackup())
+  ipcMain.handle('backup:export', (e) => actions.exportBackup(BrowserWindow.fromWebContents(e.sender)))
+  ipcMain.handle('backup:import', (e) => actions.importBackup(BrowserWindow.fromWebContents(e.sender)))
 
   ipcMain.handle('settings:set', (_e, raw: unknown) => actions.changeSettings(sanitizeSettingsPatch(raw)))
   ipcMain.handle('app:exit', () => panels.show('confirm'))
@@ -109,7 +111,7 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     store.update((d) => setProfile(d, input, today()))
     commit()
   })
-  ipcMain.handle('profile:pick-avatar', () => actions.pickAvatar())
+  ipcMain.handle('profile:pick-avatar', (e) => actions.pickAvatar(BrowserWindow.fromWebContents(e.sender)))
   ipcMain.handle('profile:get-avatar', () => actions.readAvatar())
 
   ipcMain.handle('gym:split', (_e, days: (GymDay | null)[]) => {
@@ -129,22 +131,68 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     commit()
   })
 
+  ipcMain.on('panel:zoom', (_e, id: unknown, action: unknown) => {
+    if (!isPanelId(id) || !isZoomAction(action) || !(ZOOMABLE as readonly string[]).includes(id)) return
+    store.update((d) => {
+      const next = stepZoom(d.settings.panels[id].zoom, action)
+      if (next === 1) delete d.settings.panels[id].zoom
+      else d.settings.panels[id].zoom = next
+    })
+    commit()
+  })
   ipcMain.on('panel:toggle', (_e, id: unknown) => {
     if (isPanelId(id)) panels.toggle(id)
   })
   ipcMain.on('panel:hide', (_e, id: unknown) => {
     if (!isPanelId(id)) return
-    if (id === 'designer') edit.setActive(false)
+    if (id === 'designer' || id === 'layers') edit.setActive(false)
     else panels.hide(id)
   })
   const needEdit: AssetResult = { ok: false, error: 'Turn on Edit mode first' }
   ipcMain.handle('asset:add', (_e, name: unknown, bytes: unknown) => (edit.state.active ? actions.addAsset(name, bytes) : needEdit))
-  ipcMain.handle('asset:choose', () => (edit.state.active ? actions.chooseAsset() : needEdit))
+  ipcMain.handle('asset:choose', (e) => (edit.state.active ? actions.chooseAsset(BrowserWindow.fromWebContents(e.sender)) : [needEdit]))
   ipcMain.handle('edit:get-state', () => edit.state)
   ipcMain.on('edit:set-active', (_e, on: unknown) => {
     if (typeof on === 'boolean') edit.setActive(on)
   })
   ipcMain.on('edit:select', (_e, selection: unknown) => edit.select(selection))
+  ipcMain.on('edit:select-request', (_e, r: unknown) => {
+    if (!edit.state.active || typeof r !== 'object' || r === null) return
+    const req = r as { panel?: unknown; ids?: unknown; additive?: unknown }
+    if (req.panel === 'free') edit.selectFree(req.ids, req.additive)
+    else panels.broadcast('edit:select-request', r)
+  })
+  ipcMain.on('float:drag-begin', (_e, id: unknown) => floats.beginDrag(id))
+  ipcMain.on('float:gesture-begin', (_e, id: unknown, kind: unknown, handle: unknown, snap: unknown) => floats.beginGesture(id, kind, handle, snap))
+  ipcMain.on('float:gesture-end', (_e, id: unknown) => floats.endGesture(id))
+  ipcMain.on('float:drag-end', (_e, id: unknown) => void floats.endDrag(id))
+  ipcMain.on('edit:hover', (_e, r: unknown) => {
+    if (edit.state.active && typeof r === 'object' && r !== null) panels.broadcast('edit:hover', r)
+  })
+  ipcMain.on('edit:report-dom', (_e, panel: unknown, ids: unknown) => edit.reportDom(panel, ids))
+  ipcMain.on('edit:patch-many', (_e, keys: unknown, patch: unknown) => edit.patchMany(keys, patch))
+  ipcMain.on('edit:reset-many', (_e, keys: unknown) => edit.resetMany(keys))
+  ipcMain.on('edit:sticker-update-many', (_e, ids: unknown, patch: unknown) => edit.updateStickers(ids, patch))
+  ipcMain.on('edit:resize-element', (_e, key: unknown, width: unknown, height: unknown, x: unknown, y: unknown) => edit.resizeElement(key, width, height, x, y))
+  ipcMain.on('edit:context-menu', (e, panel: unknown, ids: unknown) => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    const entries = edit.contextMenu(panel, ids)
+    if (!win || entries.length === 0) return
+    const toTemplate = (list: MenuEntry[]): MenuItemConstructorOptions[] =>
+      list.map((m): MenuItemConstructorOptions => {
+        if (m.separator) return { type: 'separator' }
+        if (m.submenu) return { label: m.label, submenu: toTemplate(m.submenu) }
+        return { label: m.label, type: m.checked === undefined ? 'normal' : 'radio', checked: m.checked, click: () => m.run?.() }
+      })
+    Menu.buildFromTemplate(toTemplate(entries)).popup({ window: win })
+  })
+  ipcMain.on('edit:set-anchors', (_e, updates: unknown) => edit.setAnchors(updates))
+  ipcMain.on('edit:space-click', () => edit.spaceClick())
+  ipcMain.on('edit:crop-mode', (_e, id: unknown) => edit.setCropping(id ?? null))
+  ipcMain.on('edit:recent-color', (_e, hex: unknown) => edit.addRecentColor(hex))
+  ipcMain.on('edit:preset-save', (_e, panel: unknown, name: unknown) => edit.savePreset(panel, name))
+  ipcMain.on('edit:preset-delete', (_e, id: unknown) => edit.deletePreset(id))
+  ipcMain.on('edit:preset-apply', (_e, id: unknown, panel: unknown) => edit.applyPreset(id, panel))
   ipcMain.on('edit:patch', (_e, key: unknown, patch: unknown) => edit.patch(key, patch))
   ipcMain.on('edit:undo', () => edit.undo())
   ipcMain.on('edit:redo', () => edit.redo())
@@ -157,6 +205,8 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.on('edit:sticker-delete', (_e, id: unknown) => edit.deleteSticker(id))
   ipcMain.on('edit:sticker-duplicate', (_e, id: unknown) => edit.duplicateSticker(id))
   ipcMain.on('edit:sticker-order', (_e, id: unknown, direction: unknown) => edit.reorderSticker(id, direction))
+  ipcMain.on('edit:sticker-place', (_e, id: unknown, layer: unknown, aboveId: unknown) => edit.placeSticker(id, layer, aboveId ?? null))
+  ipcMain.on('edit:arrange', (_e, panel: unknown, id: unknown, region: unknown, aboveId: unknown) => edit.arrange(panel, id, region, aboveId ?? null))
   ipcMain.on('edit:background', (_e, key: unknown, bg: unknown) => edit.setBackground(key, bg))
   ipcMain.on('asset:delete', (_e, id: unknown) => edit.deleteAsset(id))
 }

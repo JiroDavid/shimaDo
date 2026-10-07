@@ -14,7 +14,7 @@ export function DropGuard({ panel }: { panel: PanelId }) {
     const onDrop = (e: DragEvent) => {
       if (!hasFiles(e)) return
       e.preventDefault()
-      if (!edit.active && panel !== 'designer') toast('Turn on Edit mode to add images')
+      if (!edit.active && panel !== 'designer' && panel !== 'layers') toast('Turn on Edit mode to add images')
     }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)

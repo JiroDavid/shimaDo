@@ -137,7 +137,7 @@ describe('Store', () => {
     const file = path.join(dir, 'data.json')
     fs.writeFileSync(file, JSON.stringify({
       version: 1, tasks: [], completions: [], nicotine: { '2026-10-05': true },
-      settings: { panels: { nicotine: { width: 410, height: 333, visible: false } } }
+      settings: { layoutVersion: 3, panels: { nicotine: { width: 410, height: 333, visible: false } } }
     }))
     const s = new Store(file)
     s.load()
@@ -145,6 +145,34 @@ describe('Store', () => {
     expect(s.data.habitLog).toEqual({ nicotine: { '2026-10-05': true } })
     expect(s.data.settings.panels.habits).toMatchObject({ width: 410, height: 333, visible: false })
     expect('nicotine' in s.data).toBe(false)
+  })
+
+  it('resets window sizes once when upgrading from the reflow layout, keeping positions and visibility', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, tasks: [], completions: [],
+      settings: { panels: { checklist: { x: 40, y: 50, width: 900, height: 1000, visible: true }, bar: { width: 777, height: 50, visible: true } } }
+    }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.panels.checklist).toMatchObject({ x: 40, y: 50, width: 300, height: 440, visible: true })
+    expect(s.data.settings.panels.bar.width).toBe(777)
+    expect(s.data.settings.layoutVersion).toBe(3)
+  })
+
+  it('keeps window sizes and a valid zoom once the layout is current, and drops a bad zoom', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({
+      version: 1, tasks: [], completions: [],
+      settings: { layoutVersion: 3, panels: { checklist: { width: 450, height: 600, visible: true, zoom: 1.3 }, gym: { width: 350, height: 470, visible: false, zoom: 99 }, focus: { width: 280, height: 360, visible: false, zoom: 1 } } }
+    }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.panels.checklist).toMatchObject({ width: 450, height: 600, zoom: 1.3 })
+    expect(s.data.settings.panels.gym.zoom).toBe(5)
+    expect(s.data.settings.panels.focus.zoom).toBeUndefined()
   })
 
   it('cleans up malformed habits when loading', () => {
@@ -229,7 +257,7 @@ describe('Store', () => {
   })
 
   it('defaults to no design overrides', () => {
-    expect(defaultData().design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+    expect(defaultData().design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {}, order: {}, recentColors: [], presets: [] })
   })
 
   it('loads old files with no design as empty', () => {
@@ -238,7 +266,7 @@ describe('Store', () => {
     fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [] }))
     const s = new Store(file)
     s.load()
-    expect(s.data.design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {} })
+    expect(s.data.design).toEqual({ overrides: {}, moves: {}, stickers: [], backgrounds: {}, order: {}, recentColors: [], presets: [] })
   })
 
   it('keeps valid overrides and drops stale or invalid ones on load', () => {
@@ -250,7 +278,7 @@ describe('Store', () => {
     }))
     const s = new Store(file)
     s.load()
-    expect(s.data.design).toMatchObject({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { background: '#112233' } }, moves: {}, stickers: [], backgrounds: {} })
+    expect(s.data.design).toMatchObject({ overrides: { 'bar.label': { text: 'Hi' }, 'group:button': { background: '#112233' } }, moves: {}, stickers: [], backgrounds: {}, order: {}, recentColors: [], presets: [] })
   })
 
   it('never starts with the designer window open', () => {

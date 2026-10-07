@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)))
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.svg': 'image/svg+xml' }
-const PANEL_IDS = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile', 'confirm', 'mini', 'welcome', 'designer']
+const PANEL_IDS = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile', 'confirm', 'mini', 'welcome', 'designer', 'layers']
 
 const FIXTURE_ASSETS = ['fixture-png-one', 'fixture-png-two']
 
@@ -60,7 +60,7 @@ function fixture(options) {
     if (i % 2 === 0) data.habitLog.h2[key(d)] = true
   }
   const panels = {}
-  for (const id of PANEL_IDS) panels[id] = { width: 400, height: 500, visible: id === 'bar' }
+  for (const id of PANEL_IDS) panels[id] = { width: 400, height: 500, visible: id === 'bar', ...(options.zoom ? { zoom: Number(options.zoom) } : {}) }
   Object.assign(data.settings, {
     panels,
     theme: options.theme ?? 'classic',
@@ -68,7 +68,7 @@ function fixture(options) {
     opacity: options.opacity ?? 0.9,
     onboarded: true
   })
-  data.design = options.design ?? { overrides: {}, moves: {}, stickers: [], backgrounds: {} }
+  data.design = options.design ?? { overrides: {}, moves: {}, stickers: [], backgrounds: {}, order: {} }
   data.assets = Object.fromEntries(FIXTURE_ASSETS.map((id) => [id, { id, ext: 'png', bytes: 100, name: `${id}.png`, addedAt: 1 }]))
   return data
 }
@@ -76,7 +76,7 @@ function fixture(options) {
 function page(root, options) {
   const data = fixture(options)
   const timer = { phase: 'focus', running: false, endsAt: null, remainingMs: 1_500_000, cycle: 0, task: '' }
-  const edit = options.edit ?? { active: false, selected: null, canUndo: false, canRedo: false }
+  const edit = options.edit ?? { active: false, selected: [], canUndo: false, canRedo: false, dom: {}, cropping: null, spaceClicks: 0 }
   const mock = `<script>window.__ASSET_BASE__ = '/assets/'; window.shima = new Proxy({
     getData: () => Promise.resolve(${JSON.stringify(data)}),
     onChange: () => () => {},
@@ -136,6 +136,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const i = process.argv.indexOf(`--${name}`)
     return i === -1 ? fallback : process.argv[i + 1]
   }
-  const out = await shot({ hash: arg('panel', 'checklist'), size: arg('size', '420x760'), out: arg('out', 'shot.png'), theme: arg('theme'), accent: arg('accent'), steps: arg('steps'), design: arg('design') ? JSON.parse(arg('design')) : undefined, edit: arg('edit') ? JSON.parse(arg('edit')) : undefined })
+  const out = await shot({ hash: arg('panel', 'checklist'), size: arg('size', '420x760'), out: arg('out', 'shot.png'), theme: arg('theme'), accent: arg('accent'), steps: arg('steps'), zoom: arg('zoom'), design: arg('design') ? JSON.parse(arg('design')) : undefined, edit: arg('edit') ? JSON.parse(arg('edit')) : undefined })
   console.log(out)
 }

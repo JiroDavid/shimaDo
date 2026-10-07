@@ -57,7 +57,7 @@ describe('colour audit', () => {
 
   it('App never applies overrides to the designer window', () => {
     const app = readFileSync(join(renderer, 'App.tsx'), 'utf8')
-    expect(app).toMatch(/applyDesign\(id === 'designer' \? emptyDesign\(\) : data\.design\)/)
+    expect(app).toMatch(/applyDesign\(id === 'designer' \|\| id === 'layers' \? emptyDesign\(\) : data\.design/)
   })
 })
 
@@ -84,14 +84,14 @@ describe('edit mode visuals', () => {
 
 describe('placed layers', () => {
   it('keeps placed items out of the way outside edit mode', () => {
-    expect(css).toMatch(/\.placed-back,\s*\.placed-front\s*\{[^}]*pointer-events: none/)
+    expect(css).toMatch(/\.placed-front\s*\{[^}]*pointer-events: none/)
     expect(css).toMatch(/html\[data-edit\] \.sticker\s*\{[^}]*pointer-events: auto/)
   })
 
   it('stacks background, content and front stickers in that order', () => {
     expect(css).toMatch(/\.placed-back\s*\{[^}]*z-index: 0/)
     expect(css).toMatch(/\.panel > \.titlebar[^{]*\{[^}]*z-index: 1/)
-    expect(css).toMatch(/\.placed-front\s*\{[^}]*z-index: 2/)
+    expect(css).toMatch(/\.placed-front\s*\{[^}]*z-index: auto/)
     expect(css).toMatch(/\.panel,\s*\.bar\s*\{[^}]*isolation: isolate/)
   })
 
@@ -122,18 +122,14 @@ describe('behind stickers in edit mode', () => {
   })
 })
 
-describe('between layer', () => {
-  it('lifts buttons and fields above a middle layer that sits above cards and text', () => {
-    expect(css).toMatch(/\.placed-mid\s*\{[^}]*z-index: 1/)
-    expect(css).toMatch(/\.panel\.has-between :is\([^)]*\.btn[^)]*\)[^{]*\{[^}]*z-index: 2/)
-    expect(css).toMatch(/\.panel\.has-between > \.win-body[^{]*\{[^}]*z-index: auto/)
+describe('layered panels', () => {
+  it('frees the window body from its own stacking context so listed elements can interleave with stickers', () => {
+    expect(css).toMatch(/\.panel\.has-layers > \.win-body[^{]*\{[^}]*z-index: auto/)
   })
 
-  it('renders the middle layer and flags windows that use it', () => {
-    const layer = readFileSync(join(renderer, 'components', 'PlacedLayer.tsx'), 'utf8')
-    expect(layer).toContain("'between'")
-    expect(readFileSync(join(renderer, 'components', 'PanelFrame.tsx'), 'utf8')).toContain('has-between')
-    expect(readFileSync(join(renderer, 'panels', 'Bar.tsx'), 'utf8')).toContain('has-between')
+  it('flags windows that have layered content', () => {
+    expect(readFileSync(join(renderer, 'components', 'PanelFrame.tsx'), 'utf8')).toContain('has-layers')
+    expect(readFileSync(join(renderer, 'panels', 'Bar.tsx'), 'utf8')).toContain('has-layers')
   })
 })
 
