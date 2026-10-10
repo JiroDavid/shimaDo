@@ -38,6 +38,11 @@
       "icon": "resources/icon.ico",
       "signExecutable": false
     },
+    "publish": {
+      "provider": "github",
+      "owner": "JiroDavid",
+      "repo": "shimaDo"
+    },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
