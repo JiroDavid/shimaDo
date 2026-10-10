@@ -38,7 +38,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 - **Always on top** - drag, resize and hide panels like sticky notes
 - **Multi-monitor** - resize panels from any edge, move everything to another monitor, or reset the layout from Settings
 - **Tray control** - opacity, accent colour, always-on-top, launch at startup, Exit
-- **Spotify** - a Now Playing tab and listening stats (top artists and tracks, minutes per day), using your own free Spotify developer app (registering one needs Spotify Premium)
+- **Spotify** - a Now Playing tab with three styles (Classic, Compact, Visualizer), playback controls, and listening stats (top artists and tracks, minutes per day), using your own free Spotify developer app (registering one needs Spotify Premium)
 - **Updates** - checks GitHub Releases, asks before downloading, and restarts into the new version on request
 - **Starts with Windows** - opens your day's tasks on boot
 
@@ -73,6 +73,8 @@ ShimaDo talks to Spotify through a free developer app that you create once. Crea
 4. Tick **Web API** only, agree to the terms and click **Save**.
 5. Open the new app, go to **Settings** and copy the **Client ID**. You do not need the client secret.
 6. In ShimaDo open Settings > Spotify, paste the Client ID, click **Connect Spotify** and approve it in the browser tab that opens.
+
+Playback controls (play/pause, next/previous, seek, volume) need Spotify Premium and one extra permission: if you connected before v0.9.0, click "Reconnect to enable controls" once. The Visualizer style listens to your computer's audio output on Windows to draw the bars; it reacts to all system sound, runs only while the panel is showing it, and nothing is recorded.
 
 Common mistakes: using `localhost` instead of `127.0.0.1`, typing the redirect address but not pressing **Add**, or pasting the client secret instead of the Client ID.
 
