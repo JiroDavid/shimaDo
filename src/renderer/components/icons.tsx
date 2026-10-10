@@ -70,6 +70,13 @@ export const NotepadIcon = () => (
     <path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h3" />
   </Icon>
 )
+export const SpotifyIcon = () => (
+  <Icon>
+    <path d="M9 18V6l10-2v12" />
+    <circle cx="6.5" cy="18" r="2.5" />
+    <circle cx="16.5" cy="16" r="2.5" />
+  </Icon>
+)
 export const EditIcon = () => (
   <Icon>
     <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" />

@@ -33,6 +33,10 @@ describe('defaultBounds', () => {
     expect(defaultBounds('confirm', area, panels)).toEqual({ x: 800, y: 425, width: 320, height: 190 })
     expect(defaultBounds('update', area, panels)).toEqual({ x: 780, y: 395, width: 360, height: 250 })
   })
+  it('puts the spotify panel to the right of the gym panel', () => {
+    const g = defaultBounds('gym', area, panels)
+    expect(defaultBounds('spotify', area, panels)).toMatchObject({ x: g.x + g.width + 12, y: g.y })
+  })
   it('centers the welcome panel', () => {
     const w = defaultBounds('welcome', area, panels)
     expect(w.x + w.width / 2).toBeCloseTo(area.x + area.width / 2, 0)

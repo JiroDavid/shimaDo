@@ -28,6 +28,7 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   profile: { width: 240, height: 300 },
   confirm: { width: 280, height: 160 },
   update: { width: 300, height: 200 },
+  spotify: { width: 260, height: 300 },
   mini: { width: 64, height: 64 }
 }
 
@@ -82,6 +83,8 @@ export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels'
       return { x: right - panels.progress.width - GAP - width, y: top, width, height }
     case 'notepad':
       return { x: right - panels.progress.width - GAP - width, y: top + panels.focus.height + GAP, width, height }
+    case 'spotify':
+      return { x: left + panels.checklist.width + GAP + panels.schedule.width + GAP + panels.gym.width + GAP, y: belowBar, width, height }
     case 'layers':
       return { x: right - width, y: top, width, height }
     case 'designer':

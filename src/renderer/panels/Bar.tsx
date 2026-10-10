@@ -1,6 +1,6 @@
 import { useContext, useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { AppData, PanelId } from '../../shared/types'
-import { ChecklistIcon, DumbbellIcon, EditIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon } from '../components/icons'
+import { ChecklistIcon, DumbbellIcon, EditIcon, FocusIcon, MinimizeIcon, NotepadIcon, HabitsIcon, PowerIcon, ProfileIcon, ProgressIcon, ScheduleIcon, SettingsIcon, SpotifyIcon } from '../components/icons'
 import { DesignContext, EditableText } from '../components/EditableText'
 import { snapshotElement } from '../lib/snapshotElement'
 import { isLayered } from '../../shared/layers'
@@ -9,7 +9,7 @@ import { ResizeHandles } from '../components/ResizeHandles'
 import { useEditState } from '../hooks/useEditState'
 import { useAvatar } from '../hooks/useData'
 
-const NATURAL_W = 690
+const NATURAL_W = 740
 const NATURAL_H = 56
 
 const BUTTONS: { id: PanelId; label: string; icon: ReactNode }[] = [
@@ -20,6 +20,7 @@ const BUTTONS: { id: PanelId; label: string; icon: ReactNode }[] = [
   { id: 'habits', label: 'Habits', icon: <HabitsIcon /> },
   { id: 'focus', label: 'Focus', icon: <FocusIcon /> },
   { id: 'notepad', label: 'Notepad', icon: <NotepadIcon /> },
+  { id: 'spotify', label: 'Spotify', icon: <SpotifyIcon /> },
   { id: 'settings', label: 'Settings', icon: <SettingsIcon /> }
 ]
 

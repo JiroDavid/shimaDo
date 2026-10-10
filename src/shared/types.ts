@@ -4,14 +4,15 @@ import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
 import type { UpdateState } from './update'
+import type { SpotifyState } from './spotify'
 import type { ZoomAction } from './zoom'
 
 export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'welcome' | 'designer' | 'layers' | 'settings' | 'profile' | 'confirm' | 'update' | 'mini'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'designer', 'layers', 'settings', 'profile', 'confirm', 'update', 'mini']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'welcome' | 'designer' | 'layers' | 'settings' | 'profile' | 'confirm' | 'update' | 'spotify' | 'mini'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'designer', 'layers', 'settings', 'profile', 'confirm', 'update', 'spotify', 'mini']
 export type TimerAction = 'start' | 'pause' | 'reset' | 'skip'
 export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
@@ -253,6 +254,11 @@ export interface ShimaApi {
   installUpdate(): Promise<void>
   installUpdateOnQuit(): Promise<void>
   dismissUpdate(): Promise<void>
+  getSpotifyState(): Promise<SpotifyState>
+  onSpotifyState(cb: (s: SpotifyState) => void): () => void
+  spotifyConnect(): Promise<void>
+  spotifyDisconnect(): Promise<void>
+  spotifyWatch(on: boolean): void
   beginResize(id: PanelId, edge: Edge): void
   endResize(): void
   listDisplays(): Promise<DisplayInfo[]>

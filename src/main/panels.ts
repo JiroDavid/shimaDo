@@ -12,7 +12,7 @@ interface Paths {
   file: string
 }
 
-const DOCKABLE: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings', 'profile']
+const DOCKABLE: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'spotify', 'settings', 'profile']
 const CENTERED: PanelId[] = ['settings', 'profile', 'confirm', 'update', 'welcome', 'designer', 'layers']
 const UI_SCALE = 0.91
 const RESIZE_POLL_MS = 8

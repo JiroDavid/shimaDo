@@ -18,6 +18,7 @@ import { Bar } from './panels/Bar'
 import { Checklist } from './panels/Checklist'
 import { Confirm } from './panels/Confirm'
 import { UpdatePrompt } from './panels/UpdatePrompt'
+import { Spotify } from './panels/Spotify'
 import { Designer } from './panels/Designer'
 import { Focus } from './panels/Focus'
 import { Gym } from './panels/Gym'
@@ -33,7 +34,7 @@ import { Progress } from './panels/Progress'
 import { Schedule } from './panels/Schedule'
 import { Settings } from './panels/Settings'
 
-const TITLES: Record<PanelId, string> = { ...PANEL_TITLES, bar: 'to-do', mini: 'shimado', designer: 'designer', layers: 'layers', update: 'update' }
+const TITLES: Record<PanelId, string> = { ...PANEL_TITLES, bar: 'to-do', mini: 'shimado', designer: 'designer', layers: 'layers', update: 'update', spotify: 'spotify' }
 
 const FIT: Partial<Record<PanelId, 'both'>> = { confirm: 'both', welcome: 'both', update: 'both' }
 
@@ -89,6 +90,7 @@ function PanelApp() {
         {id === 'profile' && <Profile data={data} />}
         {id === 'confirm' && <Confirm />}
         {id === 'update' && <UpdatePrompt />}
+        {id === 'spotify' && <Spotify />}
         {id === 'designer' && <Designer data={data} />}
         {id === 'layers' && <Layers data={data} />}
       </PanelFrame>
@@ -98,8 +100,8 @@ function PanelApp() {
       <DropGuard panel={id} />
       <EditShortcuts />
       {(ZOOMABLE as readonly string[]).includes(id) && <PanelZoom panel={id} />}
-      {id !== 'mini' && id !== 'designer' && id !== 'layers' && id !== 'update' && <BackgroundGestures panel={id} />}
-      {id !== 'mini' && id !== 'designer' && id !== 'layers' && id !== 'update' && <EditLayer panel={id} />}
+      {id !== 'mini' && id !== 'designer' && id !== 'layers' && id !== 'update' && id !== 'spotify' && <BackgroundGestures panel={id} />}
+      {id !== 'mini' && id !== 'designer' && id !== 'layers' && id !== 'update' && id !== 'spotify' && <EditLayer panel={id} />}
       {body}
     </DesignContext.Provider>
   )

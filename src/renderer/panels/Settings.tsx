@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { AppData, DisplayInfo } from '../../shared/types'
+import { CLIENT_ID_PATTERN, type SpotifyState } from '../../shared/spotify'
 import { AccentPicker } from '../components/AccentPicker'
 import { Section } from '../components/Section'
 import { ThemePicker } from '../components/ThemePicker'
@@ -19,6 +20,9 @@ export function Settings({ data }: { data: AppData }) {
   const [scale, setScale] = useState(s.textScale)
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
   const [backupMsg, setBackupMsg] = useState('')
+  const [spotify, setSpotify] = useState<SpotifyState | null>(null)
+  const [clientId, setClientId] = useState(s.spotifyClientId)
+  const [idMsg, setIdMsg] = useState('')
   const [version, setVersion] = useState('')
   const [updateMsg, setUpdateMsg] = useState('')
   const [checking, setChecking] = useState(false)
@@ -37,6 +41,20 @@ export function Settings({ data }: { data: AppData }) {
   useEffect(() => {
     window.shima.getVersion().then(setVersion)
   }, [])
+
+  useEffect(() => {
+    window.shima.getSpotifyState().then(setSpotify)
+    return window.shima.onSpotifyState(setSpotify)
+  }, [])
+  useEffect(() => setClientId(s.spotifyClientId), [s.spotifyClientId])
+
+  const saveClientId = () => {
+    const id = clientId.trim()
+    if (id === s.spotifyClientId) return
+    if (id !== '' && !CLIENT_ID_PATTERN.test(id)) return setIdMsg('A client ID is 32 letters and numbers')
+    setIdMsg('')
+    window.shima.setSettings({ spotifyClientId: id })
+  }
 
   const checkUpdates = async () => {
     setChecking(true)
@@ -144,6 +162,38 @@ export function Settings({ data }: { data: AppData }) {
           {checking ? 'Checking...' : 'Check for updates'}
         </button>
         {updateMsg && <p className="mt-2 text-[0.85rem] font-bold text-accent">{updateMsg}</p>}
+      </Section>
+
+      <Section label="Spotify">
+        <p className="mb-2 text-muted">Needs a free Spotify developer app, which requires the app owner to have Spotify Premium.</p>
+        <ol className="mb-3 list-decimal space-y-1 pl-5 text-[0.85rem] text-muted">
+          <li>Open developer.spotify.com/dashboard and create an app.</li>
+          <li>
+            Add the redirect URI <span className="select-all font-bold">http://127.0.0.1:53682/callback</span>
+          </li>
+          <li>Tick "Web API", save, then copy the Client ID here.</li>
+        </ol>
+        <input
+          className="field mb-2"
+          aria-label="Spotify client ID"
+          placeholder="Client ID"
+          spellCheck={false}
+          value={clientId}
+          onChange={(e) => setClientId(e.target.value)}
+          onBlur={saveClientId}
+          onKeyDown={(e) => e.key === 'Enter' && saveClientId()}
+        />
+        {idMsg && <p className="mb-2 text-[0.85rem] font-bold text-accent">{idMsg}</p>}
+        {spotify?.status === 'connected' ? (
+          <button className="btn" onClick={() => window.shima.spotifyDisconnect()}>
+            Disconnect Spotify
+          </button>
+        ) : (
+          <button className="btn" disabled={spotify?.status !== 'disconnected'} onClick={() => window.shima.spotifyConnect()}>
+            {spotify?.status === 'connecting' ? 'Waiting for browser...' : 'Connect Spotify'}
+          </button>
+        )}
+        {spotify?.error && <p className="mt-2 text-[0.85rem] font-bold text-accent">{spotify.error}</p>}
       </Section>
 
       <Section label="Layout">

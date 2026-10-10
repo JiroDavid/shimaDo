@@ -4,6 +4,7 @@ import type { AssetResult } from '../shared/assets'
 import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import type { UpdateState } from '../shared/update'
+import type { SpotifyState } from '../shared/spotify'
 import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setHabitDay, addPage, deletePage, renamePage, setPageText, setActivePage, setProfile, setSplit, setWeighIn, updateHabit, updateTask
@@ -35,6 +36,10 @@ export interface AppActions {
   installUpdate(): void
   installUpdateOnQuit(): void
   dismissUpdate(): void
+  getSpotifyState(): SpotifyState
+  spotifyConnect(): Promise<void>
+  spotifyDisconnect(): void
+  spotifyWatch(on: boolean): void
 }
 
 const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
@@ -122,6 +127,10 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     panels.hide('update')
   })
   ipcMain.handle('update:dismiss', () => actions.dismissUpdate())
+  ipcMain.handle('spotify:get', () => actions.getSpotifyState())
+  ipcMain.handle('spotify:connect', () => actions.spotifyConnect())
+  ipcMain.handle('spotify:disconnect', () => actions.spotifyDisconnect())
+  ipcMain.on('spotify:watch', (_e, on: unknown) => actions.spotifyWatch(on === true))
   ipcMain.handle('displays:list', () => panels.listDisplays())
   ipcMain.handle('displays:move', (_e, id: number) => panels.moveAllToDisplay(id))
   ipcMain.handle('layout:reset', () => panels.resetLayout())

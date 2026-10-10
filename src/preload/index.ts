@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TimerState } from '../shared/pomodoro'
 import type { UpdateState } from '../shared/update'
+import type { SpotifyState } from '../shared/spotify'
 import type { AppData, EditState, HoverRequest, SelectRequest, ShimaApi } from '../shared/types'
 
 const api: ShimaApi = {
@@ -49,6 +50,15 @@ const api: ShimaApi = {
   installUpdate: () => ipcRenderer.invoke('update:install'),
   installUpdateOnQuit: () => ipcRenderer.invoke('update:install-on-quit'),
   dismissUpdate: () => ipcRenderer.invoke('update:dismiss'),
+  getSpotifyState: () => ipcRenderer.invoke('spotify:get'),
+  onSpotifyState: (cb) => {
+    const handler = (_e: unknown, s: SpotifyState) => cb(s)
+    ipcRenderer.on('spotify:state', handler)
+    return () => ipcRenderer.removeListener('spotify:state', handler)
+  },
+  spotifyConnect: () => ipcRenderer.invoke('spotify:connect'),
+  spotifyDisconnect: () => ipcRenderer.invoke('spotify:disconnect'),
+  spotifyWatch: (on) => ipcRenderer.send('spotify:watch', on),
   getEditState: () => ipcRenderer.invoke('edit:get-state'),
   onEditState: (cb) => {
     const handler = (_e: unknown, s: EditState) => cb(s)

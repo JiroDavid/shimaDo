@@ -1,4 +1,4 @@
-import { app, dialog, Notification, protocol, screen, type BrowserWindow, type MessageBoxOptions, type OpenDialogOptions } from 'electron'
+import { app, dialog, Notification, protocol, safeStorage, screen, shell, type BrowserWindow, type MessageBoxOptions, type OpenDialogOptions } from 'electron'
 import fs from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, join } from 'node:path'
@@ -20,6 +20,10 @@ import { SpaceManager } from './space'
 import { createTray } from './tray'
 import { autoUpdater } from 'electron-updater'
 import { UpdateController, type UpdaterLike } from './updater'
+import { SpotifyAuth } from './spotify/auth'
+import { SpotifyApi } from './spotify/api'
+import { SpotifyController } from './spotify/controller'
+import { createTokenStore } from './spotify/tokenStore'
 import { shouldRaisePrompt, type UpdateState } from '../shared/update'
 
 const MAX_BATCH = 50
@@ -103,10 +107,23 @@ function boot(): void {
     shownUpdate = s
   })
 
+  const spotifyAuth = new SpotifyAuth({
+    clientId: () => store.data.settings.spotifyClientId,
+    store: createTokenStore(join(userData, 'spotify-token.bin'), safeStorage),
+    openUrl: (url) => void shell.openExternal(url)
+  })
+  const spotify = new SpotifyController({
+    clientId: () => store.data.settings.spotifyClientId,
+    auth: spotifyAuth,
+    api: new SpotifyApi(spotifyAuth),
+    broadcast: (s) => panels.broadcast('spotify:state', s)
+  })
+
   const checkForUpdates = (): Promise<UpdateState> => updates.check(true)
 
   const changeSettings = (patch: SettingsPatch) => {
     const previousScale = store.data.settings.textScale
+    const previousClientId = store.data.settings.spotifyClientId
     store.update((d) => {
       Object.assign(d.settings, patch)
     })
@@ -115,6 +132,7 @@ function boot(): void {
     if (patch.launchAtStartup !== undefined && app.isPackaged) {
       app.setLoginItemSettings({ openAtLogin: patch.launchAtStartup })
     }
+    if (patch.spotifyClientId !== undefined && patch.spotifyClientId !== previousClientId) spotify.clientIdChanged()
     panels.broadcast('data:changed', store.data)
     tray?.refresh()
   }
@@ -230,6 +248,10 @@ function boot(): void {
         if (results.some((r) => r.ok)) panels.broadcast('data:changed', store.data)
         return results
       },
+      getSpotifyState: () => spotify.state,
+      spotifyConnect: () => spotify.connect(),
+      spotifyDisconnect: () => spotify.disconnect(),
+      spotifyWatch: (on) => spotify.setWatching(on),
       appVersion: () => app.getVersion(),
       getUpdateState: () => updates.state,
       checkForUpdates,

@@ -76,7 +76,7 @@ const PANEL_NAMES: Record<EditablePanel, string> = {
   confirm: 'Exit prompt'
 }
 
-export const BAR_BUTTONS = ['checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'settings'] as const
+export const BAR_BUTTONS = ['checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'spotify', 'settings'] as const
 
 const BAR_BUTTON_NAMES: Record<string, string> = {
   checklist: 'Checklist',
@@ -86,6 +86,7 @@ const BAR_BUTTON_NAMES: Record<string, string> = {
   habits: 'Habits',
   focus: 'Focus',
   notepad: 'Notepad',
+  spotify: 'Spotify',
   settings: 'Settings',
   edit: 'Edit',
   minimize: 'Minimise'

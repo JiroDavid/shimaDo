@@ -57,6 +57,7 @@ export function defaultData(): AppData {
         profile: { width: 315, height: 610, visible: false },
         confirm: { width: 320, height: 190, visible: false },
         update: { width: 360, height: 250, visible: false },
+        spotify: { width: 320, height: 420, visible: false },
         mini: { width: 64, height: 64, visible: false }
       }
     }

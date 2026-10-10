@@ -232,6 +232,15 @@ describe('Store', () => {
     expect(s.data.settings.spotifyClientId).toBe(id)
   })
 
+  it('adds the spotify panel hidden by default to old files', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { panels: {} } }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.panels.spotify).toMatchObject({ visible: false })
+  })
+
   it('drops end times that cannot be valid when loading', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
