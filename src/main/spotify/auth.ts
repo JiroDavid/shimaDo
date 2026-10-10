@@ -1,5 +1,5 @@
 import http from 'node:http'
-import { CLIENT_ID_PATTERN, SPOTIFY_REDIRECT_PORT, SPOTIFY_SCOPES } from '../../shared/spotify'
+import { CLIENT_ID_PATTERN, CONTROL_SCOPE, SPOTIFY_REDIRECT_PORT, SPOTIFY_SCOPES } from '../../shared/spotify'
 import { AuthLostError, type TokenSource } from './api'
 import { challengeFor, makeState, makeVerifier } from './pkce'
 
@@ -14,9 +14,14 @@ export class LoginCancelledError extends Error {
   }
 }
 
+export interface StoredLogin {
+  refresh: string
+  scope: string
+}
+
 export interface TokenStore {
-  load(): string | null
-  save(refreshToken: string): void
+  load(): StoredLogin | null
+  save(login: StoredLogin): void
   clear(): void
 }
 
@@ -33,6 +38,7 @@ interface TokenBody {
   access_token?: string
   expires_in?: number
   refresh_token?: string
+  scope?: string
 }
 
 const PAGE = (msg: string) => `<!doctype html><meta charset="utf-8"><title>ShimaDo</title><body style="font-family:sans-serif;padding:2rem"><h2>${msg}</h2><p>You can close this tab and go back to ShimaDo.</p></body>`
@@ -47,6 +53,10 @@ export class SpotifyAuth implements TokenSource {
 
   get connected(): boolean {
     return this.o.store.load() !== null
+  }
+
+  get canControl(): boolean {
+    return (this.o.store.load()?.scope ?? '').split(' ').includes(CONTROL_SCOPE)
   }
 
   disconnect(): void {
@@ -84,7 +94,7 @@ export class SpotifyAuth implements TokenSource {
     if (epoch !== this.epoch) throw new LoginCancelledError()
     if (!body.refresh_token) throw new Error('Spotify did not return a refresh token')
     this.access = { token: body.access_token ?? '', expiresAt: Date.now() + (body.expires_in ?? 3600) * 1000 }
-    this.o.store.save(body.refresh_token)
+    this.o.store.save({ refresh: body.refresh_token, scope: body.scope ?? '' })
   }
 
   async accessToken(): Promise<string> {
@@ -101,9 +111,9 @@ export class SpotifyAuth implements TokenSource {
 
   private async doRefresh(): Promise<string> {
     const epoch = this.epoch
-    const refreshToken = this.o.store.load()
-    if (!refreshToken) throw new AuthLostError()
-    const res = await this.post({ grant_type: 'refresh_token', refresh_token: refreshToken, client_id: this.o.clientId() })
+    const stored = this.o.store.load()
+    if (!stored) throw new AuthLostError()
+    const res = await this.post({ grant_type: 'refresh_token', refresh_token: stored.refresh, client_id: this.o.clientId() })
     if (epoch !== this.epoch) throw new AuthLostError()
     if (res.status === 400 || res.status === 401) {
       this.disconnect()
@@ -114,7 +124,7 @@ export class SpotifyAuth implements TokenSource {
     if (epoch !== this.epoch) throw new AuthLostError()
     if (!body.access_token) throw new Error('Spotify returned no access token')
     this.access = { token: body.access_token, expiresAt: Date.now() + (body.expires_in ?? 3600) * 1000 }
-    if (body.refresh_token) this.o.store.save(body.refresh_token)
+    this.o.store.save({ refresh: body.refresh_token ?? stored.refresh, scope: body.scope ?? stored.scope })
     return body.access_token
   }
 

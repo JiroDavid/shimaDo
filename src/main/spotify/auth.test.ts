@@ -5,15 +5,18 @@ import { LoginCancelledError, SpotifyAuth, type TokenStore } from './auth'
 
 const CLIENT = 'a'.repeat(32)
 
-function memoryStore(initial: string | null = null): TokenStore & { value: string | null } {
+function memoryStore(initial: string | null = null, scope = ''): TokenStore & { value: string | null; scope: string } {
   const s = {
     value: initial,
-    load: () => s.value,
-    save: (t: string) => {
-      s.value = t
+    scope,
+    load: () => (s.value === null ? null : { refresh: s.value, scope: s.scope }),
+    save: (l: { refresh: string; scope: string }) => {
+      s.value = l.refresh
+      s.scope = l.scope
     },
     clear: () => {
       s.value = null
+      s.scope = ''
     }
   }
   return s
@@ -37,7 +40,7 @@ function setup(over: { store?: ReturnType<typeof memoryStore>; fetchFn?: typeof 
     over.fetchFn ??
     ((async (_url: string, init?: RequestInit) => {
       bodies.push(new URLSearchParams(String(init?.body)))
-      return tokenResponse({ access_token: 'acc-1', expires_in: 3600, refresh_token: 'ref-1' })
+      return tokenResponse({ access_token: 'acc-1', expires_in: 3600, refresh_token: 'ref-1', scope: 'user-read-playback-state user-modify-playback-state' })
     }) as unknown as typeof fetch)
   let opened: URL | null = null
   let onOpen: (u: URL) => void = () => {}
@@ -69,13 +72,15 @@ describe('SpotifyAuth.connect', () => {
     expect(u.searchParams.get('client_id')).toBe(CLIENT)
     expect(u.searchParams.get('response_type')).toBe('code')
     expect(u.searchParams.get('code_challenge_method')).toBe('S256')
-    expect(u.searchParams.get('scope')).toBe('user-read-currently-playing user-read-playback-state user-read-recently-played')
+    expect(u.searchParams.get('scope')).toBe('user-read-currently-playing user-read-playback-state user-read-recently-played user-modify-playback-state')
     expect(u.searchParams.get('redirect_uri')).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/callback$/)
     expect(t.bodies[0].get('grant_type')).toBe('authorization_code')
     expect(t.bodies[0].get('code')).toBe('thecode')
     expect(t.bodies[0].get('client_id')).toBe(CLIENT)
     expect(t.bodies[0].get('code_verifier')).toMatch(/^[A-Za-z0-9_-]{43,128}$/)
     expect(t.store.value).toBe('ref-1')
+    expect(t.store.scope).toBe('user-read-playback-state user-modify-playback-state')
+    expect(t.auth.canControl).toBe(true)
     expect(t.auth.connected).toBe(true)
     expect(await t.auth.accessToken()).toBe('acc-1')
   })
@@ -146,6 +151,28 @@ describe('SpotifyAuth tokens', () => {
     const t = setup({ store: memoryStore('ref-old'), fetchFn })
     await expect(t.auth.refresh()).rejects.not.toBeInstanceOf(AuthLostError)
     expect(t.store.value).toBe('ref-old')
+  })
+
+  it('keeps the stored scope on refresh unless Spotify sends a new one', async () => {
+    let scope: string | undefined
+    const fetchFn = (async () => tokenResponse({ access_token: 'a', expires_in: 3600, ...(scope ? { scope } : {}) })) as unknown as typeof fetch
+    const t = setup({ store: memoryStore('ref', 'user-read-playback-state'), fetchFn })
+    await t.auth.refresh()
+    expect(t.store.scope).toBe('user-read-playback-state')
+    expect(t.auth.canControl).toBe(false)
+    scope = 'user-read-playback-state user-modify-playback-state'
+    await t.auth.refresh()
+    expect(t.store.scope).toBe(scope)
+    expect(t.auth.canControl).toBe(true)
+  })
+
+  it('a legacy login without a scope cannot control and a disconnect resets it', () => {
+    const t = setup({ store: memoryStore('ref') })
+    expect(t.auth.canControl).toBe(false)
+    const t2 = setup({ store: memoryStore('ref', 'user-modify-playback-state') })
+    expect(t2.auth.canControl).toBe(true)
+    t2.auth.disconnect()
+    expect(t2.auth.canControl).toBe(false)
   })
 
   it('has no access when disconnected', async () => {

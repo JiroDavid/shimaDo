@@ -1,7 +1,8 @@
 export const SPOTIFY_REDIRECT_PORT = 53682
 export const SPOTIFY_REDIRECT_URI = `http://127.0.0.1:${SPOTIFY_REDIRECT_PORT}/callback`
 export const SPOTIFY_DASHBOARD_URL = 'https://developer.spotify.com/dashboard'
-export const SPOTIFY_SCOPES = ['user-read-currently-playing', 'user-read-playback-state', 'user-read-recently-played']
+export const CONTROL_SCOPE = 'user-modify-playback-state'
+export const SPOTIFY_SCOPES = ['user-read-currently-playing', 'user-read-playback-state', 'user-read-recently-played', CONTROL_SCOPE]
 export const NOW_PLAYING_MS = 5_000
 export const IDLE_POLL_MS = 15_000
 export const HISTORY_POLL_MS = 10 * 60 * 1000
