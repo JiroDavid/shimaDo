@@ -57,13 +57,13 @@ export class SpotifyApi {
       is_playing?: unknown
       progress_ms?: unknown
       currently_playing_type?: unknown
-      device?: { name?: unknown; volume_percent?: unknown } | null
+      device?: { name?: unknown; volume_percent?: unknown; supports_volume?: unknown } | null
       item?: RawTrack | null
     }
     if (body.currently_playing_type === 'ad') return null
     const track = parseTrack(body.item)
     if (!track) return null
-    const device = body.device && typeof body.device.name === 'string' ? { name: body.device.name, volumePercent: typeof body.device.volume_percent === 'number' ? body.device.volume_percent : null } : null
+    const device = body.device && typeof body.device.name === 'string' ? { name: body.device.name, volumePercent: typeof body.device.volume_percent === 'number' && body.device.supports_volume !== false ? body.device.volume_percent : null } : null
     return {
       track,
       progressMs: typeof body.progress_ms === 'number' ? body.progress_ms : 0,

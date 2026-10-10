@@ -47,6 +47,10 @@ describe('SpotifyApi.nowPlaying', () => {
     expect((await api.nowPlaying())?.device).toBeNull()
     expect((await api.nowPlaying())?.device).toEqual({ name: 'Phone', volumePercent: null })
   })
+  it('hides the volume for devices that do not support volume control', async () => {
+    const { api } = setup([json({ is_playing: true, item: track(), device: { name: 'TV', volume_percent: 100, supports_volume: false } })])
+    expect((await api.nowPlaying())?.device).toEqual({ name: 'TV', volumePercent: null })
+  })
   it('treats ads as nothing playing', async () => {
     const { api } = setup([json({ is_playing: true, currently_playing_type: 'ad', item: track() })])
     expect(await api.nowPlaying()).toBeNull()

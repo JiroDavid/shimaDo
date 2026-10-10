@@ -1,5 +1,5 @@
 import type { NowPlaying, SpotifyState } from '../../../shared/spotify'
-import { Controls } from './Controls'
+import { Controls, ControlsNotice } from './Controls'
 import { ProgressBar } from './ProgressBar'
 import { useProgress } from './useProgress'
 
@@ -17,9 +17,12 @@ export function NowPlayingCompact({ state, np }: { state: SpotifyState; np: NowP
             {np.track.artists.join(', ')}
           </div>
         </div>
-        <Controls state={state} np={np} small />
+        <Controls state={state} np={np} small notice={false} />
       </div>
       <ProgressBar state={state} np={np} progress={progress} thin times={false} />
+      <div className="flex justify-center">
+        <ControlsNotice state={state} />
+      </div>
     </div>
   )
 }

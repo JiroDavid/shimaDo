@@ -10,7 +10,19 @@ const NEXT = 'M16 6h2v12h-2zM6 18V6l8.5 6z'
 const PLAY = 'M8 5v14l11-7z'
 const PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z'
 
-export function Controls({ state, np, small = false }: { state: SpotifyState; np: NowPlaying; small?: boolean }) {
+export function ControlsNotice({ state }: { state: SpotifyState }) {
+  return !state.canControl ? (
+    <button className="btn !min-h-[26px] !px-2 !py-0 !text-[0.75rem]" onClick={() => window.shima.spotifyConnect()}>
+      Reconnect to enable controls
+    </button>
+  ) : state.premiumRequired ? (
+    <p className="text-[0.75rem] font-bold text-muted">Controls need Spotify Premium</p>
+  ) : state.controlError ? (
+    <p className="text-[0.75rem] font-bold text-accent">{state.controlError}</p>
+  ) : null
+}
+
+export function Controls({ state, np, small = false, notice = true }: { state: SpotifyState; np: NowPlaying; small?: boolean; notice?: boolean }) {
   const blocked = !state.canControl || state.premiumRequired
   const send = (type: 'play' | 'pause' | 'next' | 'previous') => window.shima.spotifyControl({ type })
   const base = `flex items-center justify-center rounded-full transition-transform active:scale-90 ${blocked ? 'opacity-40' : 'hover:text-accent'}`
@@ -31,15 +43,7 @@ export function Controls({ state, np, small = false }: { state: SpotifyState; np
           <Icon d={NEXT} />
         </button>
       </div>
-      {!state.canControl ? (
-        <button className="btn !min-h-[26px] !px-2 !py-0 !text-[0.75rem]" onClick={() => window.shima.spotifyConnect()}>
-          Reconnect to enable controls
-        </button>
-      ) : state.premiumRequired ? (
-        <p className="text-[0.75rem] font-bold text-muted">Controls need Spotify Premium</p>
-      ) : (
-        state.controlError && <p className="text-[0.75rem] font-bold text-accent">{state.controlError}</p>
-      )}
+      {notice && <ControlsNotice state={state} />}
     </div>
   )
 }

@@ -228,11 +228,23 @@ function boot(): void {
     assets.init()
     const rendererUrl = process.env['ELECTRON_RENDERER_URL']
     session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
+      const deny = () => {
+        try {
+          callback({})
+        } catch {
+          return
+        }
+      }
       const url = request.frame?.url ?? ''
       const own = url.startsWith('file://') || (rendererUrl !== undefined && url.startsWith(rendererUrl))
-      const sources = own ? await desktopCapturer.getSources({ types: ['screen'] }) : []
-      if (sources.length === 0) return callback({})
-      callback({ video: sources[0], audio: 'loopback' })
+      if (!own || process.platform !== 'win32') return deny()
+      try {
+        const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } })
+        if (sources.length === 0) return deny()
+        callback({ video: sources[0], audio: 'loopback' })
+      } catch {
+        deny()
+      }
     })
     protocol.handle(ASSET_SCHEME, (request) => {
       const r = serveAsset(assets, request.url)

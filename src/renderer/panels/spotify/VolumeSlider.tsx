@@ -9,7 +9,7 @@ export function VolumeSlider({ state, np }: { state: SpotifyState; np: NowPlayin
 
   useEffect(() => {
     if (!dragging.current && reported !== null) setValue(reported)
-  }, [reported])
+  }, [reported, np.fetchedAt])
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current)

@@ -86,7 +86,7 @@ export class SpotifyController {
       return this.fail('Could not reach Spotify')
     }
     this.clearControlError()
-    setTimeout(() => this.poller.pollNow(), 600)
+    for (const ms of [600, 1800]) setTimeout(() => this.poller.pollNow(), ms)
   }
 
   disconnect(): void {

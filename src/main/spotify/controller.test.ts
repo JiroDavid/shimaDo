@@ -203,6 +203,20 @@ describe('controls', () => {
     expect(nowPlaying).toHaveBeenCalledTimes(2)
   })
 
+  it('polls again about 1.8 seconds after a control because Spotify can be slow to apply it', async () => {
+    const nowPlaying = vi.fn(async () => np)
+    const t = setup({ connected: true, nowPlaying })
+    t.c.setWatching(true)
+    await vi.advanceTimersByTimeAsync(0)
+    await t.c.control({ type: 'play' })
+    await vi.advanceTimersByTimeAsync(600)
+    expect(nowPlaying).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1199)
+    expect(nowPlaying).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(nowPlaying).toHaveBeenCalledTimes(3)
+  })
+
   it('refuses without the control permission and asks to reconnect', async () => {
     const t = setup({ connected: true, canControl: false })
     await t.c.control({ type: 'next' })
