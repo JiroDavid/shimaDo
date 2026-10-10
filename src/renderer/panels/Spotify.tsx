@@ -146,7 +146,7 @@ export function Spotify() {
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           {state.status === 'no-client' ? (
             <>
-              <p className="text-muted">Add your Spotify client ID in Settings to get started.</p>
+              <p className="text-muted">Add your Spotify client ID in Settings to get started. The setup guide there takes about 3 minutes.</p>
               <button className="btn" onClick={() => window.shima.togglePanel('settings')}>
                 Open Settings
               </button>

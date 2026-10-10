@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { AppData, DisplayInfo } from '../../shared/types'
-import { CLIENT_ID_PATTERN, type SpotifyState } from '../../shared/spotify'
+import { CLIENT_ID_PATTERN, SPOTIFY_REDIRECT_URI, type SpotifyState } from '../../shared/spotify'
 import { AccentPicker } from '../components/AccentPicker'
 import { Section } from '../components/Section'
 import { ThemePicker } from '../components/ThemePicker'
@@ -23,6 +23,7 @@ export function Settings({ data }: { data: AppData }) {
   const [spotify, setSpotify] = useState<SpotifyState | null>(null)
   const [clientId, setClientId] = useState(s.spotifyClientId)
   const [idMsg, setIdMsg] = useState('')
+  const [copied, setCopied] = useState(false)
   const [version, setVersion] = useState('')
   const [updateMsg, setUpdateMsg] = useState('')
   const [checking, setChecking] = useState(false)
@@ -47,6 +48,16 @@ export function Settings({ data }: { data: AppData }) {
     return window.shima.onSpotifyState(setSpotify)
   }, [])
   useEffect(() => setClientId(s.spotifyClientId), [s.spotifyClientId])
+
+  const copyRedirect = async () => {
+    try {
+      await navigator.clipboard.writeText(SPOTIFY_REDIRECT_URI)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
 
   const saveClientId = () => {
     const id = clientId.trim()
@@ -165,14 +176,40 @@ export function Settings({ data }: { data: AppData }) {
       </Section>
 
       <Section label="Spotify">
-        <p className="mb-2 text-muted">Needs a free Spotify developer app, which requires the app owner to have Spotify Premium.</p>
-        <ol className="mb-3 list-decimal space-y-1 pl-5 text-[0.85rem] text-muted">
-          <li>Open developer.spotify.com/dashboard and create an app.</li>
-          <li>
-            Add the redirect URI <span className="select-all font-bold">http://127.0.0.1:53682/callback</span>
-          </li>
-          <li>Tick "Web API", save, then copy the Client ID here.</li>
-        </ol>
+        <details open={!s.spotifyClientId} className="mb-3">
+          <summary className="mb-2 cursor-pointer font-bold">Setup guide (about 3 minutes)</summary>
+          <p className="mb-2 text-[0.85rem] text-muted">
+            ShimaDo uses a free Spotify developer app that you create once, so your listening stays between you and Spotify. Creating one needs a Spotify Premium account.
+          </p>
+          <ol className="mb-2 list-decimal space-y-2 pl-5 text-[0.85rem] text-muted">
+            <li>
+              <button className="btn !min-h-[28px] !px-2.5 !py-0 !text-[0.8rem]" onClick={() => window.shima.openSpotifyDashboard()}>
+                Open Spotify dashboard
+              </button>
+              <div className="mt-1">Log in, accept the terms and click <span className="font-bold">Create app</span>.</div>
+            </li>
+            <li>
+              Give it any name and description, for example "ShimaDo".
+            </li>
+            <li>
+              In <span className="font-bold">Redirect URIs</span> paste the address below, then press the <span className="font-bold">Add</span> button next to the box. It must show up as a listed item.
+              <div className="mt-1 flex items-center gap-2">
+                <span className="select-all break-all font-bold">{SPOTIFY_REDIRECT_URI}</span>
+                <button className="btn !min-h-[28px] shrink-0 !px-2.5 !py-0 !text-[0.8rem]" onClick={copyRedirect}>
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </li>
+            <li>
+              Tick <span className="font-bold">Web API</span> only, agree to the terms and click <span className="font-bold">Save</span>.
+            </li>
+            <li>
+              Open the new app, go to <span className="font-bold">Settings</span> and copy the <span className="font-bold">Client ID</span>. You do not need the client secret.
+            </li>
+            <li>Paste the Client ID below, click <span className="font-bold">Connect Spotify</span> and approve it in the browser tab that opens.</li>
+          </ol>
+          <p className="text-[0.8rem] text-muted">If login says "invalid redirect URI", the address in step 3 was not added exactly (use 127.0.0.1, not localhost).</p>
+        </details>
         <input
           className="field mb-2"
           aria-label="Spotify client ID"

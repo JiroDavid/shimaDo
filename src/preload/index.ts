@@ -58,6 +58,7 @@ const api: ShimaApi = {
   },
   spotifyConnect: () => ipcRenderer.invoke('spotify:connect'),
   spotifyCancel: () => ipcRenderer.invoke('spotify:cancel'),
+  openSpotifyDashboard: () => ipcRenderer.invoke('spotify:open-dashboard'),
   spotifyDisconnect: () => ipcRenderer.invoke('spotify:disconnect'),
   spotifyWatch: (on) => ipcRenderer.send('spotify:watch', on),
   spotifyStats: (range) => ipcRenderer.invoke('spotify:stats', range),

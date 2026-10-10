@@ -20,6 +20,7 @@ import { SpaceManager } from './space'
 import { createTray } from './tray'
 import { autoUpdater } from 'electron-updater'
 import { UpdateController, type UpdaterLike } from './updater'
+import { SPOTIFY_DASHBOARD_URL } from '../shared/spotify'
 import { SpotifyAuth } from './spotify/auth'
 import { SpotifyApi } from './spotify/api'
 import { SpotifyController } from './spotify/controller'
@@ -257,6 +258,7 @@ function boot(): void {
       getSpotifyState: () => spotify.state,
       spotifyConnect: () => spotify.connect(),
       spotifyCancel: () => spotify.cancel(),
+      openSpotifyDashboard: () => void shell.openExternal(SPOTIFY_DASHBOARD_URL),
       spotifyDisconnect: () => spotify.disconnect(),
       spotifyWatch: (on) => spotify.setWatching(on),
       spotifyStats: (range) => spotify.stats(range),

@@ -65,9 +65,16 @@ The first updater-enabled version has to be installed by hand once. Installers a
 
 ## Spotify setup
 
-1. Go to developer.spotify.com/dashboard and create an app (this needs a Spotify Premium account).
-2. Add the redirect URI `http://127.0.0.1:53682/callback` and tick "Web API".
-3. Copy the Client ID into Settings > Spotify, then click Connect and approve in your browser.
+ShimaDo talks to Spotify through a free developer app that you create once. Creating one needs a Spotify Premium account. The same steps are in Settings > Spotify, with buttons for the dashboard and the redirect address.
+
+1. Open https://developer.spotify.com/dashboard, log in, accept the terms and click **Create app**.
+2. Give it any name and description, for example "ShimaDo".
+3. Under **Redirect URIs** enter `http://127.0.0.1:53682/callback` and press the **Add** button next to the box. It must appear as a listed item.
+4. Tick **Web API** only, agree to the terms and click **Save**.
+5. Open the new app, go to **Settings** and copy the **Client ID**. You do not need the client secret.
+6. In ShimaDo open Settings > Spotify, paste the Client ID, click **Connect Spotify** and approve it in the browser tab that opens.
+
+Common mistakes: using `localhost` instead of `127.0.0.1`, typing the redirect address but not pressing **Add**, or pasting the client secret instead of the Client ID.
 
 Only the last 50 plays can be backfilled after ShimaDo has been closed, so heavy listening while it is off leaves gaps in the stats. Listening time counts each play at full track length. History stays on your computer in `spotify-history.json`.
 
