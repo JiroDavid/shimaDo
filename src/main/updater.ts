@@ -53,12 +53,11 @@ export class UpdateController {
 
   async check(manual: boolean): Promise<UpdateState> {
     if (!this.enabled) return { kind: 'error', during: 'check', message: 'Updates only work in the installed app' }
-    const busy = this.state.kind === 'available' || this.state.kind === 'downloading' || this.state.kind === 'ready'
+    const busy = this.state.kind !== 'idle'
     if (busy) {
       if (manual) this.set(this.state)
       return this.state
     }
-    if (this.state.kind === 'error') this.state = { kind: 'idle' }
     this.manual = manual
     try {
       await this.updater.checkForUpdates()
@@ -75,10 +74,14 @@ export class UpdateController {
     const version = s.kind === 'available' ? s.version : s.kind === 'error' && s.during === 'download' ? s.version : undefined
     if (!version) return
     this.set({ kind: 'downloading', version, percent: 0 })
+    // electron-updater only registers its quit handler if this is true when the download finishes
+    this.updater.autoInstallOnAppQuit = true
     try {
       await this.updater.downloadUpdate()
     } catch (e) {
       this.set({ kind: 'error', during: 'download', message: (e as Error).message, version })
+    } finally {
+      this.updater.autoInstallOnAppQuit = false
     }
   }
 

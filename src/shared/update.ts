@@ -21,3 +21,9 @@ export function plainNotes(raw: unknown): string {
   }
   return text.length > MAX_NOTES ? `${text.slice(0, MAX_NOTES)}…` : text
 }
+
+export function shouldRaisePrompt(prev: UpdateState, next: UpdateState): boolean {
+  const visible = next.kind === 'available' || next.kind === 'downloading' || next.kind === 'ready' || (next.kind === 'error' && next.during === 'download')
+  if (!visible) return false
+  return !(prev.kind === 'downloading' && next.kind === 'downloading' && prev.percent !== next.percent)
+}

@@ -186,6 +186,36 @@ describe('UpdateController', () => {
     expect(controller.state).toEqual({ kind: 'ready', version: '0.6.0' })
   })
 
+  it('arms the quit installer only while downloading so the library registers its quit handler', async () => {
+    const { updater, controller } = setup()
+    offer(updater, '0.6.0')
+    await controller.check(false)
+    let during: boolean | null = null
+    updater.onDownload = () => {
+      during = updater.autoInstallOnAppQuit
+      updater.emit('update-downloaded', { version: '0.6.0' })
+    }
+    await controller.download()
+    expect(during).toBe(true)
+    expect(updater.autoInstallOnAppQuit).toBe(false)
+  })
+
+  it('keeps a failed download visible through later checks so Retry and Close still work', async () => {
+    const { updater, controller } = setup()
+    offer(updater, '0.6.0')
+    await controller.check(false)
+    updater.onDownload = () => {
+      throw new Error('connection reset')
+    }
+    await controller.download()
+    const checksBefore = updater.checks
+    await controller.check(false)
+    expect(updater.checks).toBe(checksBefore)
+    expect(controller.state).toMatchObject({ kind: 'error', during: 'download' })
+    controller.later()
+    expect(controller.state).toEqual({ kind: 'idle' })
+  })
+
   it('ignores download when nothing is offered', async () => {
     const { updater, controller } = setup()
     await controller.download()

@@ -20,7 +20,7 @@ import { SpaceManager } from './space'
 import { createTray } from './tray'
 import { autoUpdater } from 'electron-updater'
 import { UpdateController, type UpdaterLike } from './updater'
-import type { UpdateState } from '../shared/update'
+import { shouldRaisePrompt, type UpdateState } from '../shared/update'
 
 const MAX_BATCH = 50
 
@@ -95,10 +95,12 @@ function boot(): void {
     onNotifyClick: () => panels.show('focus')
   })
 
+  let shownUpdate: UpdateState = { kind: 'idle' }
   const updates = new UpdateController(autoUpdater as unknown as UpdaterLike, app.isPackaged, (s) => {
     panels.broadcast('update:state', s)
-    if (s.kind === 'available' || s.kind === 'downloading' || s.kind === 'ready' || (s.kind === 'error' && s.during === 'download')) panels.show('update')
+    if (shouldRaisePrompt(shownUpdate, s)) panels.show('update')
     else if (s.kind === 'idle') panels.hide('update')
+    shownUpdate = s
   })
 
   const checkForUpdates = (): Promise<UpdateState> => updates.check(true)
