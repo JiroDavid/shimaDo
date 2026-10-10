@@ -191,17 +191,29 @@ describe('Store', () => {
     expect(s.data.habitLog).toEqual({ a: { '2026-10-05': true } })
   })
 
-  it('keeps saved notes and defaults old files to an empty note', () => {
+  it('turns the old single note into page 1 and defaults junk to a blank page', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
     fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], notes: 'remember milk' }))
     const s = new Store(file)
     s.load()
-    expect(s.data.notes).toBe('remember milk')
+    expect(s.data.pages).toEqual([{ id: 'page-1', title: 'Page 1', text: 'remember milk' }])
+    expect(s.data.activePage).toBe('page-1')
     expect(s.data.settings.panels.notepad.visible).toBe(false)
     fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], notes: 5 }))
     s.load()
-    expect(s.data.notes).toBe('')
+    expect(s.data.pages).toEqual([{ id: 'page-1', title: 'Page 1', text: '' }])
+  })
+
+  it('keeps saved pages and the active page across a reload', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    const pages = [{ id: 'a', title: 'Todo', text: 'x' }, { id: 'b', title: 'Ideas', text: 'y' }]
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], pages, activePage: 'b' }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.pages).toEqual(pages)
+    expect(s.data.activePage).toBe('b')
   })
 
   it('drops end times that cannot be valid when loading', () => {

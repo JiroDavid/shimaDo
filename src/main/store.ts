@@ -3,7 +3,7 @@ import path from 'node:path'
 import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings, type Task } from '../shared/types'
 import { emptyGym } from '../shared/gym'
 import { isValidTime } from '../shared/dates'
-import { MAX_NOTES_LENGTH } from '../shared/notes'
+import { defaultPage, sanitizePages } from '../shared/notes'
 import { sanitizeAssets } from '../shared/assets'
 import { emptyDesign, sanitizeDesign } from '../shared/design'
 import { normaliseAccentInput } from '../shared/theme'
@@ -22,7 +22,8 @@ export function defaultData(): AppData {
     completions: [],
     habits: [],
     habitLog: {},
-    notes: '',
+    pages: [defaultPage()],
+    activePage: 'page-1',
     design: emptyDesign(),
     assets: {},
     pomodoros: {},
@@ -128,7 +129,7 @@ export function migrate(raw: unknown): AppData {
     tasks: Array.isArray(r.tasks) ? (r.tasks as AppData['tasks']).map(cleanTask) : [],
     completions: Array.isArray(r.completions) ? (r.completions as AppData['completions']) : [],
     ...pickHabits(r),
-    notes: typeof r.notes === 'string' ? r.notes.slice(0, MAX_NOTES_LENGTH) : '',
+    ...sanitizePages(r.pages, r.activePage, r.notes),
     design: sanitizeDesign(r.design, assets),
     assets,
     pomodoros: typeof r.pomodoros === 'object' && r.pomodoros !== null ? (r.pomodoros as AppData['pomodoros']) : {},

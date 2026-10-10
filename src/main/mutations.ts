@@ -2,7 +2,7 @@ import type { AppData, GymDay, Habit, HabitInput, ProfileInput, SettingsPatch, T
 import { isValidDateKey } from '../shared/dates'
 import { normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateWeighIn } from '../shared/gym'
 import { MAX_HABITS, validateHabitInput } from '../shared/habits'
-import { MAX_NOTES_LENGTH } from '../shared/notes'
+import { MAX_NOTES_LENGTH, MAX_PAGES, MAX_TITLE_LENGTH, defaultPage } from '../shared/notes'
 import { normaliseAccentInput } from '../shared/theme'
 import { THEME_IDS } from '../shared/themes'
 import { validateProfile } from '../shared/profile'
@@ -86,8 +86,36 @@ export function setHabitDay(d: AppData, id: string, date: string, on: boolean): 
   else if (d.habitLog[id]) delete d.habitLog[id][date]
 }
 
-export function setNotes(d: AppData, text: string): void {
-  if (typeof text === 'string') d.notes = text.slice(0, MAX_NOTES_LENGTH)
+export function addPage(d: AppData, id: string): void {
+  if (d.pages.length >= MAX_PAGES) return
+  const used = new Set(d.pages.map((p) => p.title))
+  let n = 1
+  while (used.has(`Page ${n}`)) n++
+  d.pages.push(defaultPage(id, n))
+  d.activePage = id
+}
+
+export function deletePage(d: AppData, id: string, freshId: string): void {
+  const i = d.pages.findIndex((p) => p.id === id)
+  if (i < 0) return
+  d.pages.splice(i, 1)
+  if (d.pages.length === 0) d.pages.push(defaultPage(freshId))
+  if (d.activePage === id) d.activePage = (d.pages[i - 1] ?? d.pages[i]).id
+}
+
+export function renamePage(d: AppData, id: string, title: string): void {
+  const page = d.pages.find((p) => p.id === id)
+  const next = typeof title === 'string' ? title.trim().slice(0, MAX_TITLE_LENGTH) : ''
+  if (page && next) page.title = next
+}
+
+export function setPageText(d: AppData, id: string, text: string): void {
+  const page = d.pages.find((p) => p.id === id)
+  if (page && typeof text === 'string') page.text = text.slice(0, MAX_NOTES_LENGTH)
+}
+
+export function setActivePage(d: AppData, id: string): void {
+  if (d.pages.some((p) => p.id === id)) d.activePage = id
 }
 
 export function claimWelcome(d: AppData): boolean {
