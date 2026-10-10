@@ -27,6 +27,7 @@ export const MIN_SIZES: Record<PanelId, Size> = {
   settings: { width: 260, height: 300 },
   profile: { width: 240, height: 300 },
   confirm: { width: 280, height: 160 },
+  update: { width: 300, height: 200 },
   mini: { width: 64, height: 64 }
 }
 
@@ -89,6 +90,7 @@ export function defaultBounds(id: PanelId, area: Rect, panels: Settings['panels'
     case 'settings':
     case 'profile':
     case 'confirm':
+    case 'update':
       return { x: Math.round(area.x + (area.width - width) / 2), y: Math.round(area.y + (area.height - height) / 2), width, height }
   }
 }
