@@ -15,7 +15,8 @@
     { "id": "h2", "name": "Read", "icon": "book" }
   ],
   "habitLog": {},
-  "notes": "Shopping list\n- milk\n- eggs\n- coffee",
+  "pages": [{ "id": "p1", "title": "Shopping", "text": "Shopping list\n- milk\n- eggs\n- coffee" }, { "id": "p2", "title": "Ideas", "text": "" }],
+  "activePage": "p1",
   "pomodoros": {},
   "pomodoroLog": [],
   "profile": { "username": "jiro", "firstName": "Jiro", "dateOfBirth": "2000-01-01", "heightCm": 178, "avatarUpdatedAt": null },

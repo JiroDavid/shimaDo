@@ -6,7 +6,7 @@ import { toDateKey } from '../shared/dates'
 import type { UpdateState } from '../shared/update'
 import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
-  setHabitDay, setNotes, setProfile, setSplit, setWeighIn, updateHabit, updateTask
+  setHabitDay, addPage, deletePage, renamePage, setPageText, setActivePage, setProfile, setSplit, setWeighIn, updateHabit, updateTask
 } from './mutations'
 import { ZOOMABLE, isZoomAction, stepZoom } from '../shared/zoom'
 import type { EditSession, MenuEntry } from './edit'
@@ -73,8 +73,24 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
     store.update((d) => deleteHabit(d, id))
     commit()
   })
-  ipcMain.handle('notes:set', (_e, text: string) => {
-    store.update((d) => setNotes(d, text))
+  ipcMain.handle('page:add', () => {
+    store.update((d) => addPage(d, randomUUID()))
+    commit()
+  })
+  ipcMain.handle('page:delete', (_e, id: string) => {
+    store.update((d) => deletePage(d, id, randomUUID()))
+    commit()
+  })
+  ipcMain.handle('page:rename', (_e, id: string, title: string) => {
+    store.update((d) => renamePage(d, id, title))
+    commit()
+  })
+  ipcMain.handle('page:text', (_e, id: string, text: string) => {
+    store.update((d) => setPageText(d, id, text))
+    commit()
+  })
+  ipcMain.handle('page:active', (_e, id: string) => {
+    store.update((d) => setActivePage(d, id))
     commit()
   })
   ipcMain.handle('habit:set', (_e, id: string, date: string, on: boolean) => {

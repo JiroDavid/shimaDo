@@ -143,13 +143,20 @@ export interface BackupResult {
   message: string
 }
 
+export interface NotePage {
+  id: string
+  title: string
+  text: string
+}
+
 export interface AppData {
   version: 1
   tasks: Task[]
   completions: Completion[]
   habits: Habit[]
   habitLog: Record<string, Record<string, true>>
-  notes: string
+  pages: NotePage[]
+  activePage: string
   design: Design
   assets: Record<string, AssetInfo>
   pomodoros: Record<string, number>
@@ -180,7 +187,11 @@ export interface ShimaApi {
   updateHabit(id: string, input: HabitInput): Promise<void>
   deleteHabit(id: string): Promise<void>
   setHabitDay(id: string, date: string, on: boolean): Promise<void>
-  setNotes(text: string): Promise<void>
+  addPage(): Promise<void>
+  deletePage(id: string): Promise<void>
+  renamePage(id: string, title: string): Promise<void>
+  setPageText(id: string, text: string): Promise<void>
+  setActivePage(id: string): Promise<void>
   getEditState(): Promise<EditState>
   onEditState(cb: (s: EditState) => void): () => void
   setEditActive(on: boolean): void

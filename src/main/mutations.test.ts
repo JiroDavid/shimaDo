@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { occurrencesOn } from '../shared/recurrence'
-import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, claimWelcome, setNotes, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
+import { addTask, updateTask, deleteTask, setDone, addHabit, updateHabit, deleteHabit, setHabitDay, addPomodoro, claimWelcome, addPage, deletePage, renamePage, setPageText, setActivePage, sanitizeSettingsPatch, setProfile, setAvatarStamp } from './mutations'
 import { defaultData } from './store'
+import { MAX_NOTES_LENGTH, MAX_PAGES, MAX_TITLE_LENGTH } from '../shared/notes'
 
 describe('mutations', () => {
   it('addTask validates and normalises input', () => {
@@ -107,14 +108,97 @@ describe('mutations', () => {
     expect(claimWelcome(d)).toBe(false)
   })
 
-  it('setNotes stores text and caps its length', () => {
-    const d = defaultData()
-    setNotes(d, 'hello\nworld')
-    expect(d.notes).toBe('hello\nworld')
-    setNotes(d, 'x'.repeat(60_000))
-    expect(d.notes).toHaveLength(50_000)
-    setNotes(d, 42 as never)
-    expect(d.notes).toHaveLength(50_000)
+  describe('notepad pages', () => {
+    const base = () => defaultData()
+
+    it('starts with one blank active page', () => {
+      const d = base()
+      expect(d.pages).toEqual([{ id: 'page-1', title: 'Page 1', text: '' }])
+      expect(d.activePage).toBe('page-1')
+    })
+
+    it('addPage appends an unused title and makes it active', () => {
+      const d = base()
+      addPage(d, 'b')
+      addPage(d, 'c')
+      expect(d.pages.map((p) => p.title)).toEqual(['Page 1', 'Page 2', 'Page 3'])
+      expect(d.activePage).toBe('c')
+    })
+
+    it('addPage skips titles already in use and stops at the page cap', () => {
+      const d = base()
+      renamePage(d, 'page-1', 'Page 2')
+      addPage(d, 'b')
+      expect(d.pages[1].title).toBe('Page 1')
+      for (let i = 0; i < 30; i++) addPage(d, `x${i}`)
+      expect(d.pages).toHaveLength(MAX_PAGES)
+    })
+
+    it('deletePage activates a neighbour when the active page goes', () => {
+      const d = base()
+      addPage(d, 'b')
+      addPage(d, 'c')
+      setActivePage(d, 'b')
+      deletePage(d, 'b', 'unused')
+      expect(d.pages.map((p) => p.id)).toEqual(['page-1', 'c'])
+      expect(d.activePage).toBe('page-1')
+      deletePage(d, 'page-1', 'unused')
+      expect(d.activePage).toBe('c')
+    })
+
+    it('deletePage keeps the active page when another page goes', () => {
+      const d = base()
+      addPage(d, 'b')
+      deletePage(d, 'page-1', 'unused')
+      expect(d.activePage).toBe('b')
+    })
+
+    it('deleting the last page leaves a fresh blank one', () => {
+      const d = base()
+      setPageText(d, 'page-1', 'keep?')
+      deletePage(d, 'page-1', 'fresh')
+      expect(d.pages).toEqual([{ id: 'fresh', title: 'Page 1', text: '' }])
+      expect(d.activePage).toBe('fresh')
+    })
+
+    it('deletePage ignores unknown ids', () => {
+      const d = base()
+      deletePage(d, 'nope', 'x')
+      expect(d.pages).toHaveLength(1)
+    })
+
+    it('renamePage trims, caps and ignores blank titles', () => {
+      const d = base()
+      renamePage(d, 'page-1', '  Groceries  ')
+      expect(d.pages[0].title).toBe('Groceries')
+      renamePage(d, 'page-1', 'x'.repeat(80))
+      expect(d.pages[0].title).toHaveLength(MAX_TITLE_LENGTH)
+      renamePage(d, 'page-1', '   ')
+      expect(d.pages[0].title).toHaveLength(MAX_TITLE_LENGTH)
+      renamePage(d, 'page-1', 42 as never)
+      expect(d.pages[0].title).toHaveLength(MAX_TITLE_LENGTH)
+    })
+
+    it('setPageText stores text per page and caps its length', () => {
+      const d = base()
+      addPage(d, 'b')
+      setPageText(d, 'page-1', 'hello\nworld')
+      setPageText(d, 'b', 'x'.repeat(60_000))
+      expect(d.pages[0].text).toBe('hello\nworld')
+      expect(d.pages[1].text).toHaveLength(MAX_NOTES_LENGTH)
+      setPageText(d, 'b', 42 as never)
+      setPageText(d, 'nope', 'lost')
+      expect(d.pages[1].text).toHaveLength(MAX_NOTES_LENGTH)
+    })
+
+    it('setActivePage only accepts existing pages', () => {
+      const d = base()
+      addPage(d, 'b')
+      setActivePage(d, 'page-1')
+      expect(d.activePage).toBe('page-1')
+      setActivePage(d, 'nope')
+      expect(d.activePage).toBe('page-1')
+    })
   })
 
   it('setHabitDay toggles a day for an existing habit', () => {
