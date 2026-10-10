@@ -180,6 +180,9 @@ textarea.field { padding: 10px 14px; }
     linear-gradient(180deg, var(--sheen), transparent 60%),
     var(--glass);
 }
+.bar.bar-vertical { flex-direction: column; padding: 10px 0; }
+.bar-vertical .bar-sep, .bar-vertical [data-el='bar.label'], .bar-vertical .bar-label { display: none; }
+.bar-vertical .bar-btn { justify-content: center; }
 .bar-sep { flex-shrink: 0; width: 2px; height: 24px; margin: 0 6px; border-radius: 2px; background: var(--line); }
 .bar-avatar {
   display: flex;

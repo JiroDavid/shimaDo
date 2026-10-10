@@ -61,7 +61,8 @@ describe('defaultBounds', () => {
 describe('effectiveSize', () => {
   it('keeps a saved bar size but never lets it go below the bar minimum', () => {
     expect(effectiveSize('bar', { width: 900, height: 80 }, panels)).toEqual({ width: 900, height: 80 })
-    expect(effectiveSize('bar', { width: 50, height: 10 }, panels)).toEqual(MIN_SIZES.bar)
+    expect(effectiveSize('bar', { width: 20, height: 10 }, panels)).toEqual(MIN_SIZES.bar)
+    expect(effectiveSize('bar', { width: 60, height: 600 }, panels)).toEqual({ width: 60, height: 600 })
   })
   it('keeps the minimised icon a fixed size', () => {
     expect(effectiveSize('mini', { width: 300, height: 300 }, panels)).toEqual({ width: 64, height: 64 })

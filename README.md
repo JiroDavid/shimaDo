@@ -20,7 +20,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 
 ## Features
 
-- **Main bar** - taskbar-style launcher with your profile picture, icon buttons with hover labels and a confirmed Exit button
+- **Main bar** - taskbar-style launcher with your profile picture, icon buttons with hover labels and a confirmed Exit button; drag its edges to make it tall and narrow and it turns into a vertical bar (icons only, with tooltips)
 - **Profile** - username, name, date of birth, height and a profile picture
 - **Gym** - weekly workout split with a list of exercises per day, flexible swaps and rest days, a done tick per day, and consistency and weight charts
 - **Checklist** - a big "things to do today" list with overdue carry-over and quick add with a time and a priority tag

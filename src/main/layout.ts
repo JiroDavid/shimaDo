@@ -13,7 +13,7 @@ export interface Size {
 }
 
 export const MIN_SIZES: Record<PanelId, Size> = {
-  bar: { width: 320, height: 32 },
+  bar: { width: 40, height: 32 },
   checklist: { width: 220, height: 240 },
   schedule: { width: 240, height: 260 },
   gym: { width: 240, height: 260 },
