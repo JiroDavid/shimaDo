@@ -23,9 +23,10 @@ interface Options {
   onExit: () => void
   isEditing: () => boolean
   onEdit: (on: boolean) => void
+  onCheckUpdates: () => void
 }
 
-export function createTray({ store, panels, iconPath, onSettings, onExit, isEditing, onEdit }: Options) {
+export function createTray({ store, panels, iconPath, onSettings, onExit, isEditing, onEdit, onCheckUpdates }: Options) {
   const tray = new Tray(nativeImage.createFromPath(iconPath))
   tray.setToolTip('ShimaDo')
 
@@ -61,6 +62,7 @@ export function createTray({ store, panels, iconPath, onSettings, onExit, isEdit
         }))
       },
       { label: 'Launch at startup', type: 'checkbox', checked: s.launchAtStartup, click: (i) => onSettings({ launchAtStartup: i.checked }) },
+      { label: 'Check for updates', click: onCheckUpdates },
       { type: 'separator' },
       { label: 'Exit ShimaDo', click: onExit }
     ]

@@ -127,6 +127,7 @@ const BUTTONS: [string, string, EditablePanel, string][] = [
   ['welcome.next', 'Welcome next button', 'welcome', 'button-primary'],
   ['settings.export', 'Settings export button', 'settings', 'button'],
   ['settings.import', 'Settings import button', 'settings', 'button'],
+  ['settings.check-updates', 'Settings check for updates button', 'settings', 'button'],
   ['settings.reset-layout', 'Settings reset layout button', 'settings', 'button']
 ]
 

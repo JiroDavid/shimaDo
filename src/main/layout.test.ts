@@ -31,6 +31,7 @@ describe('defaultBounds', () => {
     expect(defaultBounds('settings', area, panels)).toEqual({ x: 795, y: 295, width: 330, height: 450 })
     expect(defaultBounds('profile', area, panels)).toEqual({ x: 803, y: 215, width: 315, height: 610 })
     expect(defaultBounds('confirm', area, panels)).toEqual({ x: 800, y: 425, width: 320, height: 190 })
+    expect(defaultBounds('update', area, panels)).toEqual({ x: 780, y: 395, width: 360, height: 250 })
   })
   it('centers the welcome panel', () => {
     const w = defaultBounds('welcome', area, panels)

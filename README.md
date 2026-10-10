@@ -38,6 +38,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 - **Always on top** - drag, resize and hide panels like sticky notes
 - **Multi-monitor** - resize panels from any edge, move everything to another monitor, or reset the layout from Settings
 - **Tray control** - opacity, accent colour, always-on-top, launch at startup, Exit
+- **Updates** - checks GitHub Releases, asks before downloading, and restarts into the new version on request
 - **Starts with Windows** - opens your day's tasks on boot
 
 ## Installation
@@ -52,6 +53,14 @@ npm run dist
 ```
 
 Run `dist/ShimaDo Setup 0.1.0.exe`. It installs ShimaDo for your user and adds Start menu and desktop shortcuts. Open it from Start, right-click its taskbar button and choose "Pin to taskbar", or right-click the Start entry and pin it to Start or the taskbar. It starts with Windows by default and can be turned off in Settings.
+
+## Releasing
+
+1. Bump `version` in `package.json` and commit.
+2. `git tag v0.6.0` (must match the version) and `git push --tags`.
+3. The Release workflow builds the installer and publishes it to GitHub Releases. Installed copies find it within 6 hours, or straight away via Settings > Check for updates.
+
+The first updater-enabled version has to be installed by hand once. Installers are unsigned, so Windows SmartScreen may warn on a fresh install (in-place updates are unaffected).
 
 ## Development
 

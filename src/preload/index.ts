@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TimerState } from '../shared/pomodoro'
+import type { UpdateState } from '../shared/update'
 import type { AppData, EditState, HoverRequest, SelectRequest, ShimaApi } from '../shared/types'
 
 const api: ShimaApi = {
@@ -32,6 +33,18 @@ const api: ShimaApi = {
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
   requestExit: () => ipcRenderer.invoke('app:exit'),
   confirmExit: () => ipcRenderer.invoke('app:confirm-exit'),
+  getVersion: () => ipcRenderer.invoke('app:version'),
+  getUpdateState: () => ipcRenderer.invoke('update:get'),
+  onUpdateState: (cb) => {
+    const handler = (_e: unknown, s: UpdateState) => cb(s)
+    ipcRenderer.on('update:state', handler)
+    return () => ipcRenderer.removeListener('update:state', handler)
+  },
+  checkForUpdates: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  installUpdateOnQuit: () => ipcRenderer.invoke('update:install-on-quit'),
+  dismissUpdate: () => ipcRenderer.invoke('update:dismiss'),
   getEditState: () => ipcRenderer.invoke('edit:get-state'),
   onEditState: (cb) => {
     const handler = (_e: unknown, s: EditState) => cb(s)

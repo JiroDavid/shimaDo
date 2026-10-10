@@ -53,6 +53,7 @@ export function defaultData(): AppData {
         settings: { width: 330, height: 450, visible: false },
         profile: { width: 315, height: 610, visible: false },
         confirm: { width: 320, height: 190, visible: false },
+        update: { width: 360, height: 250, visible: false },
         mini: { width: 64, height: 64, visible: false }
       }
     }
@@ -151,6 +152,7 @@ export function hideTransientPanels(d: AppData): void {
   p.settings.visible = false
   p.profile.visible = false
   p.confirm.visible = false
+  p.update.visible = false
   p.welcome.visible = false
   p.designer.visible = false
   p.layers.visible = false

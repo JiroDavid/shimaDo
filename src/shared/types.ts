@@ -3,14 +3,15 @@ import type { Anchor, Background, StickerDraft, StickerLayer } from './placement
 import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
+import type { UpdateState } from './update'
 import type { ZoomAction } from './zoom'
 
 export type TaskKind = 'once' | 'daily' | 'weekly'
 export type TaskTag = 'urgent' | 'must' | 'important'
 export const TASK_TAGS: TaskTag[] = ['urgent', 'must', 'important']
 export const TAG_LABELS: Record<TaskTag, string> = { urgent: 'URGENT', must: 'MUST DO', important: 'IMPORTANT' }
-export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'welcome' | 'designer' | 'layers' | 'settings' | 'profile' | 'confirm' | 'mini'
-export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'designer', 'layers', 'settings', 'profile', 'confirm', 'mini']
+export type PanelId = 'bar' | 'checklist' | 'schedule' | 'gym' | 'progress' | 'habits' | 'focus' | 'notepad' | 'welcome' | 'designer' | 'layers' | 'settings' | 'profile' | 'confirm' | 'update' | 'mini'
+export const PANEL_IDS: PanelId[] = ['bar', 'checklist', 'schedule', 'gym', 'progress', 'habits', 'focus', 'notepad', 'welcome', 'designer', 'layers', 'settings', 'profile', 'confirm', 'update', 'mini']
 export type TimerAction = 'start' | 'pause' | 'reset' | 'skip'
 export type Edge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
@@ -232,6 +233,14 @@ export interface ShimaApi {
   setSettings(patch: SettingsPatch): Promise<void>
   requestExit(): Promise<void>
   confirmExit(): Promise<void>
+  getVersion(): Promise<string>
+  getUpdateState(): Promise<UpdateState>
+  onUpdateState(cb: (s: UpdateState) => void): () => void
+  checkForUpdates(): Promise<UpdateState>
+  downloadUpdate(): Promise<void>
+  installUpdate(): Promise<void>
+  installUpdateOnQuit(): Promise<void>
+  dismissUpdate(): Promise<void>
   beginResize(id: PanelId, edge: Edge): void
   endResize(): void
   listDisplays(): Promise<DisplayInfo[]>

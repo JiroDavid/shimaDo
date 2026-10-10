@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import type { AssetResult } from '../shared/assets'
 import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
+import type { UpdateState } from '../shared/update'
 import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setHabitDay, setNotes, setProfile, setSplit, setWeighIn, updateHabit, updateTask
@@ -27,6 +28,13 @@ export interface AppActions {
   importBackup(win: BrowserWindow | null): Promise<BackupResult>
   addAsset(name: unknown, bytes: unknown): AssetResult
   chooseAsset(win: BrowserWindow | null): Promise<AssetResult[]>
+  appVersion(): string
+  getUpdateState(): UpdateState
+  checkForUpdates(): Promise<UpdateState>
+  downloadUpdate(): Promise<void>
+  installUpdate(): void
+  installUpdateOnQuit(): void
+  dismissUpdate(): void
 }
 
 const TIMER_ACTIONS: TimerAction[] = ['start', 'pause', 'reset', 'skip']
@@ -88,6 +96,16 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.handle('settings:set', (_e, raw: unknown) => actions.changeSettings(sanitizeSettingsPatch(raw)))
   ipcMain.handle('app:exit', () => panels.show('confirm'))
   ipcMain.handle('app:confirm-exit', () => actions.confirmExit())
+  ipcMain.handle('app:version', () => actions.appVersion())
+  ipcMain.handle('update:get', () => actions.getUpdateState())
+  ipcMain.handle('update:check', () => actions.checkForUpdates())
+  ipcMain.handle('update:download', () => actions.downloadUpdate())
+  ipcMain.handle('update:install', () => actions.installUpdate())
+  ipcMain.handle('update:install-on-quit', () => {
+    actions.installUpdateOnQuit()
+    panels.hide('update')
+  })
+  ipcMain.handle('update:dismiss', () => actions.dismissUpdate())
   ipcMain.handle('displays:list', () => panels.listDisplays())
   ipcMain.handle('displays:move', (_e, id: number) => panels.moveAllToDisplay(id))
   ipcMain.handle('layout:reset', () => panels.resetLayout())
