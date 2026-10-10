@@ -4,6 +4,7 @@ import type { SpotifyState, SpotifyStyle, Stats, StatsRange } from '../../shared
 import { BarChart } from '../components/BarChart'
 import { NowPlayingClassic } from './spotify/NowPlayingClassic'
 import { NowPlayingCompact } from './spotify/NowPlayingCompact'
+import { NowPlayingVisualizer } from './spotify/NowPlayingVisualizer'
 import { StyleSwitch } from './spotify/StyleSwitch'
 
 type Tab = 'now' | 'stats'
@@ -69,6 +70,7 @@ function NowPlayingView({ state, style }: { state: SpotifyState; style: SpotifyS
   const np = state.nowPlaying
   if (!np) return <p className="py-6 text-center text-muted">{state.offline ? 'Offline - waiting for Spotify' : 'Nothing playing'}</p>
   if (style === 'compact') return <NowPlayingCompact state={state} np={np} />
+  if (style === 'visualizer') return <NowPlayingVisualizer state={state} np={np} />
   return <NowPlayingClassic state={state} np={np} />
 }
 

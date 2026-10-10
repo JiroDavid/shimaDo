@@ -1,4 +1,4 @@
-import { app, dialog, Notification, protocol, safeStorage, screen, shell, type BrowserWindow, type MessageBoxOptions, type OpenDialogOptions } from 'electron'
+import { app, desktopCapturer, dialog, Notification, protocol, safeStorage, screen, session, shell, type BrowserWindow, type MessageBoxOptions, type OpenDialogOptions } from 'electron'
 import fs from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, join } from 'node:path'
@@ -226,6 +226,14 @@ function boot(): void {
   app.whenReady().then(() => {
     store.load()
     assets.init()
+    const rendererUrl = process.env['ELECTRON_RENDERER_URL']
+    session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
+      const url = request.frame?.url ?? ''
+      const own = url.startsWith('file://') || (rendererUrl !== undefined && url.startsWith(rendererUrl))
+      const sources = own ? await desktopCapturer.getSources({ types: ['screen'] }) : []
+      if (sources.length === 0) return callback({})
+      callback({ video: sources[0], audio: 'loopback' })
+    })
     protocol.handle(ASSET_SCHEME, (request) => {
       const r = serveAsset(assets, request.url)
       return new Response(r.body ? new Uint8Array(r.body) : null, { status: r.status, headers: r.headers })
