@@ -19,6 +19,9 @@ export function Settings({ data }: { data: AppData }) {
   const [scale, setScale] = useState(s.textScale)
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
   const [backupMsg, setBackupMsg] = useState('')
+  const [version, setVersion] = useState('')
+  const [updateMsg, setUpdateMsg] = useState('')
+  const [checking, setChecking] = useState(false)
 
   useEffect(() => setOpacity(s.opacity), [s.opacity])
   useEffect(() => setScale(s.textScale), [s.textScale])
@@ -30,6 +33,19 @@ export function Settings({ data }: { data: AppData }) {
   useEffect(() => {
     window.shima.listDisplays().then(setDisplays)
   }, [data])
+
+  useEffect(() => {
+    window.shima.getVersion().then(setVersion)
+  }, [])
+
+  const checkUpdates = async () => {
+    setChecking(true)
+    setUpdateMsg('')
+    const s = await window.shima.checkForUpdates()
+    setChecking(false)
+    if (s.kind === 'current') setUpdateMsg("You're up to date")
+    else if (s.kind === 'error') setUpdateMsg(s.message)
+  }
 
   const runBackup = async (action: () => Promise<{ message: string }>) => setBackupMsg((await action()).message)
 
@@ -120,6 +136,14 @@ export function Settings({ data }: { data: AppData }) {
           </button>
         </div>
         {backupMsg && <p className="mt-2 text-[0.85rem] font-bold text-accent">{backupMsg}</p>}
+      </Section>
+
+      <Section label="Updates">
+        <p className="mb-3 text-muted">ShimaDo {version}</p>
+        <button className="btn" data-el="settings.check-updates" disabled={checking} onClick={checkUpdates}>
+          {checking ? 'Checking...' : 'Check for updates'}
+        </button>
+        {updateMsg && <p className="mt-2 text-[0.85rem] font-bold text-accent">{updateMsg}</p>}
       </Section>
 
       <Section label="Layout">

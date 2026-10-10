@@ -18,6 +18,9 @@ import { EditSession } from './edit'
 import { FloatManager } from './floats'
 import { SpaceManager } from './space'
 import { createTray } from './tray'
+import { autoUpdater } from 'electron-updater'
+import { UpdateController, type UpdaterLike } from './updater'
+import type { UpdateState } from '../shared/update'
 
 const MAX_BATCH = 50
 
@@ -35,6 +38,7 @@ function boot(): void {
   const resources = app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources')
   const windowIcon = join(resources, 'icon.ico')
   let tray: ReturnType<typeof createTray> | undefined
+  let stopUpdates = () => {}
 
   const panels = new PanelManager(
     store,
@@ -90,6 +94,14 @@ function boot(): void {
     },
     onNotifyClick: () => panels.show('focus')
   })
+
+  const updates = new UpdateController(autoUpdater as unknown as UpdaterLike, app.isPackaged, (s) => {
+    panels.broadcast('update:state', s)
+    if (s.kind === 'available' || s.kind === 'downloading' || s.kind === 'ready' || (s.kind === 'error' && s.during === 'download')) panels.show('update')
+    else if (s.kind === 'idle') panels.hide('update')
+  })
+
+  const checkForUpdates = (): Promise<UpdateState> => updates.check(true)
 
   const changeSettings = (patch: SettingsPatch) => {
     const previousScale = store.data.settings.textScale
@@ -179,6 +191,7 @@ function boot(): void {
     panels.flush()
     timer.dispose()
     panels.quitting = true
+    stopUpdates()
     floats.dispose()
     space.dispose()
   })
@@ -215,13 +228,24 @@ function boot(): void {
         if (results.some((r) => r.ok)) panels.broadcast('data:changed', store.data)
         return results
       },
+      appVersion: () => app.getVersion(),
+      getUpdateState: () => updates.state,
+      checkForUpdates,
+      downloadUpdate: () => updates.download(),
+      installUpdate: () => updates.installNow(),
+      installUpdateOnQuit: () => updates.installOnQuit(),
+      dismissUpdate: () => updates.later(),
       changeSettings, confirmExit, pickAvatar, readAvatar: () => readAvatarDataUrl(userData), exportBackup, importBackup }, floats)
-    tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit(), isEditing: () => edit.state.active, onEdit: (on) => edit.setActive(on) })
+    tray = createTray({ store, panels, iconPath: windowIcon, onSettings: changeSettings, onExit: () => app.quit(), isEditing: () => edit.state.active, onEdit: (on) => edit.setActive(on),
+      onCheckUpdates: () => void checkForUpdates().then((s) => {
+        if (s.kind === 'current') new Notification({ title: 'ShimaDo', body: "You're up to date" }).show()
+        else if (s.kind === 'error') new Notification({ title: 'ShimaDo', body: `Update check failed: ${s.message}` }).show()
+      }) })
 
     for (const id of PANEL_IDS) {
       if (id === 'mini') continue
       if (id === 'bar' || id === 'checklist') panels.show(id)
-      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'welcome' && id !== 'designer' && id !== 'layers' && store.data.settings.panels[id].visible) panels.show(id)
+      else if (id !== 'settings' && id !== 'profile' && id !== 'confirm' && id !== 'update' && id !== 'welcome' && id !== 'designer' && id !== 'layers' && store.data.settings.panels[id].visible) panels.show(id)
     }
 
     panels.fitAll()
@@ -236,6 +260,8 @@ function boot(): void {
     screen.on('display-metrics-changed', displaysChanged)
 
     if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: store.data.settings.launchAtStartup })
+
+    stopUpdates = updates.start()
 
     startScheduler(store, (occ) => {
       const n = new Notification({ title: 'ShimaDo', body: `${occ.task.time}  ${occ.task.title}` })
