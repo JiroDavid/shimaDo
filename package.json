@@ -1,7 +1,7 @@
 {
   "name": "shimado",
   "productName": "ShimaDo",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Persistent floating to-do panels with a Japanese retro Linux look",
   "author": "JiroDavid",
   "license": "MIT",
