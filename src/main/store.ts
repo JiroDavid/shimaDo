@@ -3,7 +3,7 @@ import path from 'node:path'
 import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings, type Task } from '../shared/types'
 import { emptyGym } from '../shared/gym'
 import { isValidTime } from '../shared/dates'
-import { CLIENT_ID_PATTERN } from '../shared/spotify'
+import { CLIENT_ID_PATTERN, SPOTIFY_STYLES, type SpotifyStyle } from '../shared/spotify'
 import { defaultPage, sanitizePages } from '../shared/notes'
 import { sanitizeAssets } from '../shared/assets'
 import { emptyDesign, sanitizeDesign } from '../shared/design'
@@ -39,6 +39,7 @@ export function defaultData(): AppData {
       onboarded: false,
       launchAtStartup: true,
     spotifyClientId: '',
+    spotifyStyle: 'classic',
       textScale: 1,
       layoutVersion: LAYOUT_VERSION,
       panels: {
@@ -147,7 +148,8 @@ export function migrate(raw: unknown): AppData {
       theme: theme.id,
       accent: normaliseAccentInput(s.accent) ?? theme.defaultAccent,
       onboarded: typeof s.onboarded === 'boolean' ? s.onboarded : true,
-      spotifyClientId: typeof s.spotifyClientId === 'string' && CLIENT_ID_PATTERN.test(s.spotifyClientId) ? s.spotifyClientId : ''
+      spotifyClientId: typeof s.spotifyClientId === 'string' && CLIENT_ID_PATTERN.test(s.spotifyClientId) ? s.spotifyClientId : '',
+      spotifyStyle: typeof s.spotifyStyle === 'string' && (SPOTIFY_STYLES as string[]).includes(s.spotifyStyle) ? (s.spotifyStyle as SpotifyStyle) : 'classic'
     }
   }
 }

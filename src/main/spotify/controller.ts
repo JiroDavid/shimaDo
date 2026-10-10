@@ -1,13 +1,13 @@
-import { HISTORY_POLL_MS, type NowPlaying, type Play, type SpotifyState, type Stats, type StatsRange } from '../../shared/spotify'
-import { AuthLostError } from './api'
+import { HISTORY_POLL_MS, type ControlAction, type NowPlaying, type Play, type SpotifyState, type Stats, type StatsRange } from '../../shared/spotify'
+import { AuthLostError, ControlError } from './api'
 import { LoginCancelledError } from './auth'
 import { computeStats } from './history'
 import { NowPlayingPoller } from './poller'
 
 export interface SpotifyDeps {
   clientId(): string
-  auth: { connected: boolean; connect(): Promise<void>; cancel(): void; disconnect(): void }
-  api: { nowPlaying(): Promise<NowPlaying | null>; recentlyPlayed(): Promise<Play[]> }
+  auth: { connected: boolean; canControl: boolean; connect(): Promise<void>; cancel(): void; disconnect(): void }
+  api: { nowPlaying(): Promise<NowPlaying | null>; recentlyPlayed(): Promise<Play[]>; control(action: ControlAction): Promise<void> }
   history: { add(plays: Play[]): number; plays: Play[] }
   broadcast(s: SpotifyState): void
 }
@@ -17,6 +17,9 @@ export class SpotifyController {
   private offline = false
   private error: string | null = null
   private connecting = false
+  private premiumRequired = false
+  private controlError: string | null = null
+  private errorTimer: ReturnType<typeof setTimeout> | null = null
   private watching = false
   private poller: NowPlayingPoller
 
@@ -34,13 +37,14 @@ export class SpotifyController {
 
   get state(): SpotifyState {
     const status = this.connecting ? 'connecting' : !this.deps.clientId() ? 'no-client' : this.deps.auth.connected ? 'connected' : 'disconnected'
-    return { status, nowPlaying: status === 'connected' ? this.nowPlaying : null, offline: this.offline, error: this.error }
+    return { status, nowPlaying: status === 'connected' ? this.nowPlaying : null, offline: this.offline, error: this.error, canControl: this.deps.auth.canControl, premiumRequired: this.premiumRequired, controlError: this.controlError }
   }
 
   async connect(): Promise<void> {
     if (this.connecting || !this.deps.clientId()) return
     this.connecting = true
     this.error = null
+    this.premiumRequired = false
     this.emit()
     try {
       await this.deps.auth.connect()
@@ -66,6 +70,23 @@ export class SpotifyController {
 
   cancel(): void {
     this.deps.auth.cancel()
+  }
+
+  async control(action: ControlAction): Promise<void> {
+    if (!this.deps.auth.canControl) return this.fail('Reconnect to enable controls')
+    if (this.premiumRequired) return this.fail('Controls need Spotify Premium')
+    try {
+      await this.deps.api.control(action)
+    } catch (e) {
+      if (e instanceof AuthLostError) return this.revoked()
+      if (e instanceof ControlError) {
+        if (e.kind === 'premium') this.premiumRequired = true
+        return this.fail(e.message)
+      }
+      return this.fail('Could not reach Spotify')
+    }
+    this.clearControlError()
+    setTimeout(() => this.poller.pollNow(), 600)
   }
 
   disconnect(): void {
@@ -99,7 +120,25 @@ export class SpotifyController {
     this.emit()
   }
 
+  private fail(message: string): void {
+    this.controlError = message
+    if (this.errorTimer) clearTimeout(this.errorTimer)
+    this.errorTimer = setTimeout(() => this.clearControlError(), 6000)
+    this.emit()
+  }
+
+  private clearControlError(): void {
+    if (this.errorTimer) clearTimeout(this.errorTimer)
+    this.errorTimer = null
+    if (this.controlError !== null) {
+      this.controlError = null
+      this.emit()
+    }
+  }
+
   private reset(): void {
+    this.premiumRequired = false
+    this.clearControlError()
     this.poller.stop()
     this.deps.auth.disconnect()
     this.nowPlaying = null

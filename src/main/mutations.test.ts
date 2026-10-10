@@ -209,6 +209,13 @@ describe('mutations', () => {
     expect(sanitizeSettingsPatch({ spotifyClientId: 42 })).toEqual({})
   })
 
+  it('sanitizeSettingsPatch accepts only known spotify styles', () => {
+    expect(sanitizeSettingsPatch({ spotifyStyle: 'compact' })).toEqual({ spotifyStyle: 'compact' })
+    expect(sanitizeSettingsPatch({ spotifyStyle: 'visualizer' })).toEqual({ spotifyStyle: 'visualizer' })
+    expect(sanitizeSettingsPatch({ spotifyStyle: 'neon' })).toEqual({})
+    expect(sanitizeSettingsPatch({ spotifyStyle: 3 })).toEqual({})
+  })
+
   it('setHabitDay toggles a day for an existing habit', () => {
     const d = defaultData()
     addHabit(d, { name: 'Read', icon: 'book' }, 'h1')

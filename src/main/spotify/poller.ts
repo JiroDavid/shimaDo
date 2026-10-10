@@ -28,6 +28,13 @@ export class NowPlayingPoller {
     this.timer = null
   }
 
+  pollNow(): void {
+    if (!this.running) return
+    if (this.timer) clearTimeout(this.timer)
+    this.timer = null
+    void this.tick(++this.generation)
+  }
+
   private async tick(generation: number): Promise<void> {
     let next = IDLE_POLL_MS
     try {

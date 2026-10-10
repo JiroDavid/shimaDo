@@ -4,7 +4,7 @@ import type { AssetResult } from '../shared/assets'
 import { PANEL_IDS, type BackupResult, type Edge, type GymDay, type HabitInput, type PanelId, type ProfileInput, type SettingsPatch, type TaskInput, type TimerAction } from '../shared/types'
 import { toDateKey } from '../shared/dates'
 import type { UpdateState } from '../shared/update'
-import type { SpotifyState, Stats, StatsRange } from '../shared/spotify'
+import { parseControlAction, type ControlAction, type SpotifyState, type Stats, type StatsRange } from '../shared/spotify'
 import {
   addHabit, addTask, deleteHabit, deleteTask, sanitizeSettingsPatch, setDone, setGymDone, setGymOverride,
   setHabitDay, addPage, deletePage, renamePage, setPageText, setActivePage, setProfile, setSplit, setWeighIn, updateHabit, updateTask
@@ -39,6 +39,7 @@ export interface AppActions {
   getSpotifyState(): SpotifyState
   spotifyConnect(): Promise<void>
   spotifyCancel(): void
+  spotifyControl(action: ControlAction): Promise<void>
   openSpotifyDashboard(): void
   spotifyDisconnect(): void
   spotifyWatch(on: boolean): void
@@ -133,6 +134,10 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.handle('spotify:get', () => actions.getSpotifyState())
   ipcMain.handle('spotify:connect', () => actions.spotifyConnect())
   ipcMain.handle('spotify:open-dashboard', () => actions.openSpotifyDashboard())
+  ipcMain.handle('spotify:control', (_e, raw: unknown) => {
+    const action = parseControlAction(raw)
+    return action ? actions.spotifyControl(action) : undefined
+  })
   ipcMain.handle('spotify:cancel', () => actions.spotifyCancel())
   ipcMain.handle('spotify:disconnect', () => actions.spotifyDisconnect())
   ipcMain.handle('spotify:stats', (_e, range: unknown) => actions.spotifyStats(range === '30d' || range === 'all' ? range : '7d'))

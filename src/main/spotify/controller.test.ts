@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { NowPlaying, Play, SpotifyState } from '../../shared/spotify'
-import { AuthLostError } from './api'
+import type { ControlAction, NowPlaying, Play, SpotifyState } from '../../shared/spotify'
+import { AuthLostError, ControlError } from './api'
 import { LoginCancelledError } from './auth'
 import { SpotifyController } from './controller'
 
 const np: NowPlaying = { track: { id: 't', name: 'S', artists: ['A'], album: 'X', art: null, durationMs: 1000 }, progressMs: 0, device: null, playing: true, fetchedAt: 0 }
 
-function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; onCancel?: () => void; nowPlaying?: () => Promise<NowPlaying | null>; recent?: () => Promise<Play[]> } = {}) {
+function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; onCancel?: () => void; canControl?: boolean; control?: (a: ControlAction) => Promise<void>; nowPlaying?: () => Promise<NowPlaying | null>; recent?: () => Promise<Play[]> } = {}) {
   const states: SpotifyState[] = []
   let connected = opts.connected ?? false
   let clientId = opts.clientId ?? 'a'.repeat(32)
@@ -20,12 +20,14 @@ function setup(opts: { clientId?: string; connected?: boolean; connect?: () => P
     disconnect: vi.fn(() => {
       connected = false
     }),
-    cancel: vi.fn(() => opts.onCancel?.())
+    cancel: vi.fn(() => opts.onCancel?.()),
+    canControl: opts.canControl ?? true
   }
   const history = { plays: [] as Play[], add: vi.fn((p: Play[]) => p.length) }
-  const api = { nowPlaying: opts.nowPlaying ?? (async () => np), recentlyPlayed: opts.recent ?? (async () => [] as Play[]) }
+  const control = vi.fn(opts.control ?? (async () => {}))
+  const api = { nowPlaying: opts.nowPlaying ?? (async () => np), recentlyPlayed: opts.recent ?? (async () => [] as Play[]), control }
   const c = new SpotifyController({ clientId: () => clientId, auth, api, history, broadcast: (s) => states.push(s) })
-  return { c, auth, states, history, setClientId: (v: string) => (clientId = v) }
+  return { c, auth, states, history, control, setClientId: (v: string) => (clientId = v) }
 }
 
 describe('SpotifyController', () => {
@@ -180,5 +182,76 @@ describe('history polling', () => {
     const t = setup()
     t.history.plays = [{ at: Date.now() - 1000, id: 'a', name: 'A', artists: ['Z'], durationMs: 60_000 }]
     expect(t.c.stats('7d')).toMatchObject({ plays: 1, totalMs: 60_000, topArtists: [{ name: 'Z', plays: 1 }] })
+  })
+})
+
+describe('controls', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('sends the action, then polls once more after 600 ms', async () => {
+    const nowPlaying = vi.fn(async () => np)
+    const t = setup({ connected: true, nowPlaying })
+    t.c.setWatching(true)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(nowPlaying).toHaveBeenCalledTimes(1)
+    await t.c.control({ type: 'pause' })
+    expect(t.control).toHaveBeenCalledWith({ type: 'pause' })
+    await vi.advanceTimersByTimeAsync(599)
+    expect(nowPlaying).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(nowPlaying).toHaveBeenCalledTimes(2)
+  })
+
+  it('refuses without the control permission and asks to reconnect', async () => {
+    const t = setup({ connected: true, canControl: false })
+    await t.c.control({ type: 'next' })
+    expect(t.control).not.toHaveBeenCalled()
+    expect(t.c.state).toMatchObject({ canControl: false, controlError: 'Reconnect to enable controls' })
+  })
+
+  it('shows a control failure for 6 seconds and remembers a Premium requirement', async () => {
+    const t = setup({ connected: true, control: async () => { throw new ControlError('premium', 'Controls need Spotify Premium') } })
+    await t.c.control({ type: 'play' })
+    expect(t.c.state).toMatchObject({ controlError: 'Controls need Spotify Premium', premiumRequired: true })
+    await vi.advanceTimersByTimeAsync(5999)
+    expect(t.c.state.controlError).not.toBeNull()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(t.c.state.controlError).toBeNull()
+    expect(t.c.state.premiumRequired).toBe(true)
+  })
+
+  it('does not call Spotify while Premium is known to be missing', async () => {
+    const t = setup({ connected: true, control: async () => { throw new ControlError('premium', 'Controls need Spotify Premium') } })
+    await t.c.control({ type: 'play' })
+    await t.c.control({ type: 'pause' })
+    expect(t.control).toHaveBeenCalledTimes(1)
+  })
+
+  it('a successful control clears an earlier error', async () => {
+    let fail = true
+    const t = setup({ connected: true, control: async () => { if (fail) throw new ControlError('no-device', 'Open Spotify on a device first') } })
+    await t.c.control({ type: 'play' })
+    fail = false
+    await t.c.control({ type: 'play' })
+    expect(t.c.state.controlError).toBeNull()
+  })
+
+  it('reconnecting clears the Premium flag', async () => {
+    const t = setup({ connected: true, control: async () => { throw new ControlError('premium', 'Controls need Spotify Premium') } })
+    await t.c.control({ type: 'play' })
+    expect(t.c.state.premiumRequired).toBe(true)
+    await t.c.connect()
+    expect(t.c.state.premiumRequired).toBe(false)
+  })
+
+  it('reports an unreachable Spotify and treats lost access as a revoked login', async () => {
+    const a = setup({ connected: true, control: async () => { throw new TypeError('fetch failed') } })
+    await a.c.control({ type: 'play' })
+    expect(a.c.state.controlError).toBe('Could not reach Spotify')
+    const b = setup({ connected: true, control: async () => { throw new AuthLostError() } })
+    await b.c.control({ type: 'play' })
+    expect(b.c.state.status).toBe('disconnected')
+    expect(b.c.state.error).toMatch(/connect again/i)
   })
 })

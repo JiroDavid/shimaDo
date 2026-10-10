@@ -258,6 +258,7 @@ function boot(): void {
       getSpotifyState: () => spotify.state,
       spotifyConnect: () => spotify.connect(),
       spotifyCancel: () => spotify.cancel(),
+      spotifyControl: (action) => spotify.control(action),
       openSpotifyDashboard: () => void shell.openExternal(SPOTIFY_DASHBOARD_URL),
       spotifyDisconnect: () => spotify.disconnect(),
       spotifyWatch: (on) => spotify.setWatching(on),

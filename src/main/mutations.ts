@@ -2,7 +2,7 @@ import type { AppData, GymDay, Habit, HabitInput, ProfileInput, SettingsPatch, T
 import { isValidDateKey } from '../shared/dates'
 import { normalizeDay, normalizeDays, validateGymDay, validateGymDays, validateWeighIn } from '../shared/gym'
 import { MAX_HABITS, validateHabitInput } from '../shared/habits'
-import { CLIENT_ID_PATTERN } from '../shared/spotify'
+import { CLIENT_ID_PATTERN, SPOTIFY_STYLES, type SpotifyStyle } from '../shared/spotify'
 import { MAX_NOTES_LENGTH, MAX_PAGES, MAX_TITLE_LENGTH, defaultPage } from '../shared/notes'
 import { normaliseAccentInput } from '../shared/theme'
 import { THEME_IDS } from '../shared/themes'
@@ -145,6 +145,7 @@ export function sanitizeSettingsPatch(raw: unknown): SettingsPatch {
     const id = r.spotifyClientId.trim()
     if (id === '' || CLIENT_ID_PATTERN.test(id)) out.spotifyClientId = id
   }
+  if (typeof r.spotifyStyle === 'string' && (SPOTIFY_STYLES as string[]).includes(r.spotifyStyle)) out.spotifyStyle = r.spotifyStyle as SpotifyStyle
   return out
 }
 

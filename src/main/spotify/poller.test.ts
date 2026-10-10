@@ -102,6 +102,21 @@ describe('NowPlayingPoller', () => {
     expect(t.calls()).toBe(2)
   })
 
+  it('pollNow fetches immediately while running and does nothing when stopped', async () => {
+    const t = setup([async () => np(true)])
+    t.poller.pollNow()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(t.calls()).toBe(0)
+    t.poller.start()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(t.calls()).toBe(1)
+    t.poller.pollNow()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(t.calls()).toBe(2)
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(t.calls()).toBe(3)
+  })
+
   it('stops and reports when access is lost', async () => {
     const t = setup([async () => { throw new AuthLostError() }])
     t.poller.start()

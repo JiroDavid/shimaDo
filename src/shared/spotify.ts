@@ -39,6 +39,18 @@ export interface Play {
   durationMs: number
 }
 
+export type SpotifyStyle = 'classic' | 'compact' | 'visualizer'
+export const SPOTIFY_STYLES: SpotifyStyle[] = ['classic', 'compact', 'visualizer']
+
+export function parseControlAction(raw: unknown): ControlAction | null {
+  if (typeof raw !== 'object' || raw === null) return null
+  const r = raw as Record<string, unknown>
+  if (r.type === 'play' || r.type === 'pause' || r.type === 'next' || r.type === 'previous') return { type: r.type }
+  if (r.type === 'seek' && typeof r.positionMs === 'number' && Number.isFinite(r.positionMs)) return { type: 'seek', positionMs: r.positionMs }
+  if (r.type === 'volume' && typeof r.percent === 'number' && Number.isFinite(r.percent)) return { type: 'volume', percent: r.percent }
+  return null
+}
+
 export type SpotifyStatus = 'no-client' | 'disconnected' | 'connecting' | 'connected'
 
 export interface SpotifyState {
@@ -46,6 +58,9 @@ export interface SpotifyState {
   nowPlaying: NowPlaying | null
   offline: boolean
   error: string | null
+  canControl: boolean
+  premiumRequired: boolean
+  controlError: string | null
 }
 
 export type StatsRange = '7d' | '30d' | 'all'

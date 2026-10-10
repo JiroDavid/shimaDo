@@ -4,7 +4,7 @@ import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
 import type { UpdateState } from './update'
-import type { SpotifyState, Stats, StatsRange } from './spotify'
+import type { ControlAction, SpotifyState, SpotifyStyle, Stats, StatsRange } from './spotify'
 import type { ZoomAction } from './zoom'
 
 export type TaskKind = 'once' | 'daily' | 'weekly'
@@ -72,6 +72,7 @@ export interface Settings {
   launchAtStartup: boolean
   textScale: number
   spotifyClientId: string
+  spotifyStyle: SpotifyStyle
   layoutVersion?: number
   panels: Record<PanelId, PanelState>
 }
@@ -93,7 +94,7 @@ export interface Gym {
   weighIns: Record<string, number>
 }
 
-export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'theme' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale' | 'spotifyClientId'>>
+export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'theme' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale' | 'spotifyClientId' | 'spotifyStyle'>>
 
 export interface Profile {
   username: string
@@ -258,6 +259,7 @@ export interface ShimaApi {
   onSpotifyState(cb: (s: SpotifyState) => void): () => void
   spotifyConnect(): Promise<void>
   spotifyCancel(): Promise<void>
+  spotifyControl(action: ControlAction): Promise<void>
   openSpotifyDashboard(): Promise<void>
   spotifyDisconnect(): Promise<void>
   spotifyWatch(on: boolean): void
