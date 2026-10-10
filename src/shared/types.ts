@@ -70,6 +70,7 @@ export interface Settings {
   onboarded: boolean
   launchAtStartup: boolean
   textScale: number
+  spotifyClientId: string
   layoutVersion?: number
   panels: Record<PanelId, PanelState>
 }
@@ -91,7 +92,7 @@ export interface Gym {
   weighIns: Record<string, number>
 }
 
-export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'theme' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale'>>
+export type SettingsPatch = Partial<Pick<Settings, 'opacity' | 'accent' | 'theme' | 'alwaysOnTop' | 'launchAtStartup' | 'textScale' | 'spotifyClientId'>>
 
 export interface Profile {
   username: string

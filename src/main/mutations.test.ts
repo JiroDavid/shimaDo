@@ -201,6 +201,14 @@ describe('mutations', () => {
     })
   })
 
+  it('sanitizeSettingsPatch accepts a valid spotify client id, trims it and rejects junk', () => {
+    const id = 'ab12'.repeat(8)
+    expect(sanitizeSettingsPatch({ spotifyClientId: `  ${id}  ` })).toEqual({ spotifyClientId: id })
+    expect(sanitizeSettingsPatch({ spotifyClientId: '' })).toEqual({ spotifyClientId: '' })
+    expect(sanitizeSettingsPatch({ spotifyClientId: 'not-an-id' })).toEqual({})
+    expect(sanitizeSettingsPatch({ spotifyClientId: 42 })).toEqual({})
+  })
+
   it('setHabitDay toggles a day for an existing habit', () => {
     const d = defaultData()
     addHabit(d, { name: 'Read', icon: 'book' }, 'h1')

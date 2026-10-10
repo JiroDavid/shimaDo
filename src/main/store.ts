@@ -3,6 +3,7 @@ import path from 'node:path'
 import { PANEL_IDS, type AppData, type Gym, type Habit, type PanelId, type PanelState, type Profile, type Settings, type Task } from '../shared/types'
 import { emptyGym } from '../shared/gym'
 import { isValidTime } from '../shared/dates'
+import { CLIENT_ID_PATTERN } from '../shared/spotify'
 import { defaultPage, sanitizePages } from '../shared/notes'
 import { sanitizeAssets } from '../shared/assets'
 import { emptyDesign, sanitizeDesign } from '../shared/design'
@@ -37,6 +38,7 @@ export function defaultData(): AppData {
       theme: DEFAULT_THEME_ID,
       onboarded: false,
       launchAtStartup: true,
+    spotifyClientId: '',
       textScale: 1,
       layoutVersion: LAYOUT_VERSION,
       panels: {
@@ -143,7 +145,8 @@ export function migrate(raw: unknown): AppData {
       layoutVersion: LAYOUT_VERSION,
       theme: theme.id,
       accent: normaliseAccentInput(s.accent) ?? theme.defaultAccent,
-      onboarded: typeof s.onboarded === 'boolean' ? s.onboarded : true
+      onboarded: typeof s.onboarded === 'boolean' ? s.onboarded : true,
+      spotifyClientId: typeof s.spotifyClientId === 'string' && CLIENT_ID_PATTERN.test(s.spotifyClientId) ? s.spotifyClientId : ''
     }
   }
 }

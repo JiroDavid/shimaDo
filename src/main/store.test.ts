@@ -216,6 +216,22 @@ describe('Store', () => {
     expect(s.data.activePage).toBe('b')
   })
 
+  it('defaults the spotify client id and drops a junk one on load', () => {
+    const dir = tmpDir()
+    const file = path.join(dir, 'data.json')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [] }))
+    const s = new Store(file)
+    s.load()
+    expect(s.data.settings.spotifyClientId).toBe('')
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { spotifyClientId: 'junk' } }))
+    s.load()
+    expect(s.data.settings.spotifyClientId).toBe('')
+    const id = 'cd34'.repeat(8)
+    fs.writeFileSync(file, JSON.stringify({ version: 1, tasks: [], completions: [], settings: { spotifyClientId: id } }))
+    s.load()
+    expect(s.data.settings.spotifyClientId).toBe(id)
+  })
+
   it('drops end times that cannot be valid when loading', () => {
     const dir = tmpDir()
     const file = path.join(dir, 'data.json')
