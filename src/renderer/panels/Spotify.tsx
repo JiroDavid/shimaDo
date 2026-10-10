@@ -1,11 +1,69 @@
 import { useEffect, useState } from 'react'
-import type { SpotifyState } from '../../shared/spotify'
+import type { SpotifyState, Stats, StatsRange } from '../../shared/spotify'
+import { BarChart } from '../components/BarChart'
 
 type Tab = 'now' | 'stats'
 
 const fmt = (ms: number): string => {
   const s = Math.max(0, Math.floor(ms / 1000))
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
+function StatsView() {
+  const [range, setRange] = useState<StatsRange>('7d')
+  const [stats, setStats] = useState<Stats | null>(null)
+
+  useEffect(() => {
+    const load = () => window.shima.spotifyStats(range).then(setStats)
+    load()
+    const t = setInterval(load, 60_000)
+    return () => clearInterval(t)
+  }, [range])
+
+  const hours = stats ? Math.floor(stats.totalMs / 3_600_000) : 0
+  const minutes = stats ? Math.round((stats.totalMs % 3_600_000) / 60_000) : 0
+  return (
+    <div className="flex flex-col gap-3 pb-2">
+      <div className="flex gap-1">
+        {(['7d', '30d', 'all'] as const).map((r) => (
+          <button key={r} className={`btn !min-h-[28px] !px-2.5 !py-0 !text-[0.8rem] ${range === r ? 'btn-active' : ''}`} onClick={() => setRange(r)}>
+            {r === '7d' ? '7 days' : r === '30d' ? '30 days' : 'All time'}
+          </button>
+        ))}
+      </div>
+      {!stats || stats.plays === 0 ? (
+        <p className="py-4 text-center text-muted">Listen for a while and check back.</p>
+      ) : (
+        <>
+          <div className="text-center">
+            <div className="text-[1.6rem] font-extrabold text-accent">{hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}</div>
+            <div className="text-[0.8rem] font-bold text-muted">{stats.plays.toLocaleString()} plays</div>
+          </div>
+          <BarChart values={stats.perDay.map((d) => d.minutes)} labels={stats.perDay.map((d) => d.date.slice(8))} />
+          <div>
+            <div className="mb-1 text-[0.8rem] font-extrabold uppercase tracking-wider text-muted">Top artists</div>
+            {stats.topArtists.map((a) => (
+              <div key={a.name} className="flex justify-between gap-2">
+                <span className="truncate">{a.name}</span>
+                <span className="font-bold text-muted">{a.plays}</span>
+              </div>
+            ))}
+          </div>
+          <div>
+            <div className="mb-1 text-[0.8rem] font-extrabold uppercase tracking-wider text-muted">Top tracks</div>
+            {stats.topTracks.map((t) => (
+              <div key={t.name + t.artist} className="flex justify-between gap-2">
+                <span className="truncate">
+                  {t.name} <span className="text-muted">- {t.artist}</span>
+                </span>
+                <span className="font-bold text-muted">{t.plays}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 function NowPlayingView({ state }: { state: SpotifyState }) {
@@ -105,7 +163,7 @@ export function Spotify() {
       ) : tab === 'now' ? (
         <NowPlayingView state={state} />
       ) : (
-        <p className="py-6 text-center text-muted">Stats are coming soon.</p>
+        <StatsView />
       )}
     </div>
   )

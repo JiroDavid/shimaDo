@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { NowPlaying, SpotifyState } from '../../shared/spotify'
+import type { NowPlaying, Play, SpotifyState } from '../../shared/spotify'
 import { AuthLostError } from './api'
 import { SpotifyController } from './controller'
 
 const np: NowPlaying = { track: { id: 't', name: 'S', artists: ['A'], album: 'X', art: null, durationMs: 1000 }, progressMs: 0, playing: true, fetchedAt: 0 }
 
-function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; nowPlaying?: () => Promise<NowPlaying | null> } = {}) {
+function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; nowPlaying?: () => Promise<NowPlaying | null>; recent?: () => Promise<Play[]> } = {}) {
   const states: SpotifyState[] = []
   let connected = opts.connected ?? false
   let clientId = opts.clientId ?? 'a'.repeat(32)
@@ -20,9 +20,10 @@ function setup(opts: { clientId?: string; connected?: boolean; connect?: () => P
       connected = false
     })
   }
-  const api = { nowPlaying: opts.nowPlaying ?? (async () => np) }
-  const c = new SpotifyController({ clientId: () => clientId, auth, api, broadcast: (s) => states.push(s) })
-  return { c, auth, states, setClientId: (v: string) => (clientId = v) }
+  const history = { plays: [] as Play[], add: vi.fn((p: Play[]) => p.length) }
+  const api = { nowPlaying: opts.nowPlaying ?? (async () => np), recentlyPlayed: opts.recent ?? (async () => [] as Play[]) }
+  const c = new SpotifyController({ clientId: () => clientId, auth, api, history, broadcast: (s) => states.push(s) })
+  return { c, auth, states, history, setClientId: (v: string) => (clientId = v) }
 }
 
 describe('SpotifyController', () => {
@@ -107,5 +108,65 @@ describe('SpotifyController', () => {
     t.setClientId('')
     t.c.clientIdChanged()
     expect(t.c.state.status).toBe('no-client')
+  })
+})
+
+describe('history polling', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+  const p = (at: number): Play => ({ at, id: 'x', name: 'X', artists: ['A'], durationMs: 1000 })
+
+  it('fetches recent plays on start and every 10 minutes while connected', async () => {
+    const recent = vi.fn(async () => [p(1)])
+    const t = setup({ connected: true, recent })
+    const stop = t.c.start()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(recent).toHaveBeenCalledTimes(1)
+    expect(t.history.add).toHaveBeenCalledWith([p(1)])
+    await vi.advanceTimersByTimeAsync(600_000)
+    expect(recent).toHaveBeenCalledTimes(2)
+    stop()
+    await vi.advanceTimersByTimeAsync(1_200_000)
+    expect(recent).toHaveBeenCalledTimes(2)
+  })
+
+  it('does nothing while disconnected and fetches right after connecting', async () => {
+    const recent = vi.fn(async () => [p(1)])
+    const t = setup({ recent })
+    t.c.start()
+    await vi.advanceTimersByTimeAsync(600_000)
+    expect(recent).not.toHaveBeenCalled()
+    await t.c.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(recent).toHaveBeenCalledTimes(1)
+  })
+
+  it('survives a failing history fetch and tries again next time', async () => {
+    let n = 0
+    const recent = vi.fn(async () => {
+      if (n++ === 0) throw new Error('offline')
+      return [p(2)]
+    })
+    const t = setup({ connected: true, recent })
+    t.c.start()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(t.history.add).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(600_000)
+    expect(t.history.add).toHaveBeenCalledWith([p(2)])
+  })
+
+  it('treats lost access during a history fetch like a revoked login', async () => {
+    const t = setup({ connected: true, recent: async () => { throw new AuthLostError() } })
+    t.c.start()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(t.auth.disconnect).toHaveBeenCalled()
+    expect(t.c.state.status).toBe('disconnected')
+    expect(t.c.state.error).toMatch(/connect again/i)
+  })
+
+  it('computes stats from the stored history', () => {
+    const t = setup()
+    t.history.plays = [{ at: Date.now() - 1000, id: 'a', name: 'A', artists: ['Z'], durationMs: 60_000 }]
+    expect(t.c.stats('7d')).toMatchObject({ plays: 1, totalMs: 60_000, topArtists: [{ name: 'Z', plays: 1 }] })
   })
 })

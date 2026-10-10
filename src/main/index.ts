@@ -23,6 +23,7 @@ import { UpdateController, type UpdaterLike } from './updater'
 import { SpotifyAuth } from './spotify/auth'
 import { SpotifyApi } from './spotify/api'
 import { SpotifyController } from './spotify/controller'
+import { HistoryStore } from './spotify/history'
 import { createTokenStore } from './spotify/tokenStore'
 import { shouldRaisePrompt, type UpdateState } from '../shared/update'
 
@@ -43,6 +44,7 @@ function boot(): void {
   const windowIcon = join(resources, 'icon.ico')
   let tray: ReturnType<typeof createTray> | undefined
   let stopUpdates = () => {}
+  let stopSpotify = () => {}
 
   const panels = new PanelManager(
     store,
@@ -107,6 +109,8 @@ function boot(): void {
     shownUpdate = s
   })
 
+  const history = new HistoryStore(join(userData, 'spotify-history.json'))
+  history.load()
   const spotifyAuth = new SpotifyAuth({
     clientId: () => store.data.settings.spotifyClientId,
     store: createTokenStore(join(userData, 'spotify-token.bin'), safeStorage),
@@ -116,6 +120,7 @@ function boot(): void {
     clientId: () => store.data.settings.spotifyClientId,
     auth: spotifyAuth,
     api: new SpotifyApi(spotifyAuth),
+    history,
     broadcast: (s) => panels.broadcast('spotify:state', s)
   })
 
@@ -212,6 +217,7 @@ function boot(): void {
     timer.dispose()
     panels.quitting = true
     stopUpdates()
+    stopSpotify()
     floats.dispose()
     space.dispose()
   })
@@ -252,6 +258,7 @@ function boot(): void {
       spotifyConnect: () => spotify.connect(),
       spotifyDisconnect: () => spotify.disconnect(),
       spotifyWatch: (on) => spotify.setWatching(on),
+      spotifyStats: (range) => spotify.stats(range),
       appVersion: () => app.getVersion(),
       getUpdateState: () => updates.state,
       checkForUpdates,
@@ -286,6 +293,7 @@ function boot(): void {
     if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: store.data.settings.launchAtStartup })
 
     stopUpdates = updates.start()
+    stopSpotify = spotify.start()
 
     startScheduler(store, (occ) => {
       const n = new Notification({ title: 'ShimaDo', body: `${occ.task.time}  ${occ.task.title}` })

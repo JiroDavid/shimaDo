@@ -4,7 +4,7 @@ import type { Design, SelectedElement } from './design'
 import type { HabitIconId } from './habits'
 import type { TimerState } from './pomodoro'
 import type { UpdateState } from './update'
-import type { SpotifyState } from './spotify'
+import type { SpotifyState, Stats, StatsRange } from './spotify'
 import type { ZoomAction } from './zoom'
 
 export type TaskKind = 'once' | 'daily' | 'weekly'
@@ -259,6 +259,7 @@ export interface ShimaApi {
   spotifyConnect(): Promise<void>
   spotifyDisconnect(): Promise<void>
   spotifyWatch(on: boolean): void
+  spotifyStats(range: StatsRange): Promise<Stats>
   beginResize(id: PanelId, edge: Edge): void
   endResize(): void
   listDisplays(): Promise<DisplayInfo[]>

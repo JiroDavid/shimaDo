@@ -1,10 +1,13 @@
-import type { NowPlaying, SpotifyState } from '../../shared/spotify'
+import { HISTORY_POLL_MS, type NowPlaying, type Play, type SpotifyState, type Stats, type StatsRange } from '../../shared/spotify'
+import { AuthLostError } from './api'
+import { computeStats } from './history'
 import { NowPlayingPoller } from './poller'
 
 export interface SpotifyDeps {
   clientId(): string
   auth: { connected: boolean; connect(): Promise<void>; disconnect(): void }
-  api: { nowPlaying(): Promise<NowPlaying | null> }
+  api: { nowPlaying(): Promise<NowPlaying | null>; recentlyPlayed(): Promise<Play[]> }
+  history: { add(plays: Play[]): number; plays: Play[] }
   broadcast(s: SpotifyState): void
 }
 
@@ -24,13 +27,7 @@ export class SpotifyController {
         this.offline = offline
         this.emit()
       },
-      onAuthLost: () => {
-        deps.auth.disconnect()
-        this.nowPlaying = null
-        this.offline = false
-        this.error = 'Spotify access was revoked - connect again'
-        this.emit()
-      }
+      onAuthLost: () => this.revoked()
     })
   }
 
@@ -53,6 +50,17 @@ export class SpotifyController {
     }
     this.syncPoller()
     this.emit()
+    void this.pollHistory()
+  }
+
+  start(): () => void {
+    void this.pollHistory()
+    const timer = setInterval(() => void this.pollHistory(), HISTORY_POLL_MS)
+    return () => clearInterval(timer)
+  }
+
+  stats(range: StatsRange): Stats {
+    return computeStats(this.deps.history.plays, range, Date.now())
   }
 
   disconnect(): void {
@@ -66,6 +74,24 @@ export class SpotifyController {
 
   clientIdChanged(): void {
     this.reset()
+  }
+
+  private async pollHistory(): Promise<void> {
+    if (!this.deps.auth.connected) return
+    try {
+      this.deps.history.add(await this.deps.api.recentlyPlayed())
+    } catch (e) {
+      if (e instanceof AuthLostError) this.revoked()
+    }
+  }
+
+  private revoked(): void {
+    this.poller.stop()
+    this.deps.auth.disconnect()
+    this.nowPlaying = null
+    this.offline = false
+    this.error = 'Spotify access was revoked - connect again'
+    this.emit()
   }
 
   private reset(): void {

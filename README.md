@@ -38,6 +38,7 @@ ShimaDo is a personal desktop to-do app made of small floating panels that stay 
 - **Always on top** - drag, resize and hide panels like sticky notes
 - **Multi-monitor** - resize panels from any edge, move everything to another monitor, or reset the layout from Settings
 - **Tray control** - opacity, accent colour, always-on-top, launch at startup, Exit
+- **Spotify** - a Now Playing tab and listening stats (top artists and tracks, minutes per day), using your own free Spotify developer app (registering one needs Spotify Premium)
 - **Updates** - checks GitHub Releases, asks before downloading, and restarts into the new version on request
 - **Starts with Windows** - opens your day's tasks on boot
 
@@ -61,6 +62,14 @@ Run `dist/ShimaDo Setup 0.1.0.exe`. It installs ShimaDo for your user and adds S
 3. The Release workflow builds the installer and publishes it to GitHub Releases. Installed copies find it within 6 hours, or straight away via Settings > Check for updates.
 
 The first updater-enabled version has to be installed by hand once. Installers are unsigned, so Windows SmartScreen may warn on a fresh install (in-place updates are unaffected).
+
+## Spotify setup
+
+1. Go to developer.spotify.com/dashboard and create an app (this needs a Spotify Premium account).
+2. Add the redirect URI `http://127.0.0.1:53682/callback` and tick "Web API".
+3. Copy the Client ID into Settings > Spotify, then click Connect and approve in your browser.
+
+Only the last 50 plays can be backfilled after ShimaDo has been closed, so heavy listening while it is off leaves gaps in the stats. Listening time counts each play at full track length. History stays on your computer in `spotify-history.json`.
 
 ## Development
 
