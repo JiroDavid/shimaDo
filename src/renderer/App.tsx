@@ -90,7 +90,7 @@ function PanelApp() {
         {id === 'profile' && <Profile data={data} />}
         {id === 'confirm' && <Confirm />}
         {id === 'update' && <UpdatePrompt />}
-        {id === 'spotify' && <Spotify />}
+        {id === 'spotify' && <Spotify data={data} />}
         {id === 'designer' && <Designer data={data} />}
         {id === 'layers' && <Layers data={data} />}
       </PanelFrame>

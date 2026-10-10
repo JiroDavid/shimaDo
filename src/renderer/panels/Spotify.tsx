@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
-import type { SpotifyState, Stats, StatsRange } from '../../shared/spotify'
+import type { AppData } from '../../shared/types'
+import type { SpotifyState, SpotifyStyle, Stats, StatsRange } from '../../shared/spotify'
 import { BarChart } from '../components/BarChart'
+import { NowPlayingClassic } from './spotify/NowPlayingClassic'
+import { NowPlayingCompact } from './spotify/NowPlayingCompact'
+import { StyleSwitch } from './spotify/StyleSwitch'
 
 type Tab = 'now' | 'stats'
-
-const fmt = (ms: number): string => {
-  const s = Math.max(0, Math.floor(ms / 1000))
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-}
 
 function StatsView() {
   const [range, setRange] = useState<StatsRange>('7d')
@@ -66,52 +65,14 @@ function StatsView() {
   )
 }
 
-function NowPlayingView({ state }: { state: SpotifyState }) {
-  const [, tick] = useState(0)
+function NowPlayingView({ state, style }: { state: SpotifyState; style: SpotifyStyle }) {
   const np = state.nowPlaying
-  useEffect(() => {
-    if (!np?.playing) return
-    const t = setInterval(() => tick((n) => n + 1), 1000)
-    return () => clearInterval(t)
-  }, [np?.playing, np?.fetchedAt])
-
   if (!np) return <p className="py-6 text-center text-muted">{state.offline ? 'Offline - waiting for Spotify' : 'Nothing playing'}</p>
-  const progress = Math.min(np.track.durationMs, np.progressMs + (np.playing ? Date.now() - np.fetchedAt : 0))
-  const pct = np.track.durationMs ? (progress / np.track.durationMs) * 100 : 0
-  return (
-    <div className="flex flex-col items-center gap-3 pb-2 pt-2">
-      {np.track.art ? (
-        <img src={np.track.art} alt="" className="aspect-square w-full max-w-[220px] rounded-2xl object-cover" />
-      ) : (
-        <div className="aspect-square w-full max-w-[220px] rounded-2xl border-2 border-line" />
-      )}
-      <div className="w-full text-center">
-        <div className="truncate text-[1.1rem] font-extrabold" title={np.track.name}>
-          {np.track.name}
-        </div>
-        <div className="truncate text-muted" title={np.track.artists.join(', ')}>
-          {np.track.artists.join(', ')}
-        </div>
-        <div className="truncate text-[0.8rem] text-muted">{np.track.album}</div>
-      </div>
-      <div className="w-full">
-        <div className="h-2 overflow-hidden rounded-full border-2 border-line" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="mt-1 flex justify-between text-[0.75rem] font-bold text-muted">
-          <span>{fmt(progress)}</span>
-          <span>
-            {np.playing ? '' : 'Paused'}
-            {state.offline ? ' - offline' : ''}
-          </span>
-          <span>{fmt(np.track.durationMs)}</span>
-        </div>
-      </div>
-    </div>
-  )
+  if (style === 'compact') return <NowPlayingCompact state={state} np={np} />
+  return <NowPlayingClassic state={state} np={np} />
 }
 
-export function Spotify() {
+export function Spotify({ data }: { data: AppData }) {
   const [tab, setTab] = useState<Tab>('now')
   const [state, setState] = useState<SpotifyState | null>(null)
 
@@ -135,12 +96,15 @@ export function Spotify() {
 
   return (
     <div className="flex flex-col gap-2 pb-2 pt-2" style={{ minHeight: 'inherit' }}>
-      <div className="flex gap-1" role="tablist">
-        {(['now', 'stats'] as const).map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} className={`btn !min-h-[30px] !px-3 !py-0 !text-[0.85rem] ${tab === t ? 'btn-active' : ''}`} onClick={() => setTab(t)}>
-            {t === 'now' ? 'Now Playing' : 'Stats'}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1" role="tablist">
+          {(['now', 'stats'] as const).map((t) => (
+            <button key={t} role="tab" aria-selected={tab === t} className={`btn !min-h-[30px] !px-3 !py-0 !text-[0.85rem] ${tab === t ? 'btn-active' : ''}`} onClick={() => setTab(t)}>
+              {t === 'now' ? 'Now Playing' : 'Stats'}
+            </button>
+          ))}
+        </div>
+        {connected && tab === 'now' && <StyleSwitch value={data.settings.spotifyStyle} />}
       </div>
       {!connected ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
@@ -166,7 +130,7 @@ export function Spotify() {
           {state.error && <p className="text-[0.85rem] font-bold text-accent">{state.error}</p>}
         </div>
       ) : tab === 'now' ? (
-        <NowPlayingView state={state} />
+        <NowPlayingView state={state} style={data.settings.spotifyStyle} />
       ) : (
         <StatsView />
       )}
