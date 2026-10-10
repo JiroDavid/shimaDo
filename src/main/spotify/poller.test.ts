@@ -6,6 +6,7 @@ import { NowPlayingPoller } from './poller'
 const np = (playing: boolean): NowPlaying => ({
   track: { id: 't', name: 'S', artists: ['A'], album: 'X', art: null, durationMs: 1000 },
   progressMs: 0,
+  device: null,
   playing,
   fetchedAt: 0
 })

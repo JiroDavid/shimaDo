@@ -4,7 +4,7 @@ import { AuthLostError } from './api'
 import { LoginCancelledError } from './auth'
 import { SpotifyController } from './controller'
 
-const np: NowPlaying = { track: { id: 't', name: 'S', artists: ['A'], album: 'X', art: null, durationMs: 1000 }, progressMs: 0, playing: true, fetchedAt: 0 }
+const np: NowPlaying = { track: { id: 't', name: 'S', artists: ['A'], album: 'X', art: null, durationMs: 1000 }, progressMs: 0, device: null, playing: true, fetchedAt: 0 }
 
 function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; onCancel?: () => void; nowPlaying?: () => Promise<NowPlaying | null>; recent?: () => Promise<Play[]> } = {}) {
   const states: SpotifyState[] = []

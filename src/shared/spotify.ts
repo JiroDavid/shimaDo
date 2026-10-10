@@ -22,8 +22,14 @@ export interface NowPlaying {
   track: Track
   progressMs: number
   playing: boolean
+  device: { name: string; volumePercent: number | null } | null
   fetchedAt: number
 }
+
+export type ControlAction =
+  | { type: 'play' | 'pause' | 'next' | 'previous' }
+  | { type: 'seek'; positionMs: number }
+  | { type: 'volume'; percent: number }
 
 export interface Play {
   at: number
