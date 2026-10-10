@@ -214,6 +214,11 @@ describe('content security policy', () => {
     expect(csp).toMatch(/img-src[^;]*shimado-asset:/)
     expect(csp.replace(/img-src[^;]*;?/, '')).not.toContain('shimado-asset:')
   })
+
+  it('lets spotify album art load from the spotify cdn', () => {
+    const html = readFileSync(join(renderer, 'index.html'), 'utf8')
+    expect(html).toMatch(/img-src[^;"]*https:\/\/i\.scdn\.co/)
+  })
 })
 
 describe('placed layers in the markup', () => {

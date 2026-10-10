@@ -1,11 +1,12 @@
 import { HISTORY_POLL_MS, type NowPlaying, type Play, type SpotifyState, type Stats, type StatsRange } from '../../shared/spotify'
 import { AuthLostError } from './api'
+import { LoginCancelledError } from './auth'
 import { computeStats } from './history'
 import { NowPlayingPoller } from './poller'
 
 export interface SpotifyDeps {
   clientId(): string
-  auth: { connected: boolean; connect(): Promise<void>; disconnect(): void }
+  auth: { connected: boolean; connect(): Promise<void>; cancel(): void; disconnect(): void }
   api: { nowPlaying(): Promise<NowPlaying | null>; recentlyPlayed(): Promise<Play[]> }
   history: { add(plays: Play[]): number; plays: Play[] }
   broadcast(s: SpotifyState): void
@@ -44,7 +45,7 @@ export class SpotifyController {
     try {
       await this.deps.auth.connect()
     } catch (e) {
-      this.error = (e as Error).message
+      this.error = e instanceof LoginCancelledError ? null : (e as Error).message
     } finally {
       this.connecting = false
     }
@@ -61,6 +62,10 @@ export class SpotifyController {
 
   stats(range: StatsRange): Stats {
     return computeStats(this.deps.history.plays, range, Date.now())
+  }
+
+  cancel(): void {
+    this.deps.auth.cancel()
   }
 
   disconnect(): void {

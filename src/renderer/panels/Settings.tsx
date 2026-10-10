@@ -184,13 +184,17 @@ export function Settings({ data }: { data: AppData }) {
           onKeyDown={(e) => e.key === 'Enter' && saveClientId()}
         />
         {idMsg && <p className="mb-2 text-[0.85rem] font-bold text-accent">{idMsg}</p>}
-        {spotify?.status === 'connected' ? (
+        {spotify?.status === 'connecting' ? (
+          <button className="btn" onClick={() => window.shima.spotifyCancel()}>
+            Cancel (waiting for browser...)
+          </button>
+        ) : spotify?.status === 'connected' ? (
           <button className="btn" onClick={() => window.shima.spotifyDisconnect()}>
             Disconnect Spotify
           </button>
         ) : (
           <button className="btn" disabled={spotify?.status !== 'disconnected'} onClick={() => window.shima.spotifyConnect()}>
-            {spotify?.status === 'connecting' ? 'Waiting for browser...' : 'Connect Spotify'}
+            Connect Spotify
           </button>
         )}
         {spotify?.error && <p className="mt-2 text-[0.85rem] font-bold text-accent">{spotify.error}</p>}

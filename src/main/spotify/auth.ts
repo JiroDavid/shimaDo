@@ -8,6 +8,12 @@ const TOKEN_URL = 'https://accounts.spotify.com/api/token'
 const LOGIN_TIMEOUT_MS = 3 * 60 * 1000
 const EXPIRY_MARGIN_MS = 60_000
 
+export class LoginCancelledError extends Error {
+  constructor() {
+    super('Spotify login was cancelled')
+  }
+}
+
 export interface TokenStore {
   load(): string | null
   save(refreshToken: string): void
@@ -17,7 +23,7 @@ export interface TokenStore {
 interface Options {
   clientId: () => string
   store: TokenStore
-  openUrl: (url: string) => void
+  openUrl: (url: string) => void | Promise<unknown>
   fetchFn?: typeof fetch
   port?: number
   timeoutMs?: number
@@ -34,6 +40,8 @@ const PAGE = (msg: string) => `<!doctype html><meta charset="utf-8"><title>Shima
 export class SpotifyAuth implements TokenSource {
   private access: { token: string; expiresAt: number } | null = null
   private inflight: Promise<string> | null = null
+  private epoch = 0
+  private abortLogin: (() => void) | null = null
 
   constructor(private o: Options) {}
 
@@ -42,16 +50,23 @@ export class SpotifyAuth implements TokenSource {
   }
 
   disconnect(): void {
+    this.epoch++
+    this.abortLogin?.()
     this.access = null
     this.o.store.clear()
   }
 
+  cancel(): void {
+    this.abortLogin?.()
+  }
+
   async connect(): Promise<void> {
+    const epoch = this.epoch
     const clientId = this.o.clientId()
     if (!CLIENT_ID_PATTERN.test(clientId)) throw new Error('Add your Spotify client ID first')
     const verifier = makeVerifier()
     const state = makeState()
-    const { code, redirectUri } = await this.awaitCallback(state, (redirect) => {
+    const { code, redirectUri } = await this.awaitCallback(state, (redirect, fail) => {
       const url = new URL(AUTHORIZE_URL)
       url.search = new URLSearchParams({
         response_type: 'code',
@@ -62,10 +77,13 @@ export class SpotifyAuth implements TokenSource {
         code_challenge_method: 'S256',
         code_challenge: challengeFor(verifier)
       }).toString()
-      this.o.openUrl(url.toString())
+      void Promise.resolve(this.o.openUrl(url.toString())).catch(() => fail(new Error('Could not open your browser')))
     })
+    if (epoch !== this.epoch) throw new LoginCancelledError()
     const body = await this.token({ grant_type: 'authorization_code', code, redirect_uri: redirectUri, client_id: clientId, code_verifier: verifier })
+    if (epoch !== this.epoch) throw new LoginCancelledError()
     if (!body.refresh_token) throw new Error('Spotify did not return a refresh token')
+    this.access = { token: body.access_token ?? '', expiresAt: Date.now() + (body.expires_in ?? 3600) * 1000 }
     this.o.store.save(body.refresh_token)
   }
 
@@ -82,15 +100,18 @@ export class SpotifyAuth implements TokenSource {
   }
 
   private async doRefresh(): Promise<string> {
+    const epoch = this.epoch
     const refreshToken = this.o.store.load()
     if (!refreshToken) throw new AuthLostError()
     const res = await this.post({ grant_type: 'refresh_token', refresh_token: refreshToken, client_id: this.o.clientId() })
+    if (epoch !== this.epoch) throw new AuthLostError()
     if (res.status === 400 || res.status === 401) {
       this.disconnect()
       throw new AuthLostError()
     }
     if (!res.ok) throw new Error(`Spotify token refresh failed (${res.status})`)
     const body = (await res.json()) as TokenBody
+    if (epoch !== this.epoch) throw new AuthLostError()
     if (!body.access_token) throw new Error('Spotify returned no access token')
     this.access = { token: body.access_token, expiresAt: Date.now() + (body.expires_in ?? 3600) * 1000 }
     if (body.refresh_token) this.o.store.save(body.refresh_token)
@@ -110,11 +131,10 @@ export class SpotifyAuth implements TokenSource {
     if (!res.ok) throw new Error(`Spotify login failed (${res.status})`)
     const body = (await res.json()) as TokenBody
     if (!body.access_token) throw new Error('Spotify returned no access token')
-    this.access = { token: body.access_token, expiresAt: Date.now() + (body.expires_in ?? 3600) * 1000 }
     return body
   }
 
-  private awaitCallback(state: string, onListening: (redirectUri: string) => void): Promise<{ code: string; redirectUri: string }> {
+  private awaitCallback(state: string, onListening: (redirectUri: string, fail: (e: Error) => void) => void): Promise<{ code: string; redirectUri: string }> {
     const port = this.o.port ?? SPOTIFY_REDIRECT_PORT
     return new Promise((resolve, reject) => {
       let settled = false
@@ -139,15 +159,17 @@ export class SpotifyAuth implements TokenSource {
         if (settled) return
         settled = true
         clearTimeout(timer)
+        this.abortLogin = null
         server.close()
         server.closeAllConnections()
         if (err) reject(err)
         else resolve({ code, redirectUri: redirect })
       }
+      this.abortLogin = () => finish(new LoginCancelledError(), '')
       server.on('error', (e: NodeJS.ErrnoException) => finish(new Error(e.code === 'EADDRINUSE' ? `Port ${port} is already in use` : e.message), ''))
       server.listen(port, '127.0.0.1', () => {
         redirect = `http://127.0.0.1:${(server.address() as { port: number }).port}/callback`
-        onListening(redirect)
+        onListening(redirect, (e) => finish(e, ''))
       })
     })
   }

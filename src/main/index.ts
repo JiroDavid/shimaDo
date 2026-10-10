@@ -114,7 +114,7 @@ function boot(): void {
   const spotifyAuth = new SpotifyAuth({
     clientId: () => store.data.settings.spotifyClientId,
     store: createTokenStore(join(userData, 'spotify-token.bin'), safeStorage),
-    openUrl: (url) => void shell.openExternal(url)
+    openUrl: (url) => shell.openExternal(url)
   })
   const spotify = new SpotifyController({
     clientId: () => store.data.settings.spotifyClientId,
@@ -256,6 +256,7 @@ function boot(): void {
       },
       getSpotifyState: () => spotify.state,
       spotifyConnect: () => spotify.connect(),
+      spotifyCancel: () => spotify.cancel(),
       spotifyDisconnect: () => spotify.disconnect(),
       spotifyWatch: (on) => spotify.setWatching(on),
       spotifyStats: (range) => spotify.stats(range),

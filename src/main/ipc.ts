@@ -38,6 +38,7 @@ export interface AppActions {
   dismissUpdate(): void
   getSpotifyState(): SpotifyState
   spotifyConnect(): Promise<void>
+  spotifyCancel(): void
   spotifyDisconnect(): void
   spotifyWatch(on: boolean): void
   spotifyStats(range: StatsRange): Stats
@@ -130,6 +131,7 @@ export function registerIpc(store: Store, panels: PanelManager, timer: PomodoroT
   ipcMain.handle('update:dismiss', () => actions.dismissUpdate())
   ipcMain.handle('spotify:get', () => actions.getSpotifyState())
   ipcMain.handle('spotify:connect', () => actions.spotifyConnect())
+  ipcMain.handle('spotify:cancel', () => actions.spotifyCancel())
   ipcMain.handle('spotify:disconnect', () => actions.spotifyDisconnect())
   ipcMain.handle('spotify:stats', (_e, range: unknown) => actions.spotifyStats(range === '30d' || range === 'all' ? range : '7d'))
   ipcMain.on('spotify:watch', (_e, on: unknown) => actions.spotifyWatch(on === true))

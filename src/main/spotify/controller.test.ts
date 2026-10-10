@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { NowPlaying, Play, SpotifyState } from '../../shared/spotify'
 import { AuthLostError } from './api'
+import { LoginCancelledError } from './auth'
 import { SpotifyController } from './controller'
 
 const np: NowPlaying = { track: { id: 't', name: 'S', artists: ['A'], album: 'X', art: null, durationMs: 1000 }, progressMs: 0, playing: true, fetchedAt: 0 }
 
-function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; nowPlaying?: () => Promise<NowPlaying | null>; recent?: () => Promise<Play[]> } = {}) {
+function setup(opts: { clientId?: string; connected?: boolean; connect?: () => Promise<void>; onCancel?: () => void; nowPlaying?: () => Promise<NowPlaying | null>; recent?: () => Promise<Play[]> } = {}) {
   const states: SpotifyState[] = []
   let connected = opts.connected ?? false
   let clientId = opts.clientId ?? 'a'.repeat(32)
@@ -18,7 +19,8 @@ function setup(opts: { clientId?: string; connected?: boolean; connect?: () => P
     }),
     disconnect: vi.fn(() => {
       connected = false
-    })
+    }),
+    cancel: vi.fn(() => opts.onCancel?.())
   }
   const history = { plays: [] as Play[], add: vi.fn((p: Play[]) => p.length) }
   const api = { nowPlaying: opts.nowPlaying ?? (async () => np), recentlyPlayed: opts.recent ?? (async () => [] as Play[]) }
@@ -97,6 +99,16 @@ describe('SpotifyController', () => {
     t.c.disconnect()
     expect(t.auth.disconnect).toHaveBeenCalled()
     expect(t.c.state).toMatchObject({ status: 'disconnected', nowPlaying: null, error: null })
+  })
+
+  it('cancel ends a pending connect quietly and allows trying again', async () => {
+    let reject!: (e: Error) => void
+    const t = setup({ connect: () => new Promise<void>((_, r) => (reject = r)), onCancel: () => reject(new LoginCancelledError()) })
+    const pending = t.c.connect()
+    expect(t.c.state.status).toBe('connecting')
+    t.c.cancel()
+    await pending
+    expect(t.c.state).toMatchObject({ status: 'disconnected', error: null })
   })
 
   it('drops the old login when the client id changes', async () => {

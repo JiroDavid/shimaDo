@@ -257,6 +257,7 @@ export interface ShimaApi {
   getSpotifyState(): Promise<SpotifyState>
   onSpotifyState(cb: (s: SpotifyState) => void): () => void
   spotifyConnect(): Promise<void>
+  spotifyCancel(): Promise<void>
   spotifyDisconnect(): Promise<void>
   spotifyWatch(on: boolean): void
   spotifyStats(range: StatsRange): Promise<Stats>

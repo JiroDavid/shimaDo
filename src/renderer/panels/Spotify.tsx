@@ -152,7 +152,12 @@ export function Spotify() {
               </button>
             </>
           ) : state.status === 'connecting' ? (
-            <p className="text-muted">Waiting for Spotify in your browser...</p>
+            <>
+              <p className="text-muted">Waiting for Spotify in your browser...</p>
+              <button className="btn" onClick={() => window.shima.spotifyCancel()}>
+                Cancel
+              </button>
+            </>
           ) : (
             <button className="btn btn-primary" onClick={() => window.shima.spotifyConnect()}>
               Connect Spotify

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import http from 'node:http'
 import { AuthLostError } from './api'
-import { SpotifyAuth, type TokenStore } from './auth'
+import { LoginCancelledError, SpotifyAuth, type TokenStore } from './auth'
 
 const CLIENT = 'a'.repeat(32)
 
@@ -30,7 +30,7 @@ function hit(url: string): Promise<number> {
   })
 }
 
-function setup(over: { store?: ReturnType<typeof memoryStore>; fetchFn?: typeof fetch; port?: number; timeoutMs?: number; clientId?: string } = {}) {
+function setup(over: { store?: ReturnType<typeof memoryStore>; fetchFn?: typeof fetch; port?: number; timeoutMs?: number; clientId?: string; openUrl?: (u: string) => void | Promise<unknown> } = {}) {
   const store = over.store ?? memoryStore()
   const bodies: URLSearchParams[] = []
   const fetchFn =
@@ -50,6 +50,7 @@ function setup(over: { store?: ReturnType<typeof memoryStore>; fetchFn?: typeof 
     openUrl: (u) => {
       opened = new URL(u)
       onOpen(opened)
+      return over.openUrl?.(u)
     }
   })
   return { auth, store, bodies, opened: () => opened, onOpen: (cb: (u: URL) => void) => (onOpen = cb) }
@@ -153,5 +154,51 @@ describe('SpotifyAuth tokens', () => {
     const t2 = setup({ store: memoryStore('ref') })
     t2.auth.disconnect()
     expect(t2.store.value).toBeNull()
+  })
+})
+
+describe('SpotifyAuth races and cancel', () => {
+  it('a disconnect during a refresh is not undone when the refresh finishes', async () => {
+    let release!: (r: Response) => void
+    const fetchFn = (() => new Promise<Response>((r) => (release = r))) as unknown as typeof fetch
+    const t = setup({ store: memoryStore('ref-old'), fetchFn })
+    const pending = t.auth.refresh()
+    t.auth.disconnect()
+    release(tokenResponse({ access_token: 'a', expires_in: 3600, refresh_token: 'ref-new' }))
+    await expect(pending).rejects.toBeInstanceOf(AuthLostError)
+    expect(t.store.value).toBeNull()
+    expect(t.auth.connected).toBe(false)
+  })
+
+  it('a login that finishes after a disconnect is discarded', async () => {
+    let release: ((r: Response) => void) | null = null
+    const fetchFn = (() => new Promise<Response>((r) => (release = r))) as unknown as typeof fetch
+    const t = setup({ fetchFn })
+    t.onOpen((u) => void hit(`${u.searchParams.get('redirect_uri')}?code=c&state=${u.searchParams.get('state')}`))
+    const login = t.auth.connect()
+    await vi.waitFor(() => expect(release).not.toBeNull())
+    t.auth.disconnect()
+    release!(tokenResponse({ access_token: 'a', expires_in: 3600, refresh_token: 'ref-new' }))
+    await expect(login).rejects.toBeInstanceOf(LoginCancelledError)
+    expect(t.store.value).toBeNull()
+  })
+
+  it('cancel aborts a pending login with LoginCancelledError', async () => {
+    const t = setup()
+    let opened = false
+    t.onOpen(() => (opened = true))
+    const login = t.auth.connect()
+    await vi.waitFor(() => expect(opened).toBe(true))
+    t.auth.cancel()
+    await expect(login).rejects.toBeInstanceOf(LoginCancelledError)
+  })
+
+  it('cancel with nothing pending does nothing', () => {
+    expect(() => setup().auth.cancel()).not.toThrow()
+  })
+
+  it('fails with a clear message when the browser cannot be opened', async () => {
+    const t = setup({ openUrl: async () => { throw new Error('no browser') } })
+    await expect(t.auth.connect()).rejects.toThrow('Could not open your browser')
   })
 })
